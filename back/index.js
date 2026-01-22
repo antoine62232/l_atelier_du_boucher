@@ -8,6 +8,7 @@ import termeRoute from './routes/termeRoute.js';
 import avisRoute from './routes/avisRoute.js';
 import tagRoute from './routes/tagRoute.js';
 import pieceRoute from './routes/pieceRoute.js';
+import partieRoute from './routes/partieRoute.js';
 // Import de la connexion BDD (on s'assure qu'elle se lance)
 import connexion from './config/bdd.js';
 
@@ -27,6 +28,7 @@ app.use('/api/ressources', ressourceRoute);
 app.use('/api/termes', termeRoute);
 app.use('/api/tags', tagRoute);
 app.use('/api/pieces', pieceRoute);
+app.use('/api/parties', partieRoute);
 // Route de test 
 app.get('/', (req, res) => {
     res.send("API L'Atelier du Boucher : En ligne 🥩");
