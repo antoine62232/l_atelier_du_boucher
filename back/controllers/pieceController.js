@@ -34,7 +34,7 @@ export const getAllPieces = async (req, res) => {
 };
 
 export const getPieceById = async (req, res) => {
-    const idPiece = req.params.idPiece;
+    const idPiece = req.params.id;
     try {
         const result = await pieceModel.getPieceById(idPiece);
         if (!result) {
@@ -65,7 +65,7 @@ export const updatePiece = async (req, res) => {
     if (req.user.role !== 1) {
         return res.status(403).json({ error: "Accès refusé. Seuls les admins peuvent modifier des pièces." });
     }
-    const idPiece = req.params.idPiece;
+    const idPiece = req.params.id;
     const {nomPiece, descriptionPiece, utilisation, cuisson, imagePiece, partieId} = req.body;
     try {
         const result = await pieceModel.updatePiece(idPiece, nomPiece, descriptionPiece, utilisation, cuisson, imagePiece, partieId);
@@ -83,7 +83,7 @@ export const deletePiece = async (req, res) => {
     if (req.user.role !== 1) {
         return res.status(403).json({ error: "Accès refusé. Seuls les admins peuvent supprimer des pièces." });
     }
-    const idPiece = req.params.idPiece;
+    const idPiece = req.params.id;
     try {
         const result = await pieceModel.deletePiece(idPiece);
         if (result.affectedRows === 0) {
