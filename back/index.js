@@ -15,6 +15,7 @@ import questionRoute from './routes/questionRoute.js';
 import reponseQcmRoute from './routes/reponseQcmRoute.js';
 import recetteRoute from './routes/recetteRoute.js';
 import ingredientRoute from './routes/ingredientRoute.js';
+import recetteIngredientRoute from './routes/recetteIngredientRoute.js';
 // Import de la connexion BDD (on s'assure qu'elle se lance)
 import connexion from './config/bdd.js';
 
@@ -38,9 +39,10 @@ app.use('/api/parties', partieRoute);
 app.use('/api/animaux', animalRoute);
 app.use('/api/races', raceRoute);
 app.use('/api/questions', questionRoute);
-app.use('/api/reponsesQcm', reponseQcmRoute);
+app.use('/api/reponses-qcm', reponseQcmRoute);
 app.use('/api/recettes', recetteRoute);
 app.use('/api/ingredients', ingredientRoute);
+app.use('/api/recettes-ingredients', recetteIngredientRoute);
 // Route de test 
 app.get('/', (req, res) => {
     res.send("API L'Atelier du Boucher : En ligne 🥩");
