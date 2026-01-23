@@ -16,6 +16,7 @@ import reponseQcmRoute from './routes/reponseQcmRoute.js';
 import recetteRoute from './routes/recetteRoute.js';
 import ingredientRoute from './routes/ingredientRoute.js';
 import recetteIngredientRoute from './routes/recetteIngredientRoute.js';
+import instructionRoute from './routes/instructionRoute.js';
 // Import de la connexion BDD (on s'assure qu'elle se lance)
 import connexion from './config/bdd.js';
 
@@ -43,6 +44,7 @@ app.use('/api/reponses-qcm', reponseQcmRoute);
 app.use('/api/recettes', recetteRoute);
 app.use('/api/ingredients', ingredientRoute);
 app.use('/api/recettes-ingredients', recetteIngredientRoute);
+app.use('/api/instructions', instructionRoute);
 // Route de test 
 app.get('/', (req, res) => {
     res.send("API L'Atelier du Boucher : En ligne 🥩");
