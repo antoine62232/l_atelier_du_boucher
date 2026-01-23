@@ -125,8 +125,6 @@ idQuestion INT AUTO_INCREMENT PRIMARY KEY,
 texteQuestion TEXT NOT NULL,
 typeQuestion VARCHAR(50) NOT NULL,
 explication TEXT,
-animalId INT NULL,
-partieId INT NULL,
 pieceId INT NULL
 );
 
@@ -200,7 +198,13 @@ ADD CONSTRAINT fkRecettesIngredientsIngredients FOREIGN KEY (ingredientId) REFER
 ALTER TABLE recettes
 ADD CONSTRAINT fkRecettesPieces FOREIGN KEY (pieceId) REFERENCES pieces(idPiece) ON DELETE CASCADE;
 
-
+ALTER TABLE questions
+ADD COLUMN partieId INT NULL,
+ADD COLUMN animalId INT NULL,
+ADD COLUMN raceId INT NULL,
+ADD CONSTRAINT fk_questions_parties FOREIGN KEY (partieId) REFERENCES parties(idPartie) ON DELETE CASCADE,
+ADD CONSTRAINT fk_questions_animaux FOREIGN KEY (animalId) REFERENCES animaux(idAnimal) ON DELETE CASCADE,
+ADD CONSTRAINT fk_questions_races FOREIGN KEY (raceId) REFERENCES races(idRace) ON DELETE CASCADE;
 
                               
 

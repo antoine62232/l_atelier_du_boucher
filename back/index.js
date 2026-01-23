@@ -11,6 +11,7 @@ import pieceRoute from './routes/pieceRoute.js';
 import partieRoute from './routes/partieRoute.js';
 import animalRoute from './routes/animalRoute.js';
 import raceRoute from './routes/raceRoute.js';
+import questionRoute from './routes/questionRoute.js';
 // Import de la connexion BDD (on s'assure qu'elle se lance)
 import connexion from './config/bdd.js';
 
@@ -33,6 +34,7 @@ app.use('/api/pieces', pieceRoute);
 app.use('/api/parties', partieRoute);
 app.use('/api/animaux', animalRoute);
 app.use('/api/races', raceRoute);
+app.use('/api/questions', questionRoute);
 // Route de test 
 app.get('/', (req, res) => {
     res.send("API L'Atelier du Boucher : En ligne 🥩");
