@@ -152,9 +152,7 @@ ingredientId INT NOT NULL
 
 CREATE TABLE calculsRendement (
     idCalcul INT AUTO_INCREMENT PRIMARY KEY,
-    utilisateurId INT NOT NULL,
-    pieceId INT NOT NULL,
-    titreCalcul VARCHAR(100) NOT NULL,
+    titreCalcul VARCHAR(150) NOT NULL,
     dateCalcul DATETIME DEFAULT CURRENT_TIMESTAMP,
     poidsBrut DECIMAL(10,3) NOT NULL,
     prixAchatKg DECIMAL(10,2) NOT NULL,
@@ -162,12 +160,15 @@ CREATE TABLE calculsRendement (
     poidsPerte DECIMAL(10,3) NOT NULL,
     resultatRendement DECIMAL(5,2) NOT NULL,
     margeVisee DECIMAL(5,2) NOT NULL,
+    tauxTVA DECIMAL(4,2) NOT NULL DEFAULT 5.50,
     prixRevientKg DECIMAL(10,2) NOT NULL,
     prixVenteConseilleKg DECIMAL(10,2) NOT NULL,
     commentaire TEXT,
+    utilisateurId INT NOT NULL,
+    pieceId INT NOT NULL,
     
-    CONSTRAINT fkCalculsRendementUtilisateurs FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE,
-    CONSTRAINT fkCalculsRendementPieces FOREIGN KEY (pieceId) REFERENCES pieces(idPiece) ON DELETE CASCADE
+    CONSTRAINT fk_calcul_user FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE,
+    CONSTRAINT fk_calcul_piece FOREIGN KEY (pieceId) REFERENCES pieces(idPiece) ON DELETE CASCADE
 );
 
 ALTER TABLE ressourcesTermes
@@ -225,3 +226,14 @@ ADD CONSTRAINT fk_questions_races FOREIGN KEY (raceId) REFERENCES races(idRace) 
 ALTER TABLE calculsRendement 
 ADD COLUMN tauxTVA DECIMAL(4,2) NOT NULL DEFAULT 5.50 AFTER margeVisee;                           
 
+CREATE TABLE actualites (
+    idActualite INT AUTO_INCREMENT PRIMARY KEY,
+    titre VARCHAR(200) NOT NULL,
+    contenu TEXT NOT NULL,
+    imageActualite VARCHAR(255),
+    categorie VARCHAR(50) NOT NULL,
+    lienSource VARCHAR(255),
+    datePublication DATETIME DEFAULT CURRENT_TIMESTAMP,
+    utilisateurId INT NOT NULL,
+    CONSTRAINT fk_actualites_users FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE
+);
