@@ -222,5 +222,6 @@ ADD CONSTRAINT fk_questions_parties FOREIGN KEY (partieId) REFERENCES parties(id
 ADD CONSTRAINT fk_questions_animaux FOREIGN KEY (animalId) REFERENCES animaux(idAnimal) ON DELETE CASCADE,
 ADD CONSTRAINT fk_questions_races FOREIGN KEY (raceId) REFERENCES races(idRace) ON DELETE CASCADE;
 
-                              
+ALTER TABLE calculsRendement 
+ADD COLUMN tauxTVA DECIMAL(4,2) NOT NULL DEFAULT 5.50 AFTER margeVisee;                           
 
