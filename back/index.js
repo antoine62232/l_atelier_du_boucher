@@ -17,7 +17,8 @@ import recetteRoute from './routes/recetteRoute.js';
 import ingredientRoute from './routes/ingredientRoute.js';
 import recetteIngredientRoute from './routes/recetteIngredientRoute.js';
 import instructionRoute from './routes/instructionRoute.js';
-import calculsRendementRoute from './routes/calculsRendementRoute.js';
+import calculsRendementRoute from './routes/calculsRendementRoute.js'; 
+import actualiteRoute from './routes/actualiteRoute.js';
 // Import de la connexion BDD (on s'assure qu'elle se lance)
 import connexion from './config/bdd.js';
 
@@ -47,6 +48,7 @@ app.use('/api/ingredients', ingredientRoute);
 app.use('/api/recettes-ingredients', recetteIngredientRoute);
 app.use('/api/instructions', instructionRoute);
 app.use('/api/calculs-rendement', calculsRendementRoute);
+app.use('/api/actualites', actualiteRoute);
 // Route de test 
 app.get('/', (req, res) => {
     res.send("API L'Atelier du Boucher : En ligne 🥩");

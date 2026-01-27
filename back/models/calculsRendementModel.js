@@ -14,7 +14,7 @@ export const addCalcul = async (donnees) => {
         poidsPerte, 
         resultatRendement, 
         margeVisee, 
-        tauxTVA, // Attention à bien utiliser le même nom que dans le controller (tauxTVA ou tauxTva)
+        tauxTVA,
         prixRevientKg, 
         prixVenteConseilleKg, 
         commentaire, 

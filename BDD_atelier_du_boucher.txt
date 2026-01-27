@@ -233,7 +233,7 @@ CREATE TABLE actualites (
     imageActualite VARCHAR(255),
     categorie VARCHAR(50) NOT NULL,
     lienSource VARCHAR(255),
-    datePublication DATETIME DEFAULT CURRENT_TIMESTAMP,
+    datePublication DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     utilisateurId INT NOT NULL,
     CONSTRAINT fk_actualites_users FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE
 );
