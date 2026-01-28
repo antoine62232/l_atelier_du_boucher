@@ -125,8 +125,6 @@ idQuestion INT AUTO_INCREMENT PRIMARY KEY,
 texteQuestion TEXT NOT NULL,
 typeQuestion VARCHAR(50) NOT NULL,
 explication TEXT,
-animalId INT NULL,
-partieId INT NULL,
 pieceId INT NULL
 );
 
@@ -152,6 +150,27 @@ recetteId INT NOT NULL,
 ingredientId INT NOT NULL
 );
 
+CREATE TABLE calculsRendement (
+    idCalcul INT AUTO_INCREMENT PRIMARY KEY,
+    titreCalcul VARCHAR(150) NOT NULL,
+    dateCalcul DATETIME DEFAULT CURRENT_TIMESTAMP,
+    poidsBrut DECIMAL(10,3) NOT NULL,
+    prixAchatKg DECIMAL(10,2) NOT NULL,
+    poidsNet DECIMAL(10,3) NOT NULL,
+    poidsPerte DECIMAL(10,3) NOT NULL,
+    resultatRendement DECIMAL(5,2) NOT NULL,
+    margeVisee DECIMAL(5,2) NOT NULL,
+    tauxTVA DECIMAL(4,2) NOT NULL DEFAULT 5.50,
+    prixRevientKg DECIMAL(10,2) NOT NULL,
+    prixVenteConseilleKg DECIMAL(10,2) NOT NULL,
+    commentaire TEXT,
+    utilisateurId INT NOT NULL,
+    pieceId INT NOT NULL,
+    
+    CONSTRAINT fk_calcul_user FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE,
+    CONSTRAINT fk_calcul_piece FOREIGN KEY (pieceId) REFERENCES pieces(idPiece) ON DELETE CASCADE
+);
+
 ALTER TABLE ressourcesTermes
 ADD CONSTRAINT fkRessourcesTermesRessources FOREIGN KEY (ressourceId) REFERENCES ressources(idRessource) ON DELETE CASCADE,
 ADD CONSTRAINT fkRessourcesTermesTermes FOREIGN KEY (termeId) REFERENCES termes(idTerme) ON DELETE CASCADE;
@@ -173,10 +192,6 @@ ADD CONSTRAINT fkAvisRessources FOREIGN KEY (ressourceId) REFERENCES ressources(
 
 ALTER TABLE pieces
 ADD CONSTRAINT fkPiecesParties FOREIGN KEY (partieId) REFERENCES parties(idPartie) ON DELETE CASCADE;
-
-ALTER TABLE calculsRendement
-ADD CONSTRAINT fkCalculsRendementUtilisateurs FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE,
-ADD CONSTRAINT fkCalculsRendementPieces FOREIGN KEY (pieceId) REFERENCES pieces(idPiece) ON DELETE CASCADE;
 
 ALTER TABLE parties
 ADD CONSTRAINT fkPartiesAnimaux FOREIGN KEY (animalId) REFERENCES animaux(idAnimal) ON DELETE CASCADE;
@@ -200,7 +215,25 @@ ADD CONSTRAINT fkRecettesIngredientsIngredients FOREIGN KEY (ingredientId) REFER
 ALTER TABLE recettes
 ADD CONSTRAINT fkRecettesPieces FOREIGN KEY (pieceId) REFERENCES pieces(idPiece) ON DELETE CASCADE;
 
+ALTER TABLE questions
+ADD COLUMN partieId INT NULL,
+ADD COLUMN animalId INT NULL,
+ADD COLUMN raceId INT NULL,
+ADD CONSTRAINT fk_questions_parties FOREIGN KEY (partieId) REFERENCES parties(idPartie) ON DELETE CASCADE,
+ADD CONSTRAINT fk_questions_animaux FOREIGN KEY (animalId) REFERENCES animaux(idAnimal) ON DELETE CASCADE,
+ADD CONSTRAINT fk_questions_races FOREIGN KEY (raceId) REFERENCES races(idRace) ON DELETE CASCADE;
 
+ALTER TABLE calculsRendement 
+ADD COLUMN tauxTVA DECIMAL(4,2) NOT NULL DEFAULT 5.50 AFTER margeVisee;                           
 
-                              
-
+CREATE TABLE actualites (
+    idActualite INT AUTO_INCREMENT PRIMARY KEY,
+    titre VARCHAR(200) NOT NULL,
+    contenu TEXT NOT NULL,
+    imageActualite VARCHAR(255),
+    categorie VARCHAR(50) NOT NULL,
+    lienSource VARCHAR(255),
+    datePublication DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    utilisateurId INT NOT NULL,
+    CONSTRAINT fk_actualites_users FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE
+);

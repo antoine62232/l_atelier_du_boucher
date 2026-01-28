@@ -62,7 +62,7 @@ export const loginUser = async (req, res) => {
             return res.status(401).json({ error: "Identifiants incorrects." });
         }
 
-        // 4. Générer le Token JWT (Le fameux laisser-passer)
+        // 4. Générer le Token JWT
         // On y stocke l'ID et le Rôle (pratique pour le Front)
         const token = jwt.sign(
             { id: user.idUtilisateur, role: user.roleId }, 

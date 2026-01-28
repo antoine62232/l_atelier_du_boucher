@@ -8,16 +8,39 @@ import termeRoute from './routes/termeRoute.js';
 import avisRoute from './routes/avisRoute.js';
 import tagRoute from './routes/tagRoute.js';
 import pieceRoute from './routes/pieceRoute.js';
+import partieRoute from './routes/partieRoute.js';
+import animalRoute from './routes/animalRoute.js';
+import raceRoute from './routes/raceRoute.js';
+import questionRoute from './routes/questionRoute.js';
+import reponseQcmRoute from './routes/reponseQcmRoute.js';
+import recetteRoute from './routes/recetteRoute.js';
+import ingredientRoute from './routes/ingredientRoute.js';
+import recetteIngredientRoute from './routes/recetteIngredientRoute.js';
+import instructionRoute from './routes/instructionRoute.js';
+import calculsRendementRoute from './routes/calculsRendementRoute.js'; 
+import actualiteRoute from './routes/actualiteRoute.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 // Import de la connexion BDD (on s'assure qu'elle se lance)
 import connexion from './config/bdd.js';
 
 // Configuration
 dotenv.config();
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 // Middleware
-app.use(cors()); // Autorise le frontend à communiquer
-app.use(express.json()); // Permet de lire le JSON dans req.body
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json()); 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/users', userRoute);
@@ -27,6 +50,17 @@ app.use('/api/ressources', ressourceRoute);
 app.use('/api/termes', termeRoute);
 app.use('/api/tags', tagRoute);
 app.use('/api/pieces', pieceRoute);
+app.use('/api/parties', partieRoute);
+app.use('/api/animaux', animalRoute);
+app.use('/api/races', raceRoute);
+app.use('/api/questions', questionRoute);
+app.use('/api/reponses-qcm', reponseQcmRoute);
+app.use('/api/recettes', recetteRoute);
+app.use('/api/ingredients', ingredientRoute);
+app.use('/api/recettes-ingredients', recetteIngredientRoute);
+app.use('/api/instructions', instructionRoute);
+app.use('/api/calculs-rendement', calculsRendementRoute);
+app.use('/api/actualites', actualiteRoute);
 // Route de test 
 app.get('/', (req, res) => {
     res.send("API L'Atelier du Boucher : En ligne 🥩");
