@@ -237,3 +237,23 @@ CREATE TABLE actualites (
     utilisateurId INT NOT NULL,
     CONSTRAINT fk_actualites_users FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE
 );
+
+CREATE TABLE contacts (
+    idContact INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100),
+    prenom VARCHAR(100),
+    email VARCHAR(150) NOT NULL,
+    objet VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    dateEnvoi DATETIME DEFAULT CURRENT_TIMESTAMP,
+    statut VARCHAR(50) DEFAULT 'Non lu',
+    utilisateurId INT NULL,
+    CONSTRAINT fk_contact_user FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE SET NULL
+);
+
+CREATE TABLE faq (
+    idFaq INT AUTO_INCREMENT PRIMARY KEY,
+    question TEXT NOT NULL,
+    reponse TEXT NOT NULL,
+    ordre INT DEFAULT 0
+);
