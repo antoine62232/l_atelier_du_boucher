@@ -19,16 +19,24 @@ import recetteIngredientRoute from './routes/recetteIngredientRoute.js';
 import instructionRoute from './routes/instructionRoute.js';
 import calculsRendementRoute from './routes/calculsRendementRoute.js'; 
 import actualiteRoute from './routes/actualiteRoute.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 // Import de la connexion BDD (on s'assure qu'elle se lance)
 import connexion from './config/bdd.js';
 
 // Configuration
 dotenv.config();
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 // Middleware
 app.use(cors()); // Autorise le frontend à communiquer
 app.use(express.json()); // Permet de lire le JSON dans req.body
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/users', userRoute);
