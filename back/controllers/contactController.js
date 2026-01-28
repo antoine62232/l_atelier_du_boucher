@@ -1,4 +1,5 @@
 import * as contactModel from "../models/contactModel.js";
+import { sendEmail } from "../services/emailService.js";
 
 export const createContact = async (req, res) => {
     const { nom, prenom, email, objet, message } = req.body;
@@ -10,6 +11,20 @@ export const createContact = async (req, res) => {
     }
     try {
         const result = await contactModel.createContact(nom, prenom, email, objet, message, utilisateurId);
+
+        await sendEmail(
+            process.env.EMAIL_USER,
+            `Nouveau Contact : ${objet}`,
+            `Message de ${prenom} ${nom} (${email}) :\n\n${message}`,
+
+            `<h3>Nouveau message reçu sur le site</h3>
+            <p><strong>De :</strong> ${prenom} ${nom} (<a href="mailto:${email}">${email}</a>)</p>
+             <p><strong>Objet :</strong> ${objet}</p>
+             <hr>
+             <p><strong>Message :</strong></p>
+             <p style="background-color: #f4f4f4; padding: 10px; border-radius: 5px;">${message.replace(/\n/g, '<br>')}</p>`
+        );
+        
         res.status(201).json({ message: "Votre message a bien été envoyé.",  id: result.insertId });
     } catch (error) {
         console.error("Erreur contact :", error);
