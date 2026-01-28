@@ -34,8 +34,12 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Middleware
-app.use(cors()); // Autorise le frontend à communiquer
-app.use(express.json()); // Permet de lire le JSON dans req.body
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json()); 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
