@@ -58,7 +58,7 @@ const NavBar = (props) => {
 
 const DesktopLinks = () => {
     return (
-        <HStack gap="32px"> {/* "spacing" devient souvent "gap" en v3 */}
+        <HStack gap="32px">
             <MenuItemLink to="/atlas">Atlas</MenuItemLink>
             <MenuItemLink to="/videos">Vidéothèque</MenuItemLink>
             <MenuItemLink to="/outils">Outils</MenuItemLink>
@@ -91,7 +91,6 @@ const Logo = () => {
             alt="Logo" 
             h="45px" 
             fit="contain" 
-            // Petit bonus : léger zoom au survol pour montrer que c'est cliquable
             transition="transform 0.2s"
             _hover={{ transform: "scale(1.05)" }}
         />
@@ -104,7 +103,7 @@ const Logo = () => {
         fontSize="20px"
         color="brand.rouge"
         display={{ base: 'none', xl: 'block' }}
-        cursor="default" // Le curseur reste une flèche (pas une main)
+        cursor="default"
         userSelect="none" // Empêche de sélectionner le texte (effet plus "App")
       >
         L'ATELIER DU BOUCHER
@@ -201,11 +200,10 @@ const MenuItemLink = ({ children, to = "/", ...rest }) => {
       // --- STYLE DE BASE ---
       display="block" 
       fontSize="15px"
-      fontWeight="medium" // On reste en medium tout le temps
+      fontWeight="medium"
       color="brand.gris"
       textDecoration="none"
 
-      // --- AU SURVOL ---
       _hover={{ 
         color: 'brand.rouge', 
         textDecoration: 'none' 
@@ -218,8 +216,7 @@ const MenuItemLink = ({ children, to = "/", ...rest }) => {
       // --- QUAND ACTIF (Page courante) ---
       css={{
         "&.active": {
-            color: "#8A1C25", // Rouge Bœuf
-            // Plus de fontWeight: "bold" ici -> Plus de décalage !
+            color: "#8A1C25",
         }
       }}
 
@@ -282,7 +279,9 @@ const NavBarContainer = ({ children, ...props }) => {
       align="center"
       justify="space-between"
       wrap="wrap"
-      mt="20px"
+      position="relative"
+      zIndex="1000"
+
       px="24px"
       maxW="1360px"
       mx="auto"

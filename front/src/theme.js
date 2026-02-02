@@ -21,13 +21,13 @@ export const system = createSystem(defaultConfig, {
           creme: { value: "#FFFCF5" },
           gris: { value: "#2C3E50" },
           acier: { value: "#AAB7B8" },
-          beige: { value: "#F4EBD9" }, // <--- C'est corrigé ici !
-          brun: { value: "#8B4513" },
+          beige: { value: "#F4EBD9" },
+          brun: { value: "#B87333" },
         },
       },
       fonts: {
         heading: { value: "'Playfair Display', serif" },
-        body: { value: "'Inter', sans-serif" },
+        body: { value: "'Roboto', sans-serif" },
         titre: { value: "'Playfair Display', serif" },
       },
     },
