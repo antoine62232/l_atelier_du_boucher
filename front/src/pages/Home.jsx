@@ -2,7 +2,8 @@ import React from 'react';
 import { Box } from "@chakra-ui/react"; 
 import NavBar from '../components/NavBar'; 
 import Hero from '../components/Hero';
-import Tools from '../components/Tools'; 
+import Tools from '../components/Tools';
+import CourseResume from '../components/CourseResume';
 
 const Home = () => {
     return (
@@ -10,6 +11,7 @@ const Home = () => {
             <NavBar />
             <Hero />
             <Tools />
+            <CourseResume />
         </Box>
     );
 };
