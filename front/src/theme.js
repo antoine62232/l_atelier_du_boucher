@@ -1,7 +1,7 @@
 import { createSystem, defaultConfig } from "@chakra-ui/react";
 
 export const system = createSystem(defaultConfig, {
-  // 1. Styles globaux (Le fond prendra la couleur brand.beige définie plus bas)
+  // 1. Styles globaux
   globalCss: {
     "html, body": {
       margin: 0,
@@ -26,9 +26,8 @@ export const system = createSystem(defaultConfig, {
         },
       },
       fonts: {
-        heading: { value: "'Playfair Display', serif" },
         body: { value: "'Roboto', sans-serif" },
-        titre: { value: "'Playfair Display', serif" },
+        title: { value: "'Playfair Display', serif" },
       },
     },
   },

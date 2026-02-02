@@ -73,16 +73,12 @@ const Logo = () => {
   return (
     <HStack gap="12px">
       
-      {/* 1. SEULEMENT L'IMAGE EST UN LIEN */}
       <Link 
         as={RouterLink} 
         to="/" 
         
-        // Supprime le rectangle gris (focus ring) au clic
         _focus={{ outline: "none", boxShadow: "none" }}
         _focusVisible={{ outline: "none", boxShadow: "none" }}
-        
-        // Supprime le soulignement par défaut des liens
         textDecoration="none"
         _hover={{ textDecoration: "none" }}
       >
@@ -96,15 +92,12 @@ const Logo = () => {
         />
       </Link>
 
-      {/* 2. LE TEXTE EST JUSTE DU TEXTE (Non cliquable) */}
       <Text
-        fontFamily="heading"
+        fontFamily="title"
         fontWeight="bold"
         fontSize="20px"
         color="brand.rouge"
         display={{ base: 'none', xl: 'block' }}
-        cursor="default"
-        userSelect="none" // Empêche de sélectionner le texte (effet plus "App")
       >
         L'ATELIER DU BOUCHER
       </Text>
@@ -116,7 +109,6 @@ const Logo = () => {
 const RightActions = () => {
     return (
         <Flex align="center" gap={4}>
-            {/* SWITCH V3 (Structure composée) */}
             <Flex align="center" gap={3}>
                 <Text 
                     color="brand.gris" 
@@ -129,7 +121,6 @@ const RightActions = () => {
                 <Switch.Root size="md" colorPalette="red" cursor="pointer">
                     <Switch.HiddenInput />
                     <Switch.Control 
-                        // Style personnalisé du Track (la barre)
                         css={{
                           display: "flex",
                           alignItems: "center",
@@ -143,8 +134,7 @@ const RightActions = () => {
                         }}
                     >
                         <Switch.Thumb 
-                             // Style personnalisé du Thumb (le rond)
-                             css={{
+                            css={{
                                 bg: "brand.gris",
                                 _checked: { bg: "#FFFCF5" }
                              }}
@@ -161,11 +151,11 @@ const RightActions = () => {
                 <Menu.Trigger asChild>
                     <IconButton
                         variant="ghost"
-                        rounded="full" // isRound -> rounded="full"
+                        rounded="full"
                         aria-label="Profil"
                         color="brand.gris"
                         _hover={{ bg: 'brand.rouge', color: 'white' }}
-                        css={{ _open: { bg: 'brand.rouge', color: 'white' } }} // _active -> _open
+                        css={{ _open: { bg: 'brand.rouge', color: 'white' } }}
                     >
                         <FiUser size={24} />
                     </IconButton>
@@ -279,13 +269,14 @@ const NavBarContainer = ({ children, ...props }) => {
       align="center"
       justify="space-between"
       wrap="wrap"
-      position="relative"
+      position="absolute"
       zIndex="1000"
-
+      top="20px"
+      left="50%"
+      transform="translateX(-50%)"
       px="24px"
       maxW="1360px"
-      mx="auto"
-      w="calc(100% - 80px)"
+      w="calc(100% - 48px)"
       bg="brand.creme"
       border="1px solid"
       borderColor="brand.acier"
