@@ -5,6 +5,7 @@ import Hero from '../components/Hero';
 import Tools from '../components/Tools';
 import CourseResume from '../components/CourseResume';
 import ChallengesPractice from '../components/ChallengesPractice';
+import Actuality from '../components/Actuality';
 
 const Home = () => {
     return (
@@ -14,6 +15,7 @@ const Home = () => {
             <Tools />
             <CourseResume />
             <ChallengesPractice />
+            <Actuality />
         </Box>
     );
 };
