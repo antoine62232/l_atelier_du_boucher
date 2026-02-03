@@ -4,6 +4,7 @@ import NavBar from '../components/NavBar';
 import Hero from '../components/Hero';
 import Tools from '../components/Tools';
 import CourseResume from '../components/CourseResume';
+import ChallengesPractice from '../components/ChallengesPractice';
 
 const Home = () => {
     return (
@@ -12,6 +13,7 @@ const Home = () => {
             <Hero />
             <Tools />
             <CourseResume />
+            <ChallengesPractice />
         </Box>
     );
 };
