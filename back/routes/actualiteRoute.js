@@ -6,8 +6,8 @@ import multer from "../middleware/multer-config.js";
 const router = express.Router();
 
 router.post("/create", checkToken, multer, actualiteController.createActualite);
-router.get("/all", checkToken, actualiteController.getAllActualites);
-router.get("/:id", checkToken, actualiteController.getActualiteById);
+router.get("/all", actualiteController.getAllActualites);
+router.get("/:id", actualiteController.getActualiteById);
 router.put("/update/:id", checkToken, multer, actualiteController.updateActualite);
 router.delete("/delete/:id", checkToken, actualiteController.deleteActualite);
 
