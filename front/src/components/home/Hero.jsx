@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Flex, Heading, Text, Button, VStack, Container, Group, Input, Icon } from "@chakra-ui/react";
-import heroImage from "../assets/imageHero.png";
+import heroImage from "../../assets/imageHero.png";
 import { PiMagnifyingGlassThin } from "react-icons/pi";
 
 const Hero = () => {

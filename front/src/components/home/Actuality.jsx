@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Container, Heading, Text, Flex, Spinner, Center, Link } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import ActualityCard from "./ActualityCard";
-import defaultImg from "../assets/laboCard.png"; 
+import defaultImg from "../../assets/laboCard.png"; 
 
 const Actuality = () => {
   const [actualities, setActualities] = useState([]);
