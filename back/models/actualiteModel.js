@@ -13,9 +13,9 @@ export const createActualite = async (donnees) => {
 
 export const getAllActualites = async () => {
     const query = `
-        SELECT idActualite, titre, contenu, imageActualite, categorie, lienSource, utilisateurId
+        SELECT idActualite, titre, contenu, imageActualite, categorie, lienSource, datePublication, utilisateurId
         FROM actualites
-        ORDER BY idActualite DESC
+        ORDER BY datePublication ASC
     `;
     const [result] = await connexion.query(query);
     return result;
@@ -23,7 +23,7 @@ export const getAllActualites = async () => {
 
 export const getActualiteById = async (idActualite) => {
     const query = `
-        SELECT idActualite, titre, contenu, imageActualite, categorie, lienSource, utilisateurId
+        SELECT idActualite, titre, contenu, imageActualite, categorie, lienSource, datePublication, utilisateurId
         FROM actualites
         WHERE idActualite = ?
     `;
