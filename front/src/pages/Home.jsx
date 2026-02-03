@@ -6,6 +6,7 @@ import Tools from '../components/Tools';
 import CourseResume from '../components/CourseResume';
 import ChallengesPractice from '../components/ChallengesPractice';
 import Actuality from '../components/Actuality';
+import Footer from '../components/Footer';
 
 const Home = () => {
     return (
@@ -16,6 +17,7 @@ const Home = () => {
             <CourseResume />
             <ChallengesPractice />
             <Actuality />
+            <Footer />
         </Box>
     );
 };
