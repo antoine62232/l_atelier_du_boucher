@@ -137,8 +137,21 @@ const DesktopLinks = () => {
   };
 
 const RightActions = ({ openSignUpClick, openLoginClick }) => {
+  // On récupère les infos de l'utilisateur
+  const userString = localStorage.getItem("user");
+  const user = userString ? JSON.parse(userString) : null;
+
+  // Fonction de déconnexion
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    // On recharge la page pour que le menu se mette à jour
+    window.location.reload();
+  };
+
   return (
     <Flex align="center" gap={4}>
+      {/* Switch Mode Atelier */}
       <Flex align="center" gap={3}>
         <Text color="brand.gris" fontWeight="medium" fontSize="16px">
           Mode Atelier
@@ -161,7 +174,7 @@ const RightActions = ({ openSignUpClick, openLoginClick }) => {
       </Flex>
 
       <Box h="32px" w="1px" bg="brand.gris" opacity="0.5" />
-
+      {/* MENU PROFIL */}
       <Menu.Root>
         <Menu.Trigger asChild>
           <IconButton
@@ -171,31 +184,72 @@ const RightActions = ({ openSignUpClick, openLoginClick }) => {
             color="brand.gris"
             _hover={{ bg: 'brand.rouge', color: 'white' }}
             css={{ _open: { bg: 'brand.rouge', color: 'white' } }}
+            display="flex"
+            alignItems="center"
+            gap={2}
+            w="auto"
+            px={2}
           >
+            {/* AFFICHER LE PRÉNOM SI CONNECTÉ */}
+            {user ? (
+              <>
+              <FiUser size={24} />
+              <Text fontSize="sm" fontWeight="bold" display={{ base: "none", lg: "block" }}>
+                {user.prenom}
+                </Text>
+              </>
+            
+            ) : (
             <FiUser size={24} />
+            )}
           </IconButton>
         </Menu.Trigger>
 
         <Menu.Positioner>
           <Menu.Content bg="brand.creme" borderColor="brand.acier" boxShadow="lg">
+
+            {user ? (
+              <>
+              {/* Menu pour UTILISATEUR CONNECTÉ */}
+              <Menu.Item value="profil" cursor="pointer" _hover={{ bg: "gray.100" }}>
+                Mon Profil
+              </Menu.Item>
+             
+            
             
             <Menu.Item 
-                value="connexion" 
-                onClick={openLoginClick}
+                value="logout" 
+                color="red.500"
+                onClick={handleLogout}
                 cursor="pointer"
-                _hover={{ bg: "gray.100" }}
+                _hover={{ bg: "red.50" }}
             >
-              Connexion
+              Déconnexion
             </Menu.Item>
+            </>
+            ) : (
+<>
+                    {/* Menu pour VISITEUR */}
+                    <Menu.Item 
+                        value="connexion" 
+                        onClick={openLoginClick}
+                        cursor="pointer"
+                        _hover={{ bg: "gray.100" }}
+                    >
+                        Connexion
+                    </Menu.Item>
+        
+                    <Menu.Item
+                        value="inscription"
+                        onClick={openSignUpClick}
+                        cursor="pointer"
+                        _hover={{ bg: "gray.100" }}
+                    >
+                        Inscription
+                    </Menu.Item>
+                </>
+            )}
 
-            <Menu.Item
-              value="inscription"
-              onClick={openSignUpClick}
-              cursor="pointer"
-              _hover={{ bg: "gray.100" }}
-            >
-              Inscription
-            </Menu.Item>
           </Menu.Content>
         </Menu.Positioner>
       </Menu.Root>

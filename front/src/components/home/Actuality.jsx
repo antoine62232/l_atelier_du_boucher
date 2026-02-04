@@ -11,7 +11,7 @@ const Actuality = () => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/actualites/all");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/actualites/all`);
         if (!response.ok) throw new Error("Erreur réseau");
         const data = await response.json();
         setActualities(data);
@@ -67,7 +67,7 @@ const Actuality = () => {
                     })}
                     excerpt={actu.contenu ? actu.contenu.substring(0, 60) + "..." : ""}
                     image={actu.imageActualite 
-                        ? `http://localhost:3000/uploads/${actu.imageActualite}` 
+                        ? `${import.meta.env.VITE_SERVER_URL}/uploads/${actu.imageActualite}` 
                         : defaultImg
                     }
                     link={`/actu/${actu.idActualite}`}
