@@ -2,6 +2,7 @@ import * as userModel from '../models/userModel.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { sendEmail } from '../services/emailService.js';
 
 dotenv.config();
 
@@ -204,5 +205,78 @@ export const deleteUser = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Erreur serveur lors de la suppression de l'utilisateur" });
+    }
+};
+
+export const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await userModel.getUserByEmail(email);
+
+        if (!user) {
+            return res.status(200).json({ error: "Si l'email existe, le lien de réinitialisation a été envoyé." });
+        }
+        // Créer le "Secret" (clé serveur + Hash dp actuel)
+        const secret = process.env.JWT_SECRET + user.motDePasse;
+        // Créer le Token (validité 15min)
+        const payload = {
+            id: user.idUtilisateur,
+            email: user.email
+        };
+        const token = jwt.sign(payload, secret, { expiresIn: '15m' });
+        // Le lien contient l'id de l'utilisateur et le token
+        const link = `${process.env.FRONTEND_URL}/reset-password/${user.idUtilisateur}/${token}`;
+
+        // Préparer le contenu du mail
+        const subject = "Réinitialisation de votre mot de passe - L'Atelier du Boucher";
+        // Version texte brut (pour boîtes mail anciennes ou anti-spam)
+        const textMessage = `Bonjour ${user.prenom},\n\nVous avez demandé à réinitialiser votre mot de passe.\nCliquez ici : ${link}\n\nCe lien expire dans 15 minutes.`;
+        // Version HTML (pour boîtes mail modernes)
+        const htmlMessage = `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2 style="color: #8A1C25;">Réinitialisation de mot de passe</h2>
+                <p>Bonjour <strong>${user.prenom}</strong>,</p>
+                <p>Une demande de réinitialisation de mot de passe a été effectuée pour votre compte.</p>
+                <p>Si c'est bien vous, cliquez sur le bouton ci-dessous (valable 15 minutes) :</p>
+                <div style="margin: 20px 0;">
+                    <a href="${link}" style="background-color: #8A1C25; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Changer mon mot de passe</a>
+                </div>
+                <p style="font-size: 0.9em; color: #666;">Si le bouton ne fonctionne pas, copiez ce lien : <br/>${link}</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin-top: 20px;">
+                <p style="font-size: 0.8em; color: #999;">Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email en toute sécurité.</p>
+            </div>
+        `;
+        // Appel du service
+        await sendEmail(email, subject, textMessage, htmlMessage);
+        res.status(200).json({ message: "Email envoyé avec succès" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Erreur serveur lors de la récupération du mot de passe" });
+    }
+};
+
+export const resetPassword = async (req, res) => {
+    const { id, token } = req.params;
+    const { nouveauMotDePasse } = req.body;
+
+    try {
+        const userPasswordData = await userModel.getPasswordById(id);
+        if (!userPasswordData) return res.status(404).json({ error: "Utilisateur introuvable" });
+
+        const secret = process.env.JWT_SECRET + userPasswordData.motDePasse;
+
+        try {
+            jwt.verify(token, secret);
+            const nouveauHash = await bcrypt.hash(nouveauMotDePasse, 10);
+            await userModel.updatePasswordUser(id, nouveauHash);
+
+            res.status(200).json({ message: "Mot de passe modifié avec succès !" });
+        } catch (err) {
+            return res.status(400).json({ error: "Le lien est invalide ou a expiré." });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Erreur serveur" });
     }
 };

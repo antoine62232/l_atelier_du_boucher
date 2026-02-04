@@ -13,5 +13,7 @@ router.put('/update/:id', checkToken, userController.updateUser);
 router.put('/password/:id', checkToken, userController.updatePasswordUser);
 router.put('/admin/:id', checkToken, userController.updateRoleUser);
 router.delete('/delete/:id', checkToken, userController.deleteUser);
+router.post('/forgot-password', userController.forgotPassword);
+router.put('/reset-password/:id/:token', userController.resetPassword);
 
 export default router;
