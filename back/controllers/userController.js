@@ -8,10 +8,6 @@ dotenv.config();
 export const createUser = async (req, res) => {
     const { nom, prenom, email, motDePasse, confirmationMotDePasse } = req.body;
 
-    if (!motDePasse || !confirmationMotDePasse) {
-        return res.status(400).json({ error: "Les mots de passe sont obligatoires" });
-    }
-
     if (motDePasse !== confirmationMotDePasse) {
         return res.status(400).json({ error: "Les mots de passe ne correspondent pas" });
     }
