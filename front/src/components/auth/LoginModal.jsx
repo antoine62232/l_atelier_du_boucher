@@ -8,21 +8,21 @@ import {
   Flex,
   Text,
   Link,
-  Heading
+  Heading,
+  Box
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { FiX } from "react-icons/fi";
 
-const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
+const LoginModal = ({ isOpen, onClose, onSwitchToSignUp }) => {
   return (
     <Dialog.Root open={isOpen} onOpenChange={onClose} placement="center">
       
-      {/* L'arrière-plan flouté (Backdrop) */}
+      {/* Arrière-plan flouté */}
       <Dialog.Backdrop 
         backdropFilter="blur(10px)"
         bg="blackAlpha.500"
       />
-
       <Dialog.Positioner>
         <Dialog.Content 
           bg="#F9F9F9" 
@@ -36,7 +36,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
           pb={8}
         >
           
-          {/* La croix de fermeture en haut à droite */}
+          {/* Croix de fermeture */}
           <Dialog.CloseTrigger 
             position="absolute" 
             top="16px" 
@@ -46,7 +46,6 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             _hover={{ color: "brand.rouge", cursor: "pointer" }}
             outline="none"
           >
-             {/* ✅ On met l'icône visible à l'intérieur */}
              <FiX size={22} />
           </Dialog.CloseTrigger>
 
@@ -63,7 +62,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                     mb={1}
                     w="100%"
                 >
-                    Créer un compte
+                    Connexion
                 </Heading>
             </Dialog.Title>
             <Text 
@@ -75,39 +74,45 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 mb="20px"
                 w="100%"
             >
-                Rejoignez l'Atlas de l'Artisan Boucher
+                Heureux de vous revoir
             </Text>
             </Flex>
           </Dialog.Header>
 
           <Dialog.Body p={0}>
-            <Stack gap={5}>
-                <Flex gap={4} direction={{ base: "column", sm: "row" }}>
-                    <Field.Root w="100%">
-                        <Input placeholder="Prénom" bg="#FFFFFF" borderRadius="md" />
-                    </Field.Root>
-                    <Field.Root w="100%">
-                        <Input placeholder="Nom" bg="#FFFFFF" borderRadius="md" />
-                    </Field.Root>
-                </Flex>
-
-                <Field.Root>
+            <Stack gap={5} align="center">
+                
+                {/* EMAIL */}
+                <Field.Root w="340px">
                     <Input type="email" placeholder="Adresse e-mail" bg="#FFFFFF" borderRadius="md" />
                 </Field.Root>
 
-                <Field.Root>
+                {/* MOT DE PASSE */}
+                <Field.Root w="340px">
                     <Input type="password" placeholder="Mot de passe" bg="#FFFFFF" borderRadius="md" />
                 </Field.Root>
 
-                <Field.Root>
-                    <Input type="password" placeholder="Confirmer le mot de passe" bg="#FFFFFF" borderRadius="md" />
-                </Field.Root>
+                {/* LIEN MOT DE PASSE OUBLIÉ */}
+                <Box w="340px" textAlign="right">
+                    <Link 
+                        as={RouterLink} 
+                        to="/forgot-password" 
+                        fontSize="xs" 
+                        color="gray.500" 
+                        fontStyle="italic"
+                        _hover={{ color: "brand.rouge", textDecoration: "underline" }}
+                        onClick={onClose}
+                    >
+                        Mot de passe oublié ?
+                    </Link>
+                </Box>
+
             </Stack>
           </Dialog.Body>
 
-          <Dialog.Footer justifyContent="center" flexDirection="column" pt={6}>
+          <Dialog.Footer justifyContent="center" flexDirection="column" pt={6} alignItems="center">
             <Button 
-                w="full" 
+                w="340px" 
                 bg="brand.brun" 
                 color="#FFFFFF" 
                 fontSize="15px"
@@ -116,36 +121,23 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 fontFamily="title"
                 fontWeight="normal"
             >
-                S'inscrire
+                Se connecter
             </Button>
-
-            {/* 2. LE TEXTE LÉGAL */}
-            <Text
-                fontSize="10px"
-                fontWeight="light"
-                fontStyle="italic"
-                color="gray.500"
-                textAlign="center"
-                whiteSpace="nowrap"
-                mt={3}
-                mb="10px"
-            >
-                En créant un compte, vous acceptez les conditions d’utilisation
-            </Text>
             
-            <Text fontSize="sm" color="gray.500" mt={4}>
-                Déjà un compte ?{" "}
+            <Text fontSize="sm" color="gray.500" mt={6}>
+                Pas encore de compte ?{" "}
                 <Link 
+                    // On utilise un bouton ici pour switcher de modale
                     color="brand.rouge" 
                     fontWeight="bold" 
                     textDecoration="underline"
                     cursor="pointer"
                     onClick={() => {
-                      onClose();
-                      if (onSwitchToLogin) onSwitchToLogin();
-                    }} // Ferme la modale si on clique sur Login
+                        onClose(); // Ferme Connexion
+                        if (onSwitchToSignUp) onSwitchToSignUp(); // Ouvre Inscription
+                    }}
                 >
-                    Se connecter
+                    S'inscrire
                 </Link>
             </Text>
           </Dialog.Footer>
@@ -156,4 +148,4 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   );
 };
 
-export default SignUpModal;
+export default LoginModal;
