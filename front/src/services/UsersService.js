@@ -34,3 +34,7 @@ export const getProfile = () => {
 export const forgotPassword = (email) => {
   return api.post("/users/forgot-password", { email });
 };
+
+export const resetPassword = (id, token, nouveauMotDePasse) => {
+  return api.post(`/users/reset-password/${id}/${token}`, { nouveauMotDePasse });
+};
