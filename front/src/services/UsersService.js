@@ -26,6 +26,11 @@ export const logoutUser = () => {
 export const getAllUsers = () => {
   return api.get("/users/all");
 };
+
 export const getProfile = () => {
   return api.get("/users/profile");
+};
+
+export const forgotPassword = (email) => {
+  return api.post("/users/forgot-password", { email });
 };
