@@ -6,6 +6,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import boeufAvantCut from "../../assets/boeuf_avant_cut.png";
 import boeufArriereCut from "../../assets/boeuf_arriere_cut.png";
 
+
 const AtlasBoeuf = () => {
   const navigate = useNavigate();
 

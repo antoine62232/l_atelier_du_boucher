@@ -10,6 +10,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Atlas from './pages/Atlas';
 import AtlasBoeuf from './pages/atlas/AtlasBoeuf';
+import AtlasBoeufAvant from './pages/atlas/AtlasBoeufAvant';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/reset-password/:id/:token" element={<ResetPassword />} />
         <Route path="/atlas" element={<Atlas />} />
         <Route path="/atlas/boeuf" element={<AtlasBoeuf />} />
+        <Route path="/atlas/boeuf/avant" element={<AtlasBoeufAvant />} />
       </Routes>
     </Box>
     <Footer />
