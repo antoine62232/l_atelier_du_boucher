@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Atlas from './pages/Atlas';
+import AtlasBoeuf from './pages/atlas/AtlasBoeuf';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:id/:token" element={<ResetPassword />} />
         <Route path="/atlas" element={<Atlas />} />
+        <Route path="/atlas/boeuf" element={<AtlasBoeuf />} />
       </Routes>
     </Box>
     <Footer />
