@@ -66,8 +66,6 @@ const AtlasBoeuf = () => {
                 
                 {/* 1. ARRIÈRE (Le HAUT) -> Tooltip à DROITE */}
                 <Tooltip.Root 
-                    // right-start = En haut à droite
-                    // flip: false = INTERDIT de bouger même si tu as peur du bord
                     positioning={{ placement: "right-start", flip: false, offset: { mainAxis: 10, crossAxis: 120 } }} 
                     openDelay={0} 
                     closeDelay={0}
@@ -82,7 +80,6 @@ const AtlasBoeuf = () => {
                         />
                     </Tooltip.Trigger>
                     
-                    {/* ✅ AJOUT DU POSITIONER (C'est lui qui manquait !) */}
                     <Tooltip.Positioner>
                         <Tooltip.Content bg="brand.rouge" color="white" px={4} py={3} borderRadius="md" fontSize="sm">
                             <Tooltip.Arrow css={{ "--arrow-background": "var(--chakra-colors-brand-rouge)" }} />
@@ -110,7 +107,6 @@ const AtlasBoeuf = () => {
                         />
                     </Tooltip.Trigger>
 
-                    {/* ✅ AJOUT DU POSITIONER ICI AUSSI */}
                     <Tooltip.Positioner>
                         <Tooltip.Content bg="brand.brun" color="white" px={4} py={3} borderRadius="md" fontSize="sm">
                             <Tooltip.Arrow css={{ "--arrow-background": "var(--chakra-colors-brand-brun)" }} />
