@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Container, Heading, SimpleGrid } from "@chakra-ui/react";
+import { Box, Container, Heading, SimpleGrid, Text } from "@chakra-ui/react";
 import ToolsCard from "./ToolsCard";
 
 import atlasImg from "../../assets/atlasCard.png";
@@ -50,7 +50,7 @@ const Tools = () => {
         
         <Heading 
           textAlign="center"
-          mb="84px"
+          mb={8}
           color="brand.rouge" 
           fontFamily="title"
           fontSize={{ base: "3xl", md: "5xl" }}
@@ -58,11 +58,18 @@ const Tools = () => {
           Vos Outils d'Apprentissage
         </Heading>
 
+        <Text 
+            textAlign="center" 
+            color="brand.gris" 
+            fontSize="md" 
+            maxW="600px" 
+            mx="auto" 
+            mb="84px"
+        >
+            Une suite complète de ressources interactives conçues pour vous accompagner du laboratoire à la vente.
+        </Text>
+
         <SimpleGrid 
-            // BREAKPOINTS ADAPTÉS :
-            // base (Mobile) : 1 colonne
-            // md (Tablette) : 2 colonnes
-            // xl (Grand écran > 1280px) : 4 colonnes (C'est là qu'on aura tout aligné)
             columns={{ base: 1, md: 2, xl: 4 }} 
             spacing="62px" 
             justifyItems="center"

@@ -8,7 +8,8 @@ import {
   HStack, 
   Badge, 
   Icon,
-  Flex
+  Flex,
+  Text
 } from "@chakra-ui/react";
 import { FaPlay } from "react-icons/fa";
 import LiteYouTubeEmbed from 'react-lite-youtube-embed';
@@ -23,13 +24,23 @@ const CourseResume = () => {
         
         <Heading 
           textAlign="center" 
-          mb="84px"
+          mb={8}
           color="brand.rouge" 
           fontFamily="title"
           fontSize={{ base: "3xl", md: "5xl" }}
         >
           Reprenez votre parcours
         </Heading>
+
+        <Text 
+            textAlign="center" 
+            color="brand.gris" 
+            fontSize="md" 
+            maxW="600px" 
+            mx="auto" 
+            mb="84px"       >
+            Ne perdez pas le fil de votre progression. Retrouvez instantanément votre dernière leçon ou vidéo consultée.
+        </Text>
 
         <Card.Root 
             flexDirection={{ base: "column", md: "row" }} 

@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Container, Heading, Flex } from "@chakra-ui/react";
+import { Box, Container, Heading, Flex, Text } from "@chakra-ui/react";
 import ChallengeCard from "./ChallengeCard";
 
 const ChallengesPractice = () => {
@@ -10,7 +10,7 @@ const ChallengesPractice = () => {
         {/* TITRE DE SECTION */}
         <Heading 
           textAlign="center" 
-          mb="84px"
+          mb={8}
           color="brand.rouge" 
           fontFamily="title"
           fontSize={{ base: "3xl", md: "5xl" }}
@@ -18,7 +18,18 @@ const ChallengesPractice = () => {
           Pratique & Challenges
         </Heading>
 
-        {/* CONTENEUR FLEX (Plus robuste pour l'espacement) */}
+        <Text 
+            textAlign="center" 
+            color="brand.gris" 
+            fontSize="md" 
+            maxW="600px" 
+            mx="auto" 
+            mb="84px"
+        >
+            Testez vos connaissances théoriques et techniques à travers des quiz interactifs et des mises en situation réelles.
+        </Text>
+
+        {/* CONTENEUR FLEX */}
         <Flex 
             direction={{ base: "column", md: "row" }}
             gap="106px"
@@ -29,7 +40,7 @@ const ChallengesPractice = () => {
         >
             
             {/* CARTE 1 : GAUCHE */}
-            <Box flex="1" w="100%"> {/* flex="1" assure que les cartes font la même taille */}
+            <Box flex="1" w="100%">
                 <ChallengeCard 
                     title="Le Labo Calcul"
                     description="Prix de revient, taux de marge, pertes à la découpe... Accédez à vos outils."
