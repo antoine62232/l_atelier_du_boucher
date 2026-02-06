@@ -93,8 +93,8 @@ const AtlasBoeufAvant = () => {
                             zIndex={1} 
                             
                             // RÉGLAGES POSITION
-                            bottom="15%"       
-                            right="16%"
+                            bottom="0%"       
+                            right="20%"
                             w="55%"           
                         />
                     </Tooltip.Trigger>
