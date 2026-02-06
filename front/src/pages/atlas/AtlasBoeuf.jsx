@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Container, Heading, Text, Button, VStack, Flex, Image, Tooltip } from "@chakra-ui/react";
+import { Box, Container, Heading, Text, Button, VStack, Flex, Image, Tooltip, Breadcrumb } from "@chakra-ui/react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 
@@ -35,13 +35,23 @@ const AtlasBoeuf = () => {
         
         {/* En-tête */}
         <VStack align="start" spacing="12px" mb={10}>
-             <Text fontSize="sm" color="gray.500">
-                <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>Accueil</RouterLink> 
-                &nbsp; &gt; &nbsp; 
-                <RouterLink to="/atlas" style={{ textDecoration: 'none', color: 'inherit' }}>Atlas Anatomique</RouterLink>
-                &nbsp; &gt; &nbsp; 
-                <Text as="span" color="brand.rouge" fontWeight="medium">Le Bœuf</Text>
-            </Text>
+             <Breadcrumb.Root color="gray.500" fontSize="sm">
+                <Breadcrumb.List>
+                    <Breadcrumb.Item>
+                        <Breadcrumb.Link as={RouterLink} to="/">Accueil</Breadcrumb.Link>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Separator />
+                    <Breadcrumb.Item>
+                        <Breadcrumb.Link as={RouterLink} to="/atlas">Atlas Anatomique</Breadcrumb.Link>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Separator />
+                    <Breadcrumb.Item>
+                        <Breadcrumb.CurrentLink color="brand.rouge" fontWeight="medium">
+                            Le Bœuf
+                        </Breadcrumb.CurrentLink>
+                    </Breadcrumb.Item>
+                </Breadcrumb.List>
+            </Breadcrumb.Root>
             <Button 
                 as={RouterLink} to="/atlas" variant="outline" borderColor="brand.brun" 
                 color="brand.brun" borderRadius="full" bg="white" leftIcon={<FiArrowLeft />}

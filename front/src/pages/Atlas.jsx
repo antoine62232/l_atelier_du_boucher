@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Container, Heading, Text, Button, Flex, VStack } from "@chakra-ui/react";
+import { Box, Container, Heading, Text, Button, Flex, VStack, Breadcrumb } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import AnimalCard from "../components/atlas/AnimalCard";
@@ -13,15 +13,21 @@ const Atlas = () => {
         {/* Fil d'ariane + Bouton (Alignés à gauche) */}
         <VStack align="start" spacing="12px" mb={10}>
              {/* Fil d'ariane */}
-             <Text fontSize="sm" color="gray.500">
-                <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    Accueil
-                </RouterLink> 
-                &nbsp; &gt; &nbsp; 
-                <Text as="span" color="brand.rouge" fontWeight="medium">
-                    Atlas Anatomique
-                </Text>
-            </Text>
+             <Breadcrumb.Root color="gray.500" fontSize="sm">
+                <Breadcrumb.List>
+                    <Breadcrumb.Item>
+                        <Breadcrumb.Link as={RouterLink} to="/">
+                            Accueil
+                        </Breadcrumb.Link>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Separator />
+                    <Breadcrumb.Item>
+                        <Breadcrumb.CurrentLink color="brand.rouge" fontWeight="medium">
+                            Atlas Anatomique
+                        </Breadcrumb.CurrentLink>
+                    </Breadcrumb.Item>
+                </Breadcrumb.List>
+             </Breadcrumb.Root>
 
             {/* Bouton Retour */}
             <Button 
