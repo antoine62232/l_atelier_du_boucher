@@ -13,7 +13,15 @@ export const createPiece = async (nomPiece, descriptionPiece, utilisation, cuiss
 // Afficher toutes les pieces avec le nom de la partie et de l'animal
 export const getAllPieces = async () => {
     const query = `
-    SELECT pieces.idPiece, pieces.nomPiece, pieces.descriptionPiece, pieces.utilisation, pieces.cuisson, pieces.imagePiece, pieces.partieId, parties.nomPartie, animaux.nomAnimal
+    SELECT pieces.idPiece, 
+    pieces.nomPiece, 
+    pieces.descriptionPiece, 
+    pieces.utilisation, 
+    pieces.cuisson, 
+    pieces.imagePiece, 
+    pieces.partieId, 
+    parties.nomPartie, 
+    animaux.nomAnimal
     FROM pieces
     JOIN parties ON pieces.partieId = parties.idPartie
     JOIN animaux ON parties.animalId = animaux.idAnimal
@@ -26,7 +34,15 @@ export const getAllPieces = async () => {
 // Afficher une piece par son id
 export const getPieceById = async (idPiece) => {
     const query = `
-    SELECT pieces.idPiece, pieces.nomPiece, pieces.descriptionPiece, pieces.utilisation, pieces.cuisson, pieces.imagePiece, pieces.partieId, parties.nomPartie, animaux.nomAnimal
+    SELECT pieces.idPiece, 
+    pieces.nomPiece, 
+    pieces.descriptionPiece, 
+    pieces.utilisation, 
+    pieces.cuisson, 
+    pieces.imagePiece, 
+    pieces.partieId, 
+    parties.nomPartie, 
+    animaux.nomAnimal
     FROM pieces
     JOIN parties ON pieces.partieId = parties.idPartie
     JOIN animaux ON parties.animalId = animaux.idAnimal

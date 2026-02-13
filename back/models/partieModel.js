@@ -10,7 +10,7 @@ export const createPartie = async (nomPartie, descriptionPartie, imagePartie, an
 
 export const getAllParties = async () => {
     const query = `
-        SELECT parties.idPartie, parties.nomPartie, parties.descriptionPartie, parties.imagePartie, parties.animalId, animaux.nomAnimal 
+        SELECT parties.idPartie, parties.nomPartie, parties.descriptionPartie, parties.imagePartie, parties.imagePartieInterieur, parties.animalId, animaux.nomAnimal 
         FROM parties 
         JOIN animaux ON parties.animalId = animaux.idAnimal 
         ORDER BY parties.nomPartie ASC`;
@@ -20,7 +20,7 @@ export const getAllParties = async () => {
 
 export const getPartieById = async (idPartie) => {
     const query = `
-        SELECT parties.idPartie, parties.nomPartie, parties.descriptionPartie, parties.imagePartie, parties.animalId, animaux.nomAnimal 
+        SELECT parties.idPartie, parties.nomPartie, parties.descriptionPartie, parties.imagePartie, parties.imagePartieInterieur, parties.animalId, animaux.nomAnimal 
         FROM parties 
         JOIN animaux ON parties.animalId = animaux.idAnimal 
         WHERE parties.idPartie = ?`;
