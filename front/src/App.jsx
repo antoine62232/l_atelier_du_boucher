@@ -11,6 +11,7 @@ import ResetPassword from './pages/ResetPassword';
 import Atlas from './pages/Atlas';
 import AtlasBoeuf from './pages/atlas/AtlasBoeuf';
 import AtlasBoeufAvant from './pages/atlas/AtlasBoeufAvant';
+import AtlasBoeufAvantEpaule from './pages/atlas/AtlasBoeufAvantEpaule';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/atlas" element={<Atlas />} />
         <Route path="/atlas/boeuf" element={<AtlasBoeuf />} />
         <Route path="/atlas/boeuf/avant" element={<AtlasBoeufAvant />} />
+        <Route path="/atlas/boeuf/avant/epaule" element={<AtlasBoeufAvantEpaule />} />
       </Routes>
     </Box>
     <Footer />

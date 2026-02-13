@@ -3,7 +3,7 @@ import { Box, Container, Heading, Text, Button, VStack, Flex, Image, Tooltip, Br
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 
-import imgEpaule from "../../assets/boeuf_avant_epaule.png";
+const imgEpaule = `${import.meta.env.VITE_API_URL.replace('/api', '')}/uploads/parties/boeuf_epaule_interieur.png`;
 import imgCollier from "../../assets/boeuf_avant_collier.png";
 import imgCaparacon from "../../assets/boeuf_avant_caparacon.png";
 
