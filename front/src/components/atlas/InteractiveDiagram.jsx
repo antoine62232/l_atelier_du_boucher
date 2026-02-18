@@ -7,11 +7,19 @@ const InteractiveDiagram = ({
     currentBackgroundImage, 
     visiblePieces, 
     selectedPiece, 
-    onSelectPiece
+    onSelectPiece,
+    enableSwitch = true, // permet d'activer ou de désactiver les boutons switch
+    customHeight = null,
+    imageScale = 1
 }) => {
+    const defaultHeight = currentFace === "externe"
+    ? { base: "400px", lg: "600px" }
+    : { base: "400px", lg: "500px" };
+    const finalHeight = customHeight || defaultHeight;
     return (
         <Box w={{ base: "100%", lg: "500px" }}>
             {/* BOUTONS SWITCH */}
+            {enableSwitch && (
             <Flex justify="center" mb={10} bg="white" p={1} borderRadius="full" shadow="sm" display="inline-flex">
                 <Button 
                     size="sm" borderRadius="full" px={6}
@@ -36,7 +44,7 @@ const InteractiveDiagram = ({
                     Vue Extérieure
                 </Button>
             </Flex>
-
+            )}
             {/* CARTE INTERACTIVE */}
             <Flex 
                 position="relative" 
@@ -45,20 +53,25 @@ const InteractiveDiagram = ({
                 overflow="hidden" 
                 bg="white" 
                 border="4px solid white" 
-                h={{ base: "400px", lg: "500px" }} 
+                h={finalHeight} 
+                transition="height 0.3s ease"
                 align="center" 
                 justify="center"
             >
-                <Box position="relative" w="fit-content" h="fit-content">
+                <Box 
+                position="relative" 
+                w="fit-content" 
+                h="fit-content"
+                transform={`scale(${imageScale})`}
+                transition="transform 0.3s ease"
+                >
                     <Image 
                         src={currentBackgroundImage} 
-                        alt={`Épaule vue ${currentFace}`} 
-                        
-                        maxH={{ base: "400px", lg: "500px" }}
+                        alt="Schéma de découpe" 
+                        maxH={finalHeight}
                         maxW="100%"
                         objectFit="contain"
-                        display="block" 
-                        
+                        display="block"   
                         transition="all 0.3s"
                         fallbackSrc="https://via.placeholder.com/600x400?text=Chargement..."
                     />
@@ -98,9 +111,11 @@ const InteractiveDiagram = ({
                     ))}
                 </Box>
             </Flex>
+            {enableSwitch && (
             <Text textAlign="center" fontSize="sm" color="gray.400" mt={2} fontStyle="italic">
                 {currentFace === "interne" ? "Vue interne" : "Vue externe"}
             </Text>
+            )}
         </Box>
     );
 };
