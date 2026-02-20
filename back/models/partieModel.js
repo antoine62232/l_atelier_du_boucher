@@ -1,16 +1,16 @@
 import connexion from '../config/bdd.js';
 
-export const createPartie = async (nomPartie, descriptionPartie, imagePartie, animalId) => {
+export const createPartie = async (nomPartie, descriptionPartie, imagePartie, animalId, parentId = null) => {
     const query = `
-        INSERT INTO parties (nomPartie, descriptionPartie, imagePartie, animalId) 
-        VALUES (?,?,?,?)`;
-    const [result] = await connexion.query(query, [nomPartie, descriptionPartie, imagePartie, animalId]);
+        INSERT INTO parties (nomPartie, descriptionPartie, imagePartie, animalId, parentId) 
+        VALUES (?,?,?,?,?)`;
+    const [result] = await connexion.query(query, [nomPartie, descriptionPartie, imagePartie, animalId, parentId]);
     return result;
 };
 
 export const getAllParties = async () => {
     const query = `
-        SELECT parties.idPartie, parties.nomPartie, parties.descriptionPartie, parties.imagePartie, parties.imagePartieInterieur, parties.animalId, animaux.nomAnimal 
+        SELECT parties.idPartie, parties.nomPartie, parties.descriptionPartie, parties.imagePartie, parties.imagePartieInterieur, parties.animalId, parties.parentId, animaux.nomAnimal 
         FROM parties 
         JOIN animaux ON parties.animalId = animaux.idAnimal 
         ORDER BY parties.nomPartie ASC`;
@@ -20,7 +20,7 @@ export const getAllParties = async () => {
 
 export const getPartieById = async (idPartie) => {
     const query = `
-        SELECT parties.idPartie, parties.nomPartie, parties.descriptionPartie, parties.imagePartie, parties.imagePartieInterieur, parties.animalId, animaux.nomAnimal 
+        SELECT parties.idPartie, parties.nomPartie, parties.descriptionPartie, parties.imagePartie, parties.imagePartieInterieur, parties.animalId, parties.parentId, animaux.nomAnimal 
         FROM parties 
         JOIN animaux ON parties.animalId = animaux.idAnimal 
         WHERE parties.idPartie = ?`;
@@ -30,7 +30,7 @@ export const getPartieById = async (idPartie) => {
 
 export const getPartieByAnimal = async (animalId) => {
     const query = `
-        SELECT parties.idPartie, parties.nomPartie, parties.descriptionPartie, parties.imagePartie, parties.animalId, animaux.nomAnimal 
+        SELECT parties.idPartie, parties.nomPartie, parties.descriptionPartie, parties.imagePartie, parties.animalId, parties.parentId, animaux.nomAnimal 
         FROM parties 
         JOIN animaux ON parties.animalId = animaux.idAnimal 
         WHERE parties.animalId = ?
@@ -40,12 +40,12 @@ export const getPartieByAnimal = async (animalId) => {
     return result;
 };
 
-export const updatePartie = async (idPartie, nomPartie, descriptionPartie, imagePartie, animalId) => {
+export const updatePartie = async (idPartie, nomPartie, descriptionPartie, imagePartie, animalId, parentId = null) => {
     const query = `
         UPDATE parties 
-        SET nomPartie = ?, descriptionPartie = ?, imagePartie = ?, animalId = ? 
+        SET nomPartie = ?, descriptionPartie = ?, imagePartie = ?, animalId = ?, parentId = ? 
         WHERE idPartie = ?`;
-    const [result] = await connexion.query(query, [nomPartie, descriptionPartie, imagePartie, animalId, idPartie]);
+    const [result] = await connexion.query(query, [nomPartie, descriptionPartie, imagePartie, animalId, parentId, idPartie]);
     return result;
 };
 
@@ -56,4 +56,3 @@ export const deletePartie = async (idPartie) => {
     const [result] = await connexion.query(query, [idPartie]);
     return result;
 };
-
