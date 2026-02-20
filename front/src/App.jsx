@@ -14,6 +14,7 @@ import AtlasBoeufAvant from './pages/atlas/AtlasBoeufAvant';
 import AtlasBoeufAvantEpaule from './pages/atlas/AtlasBoeufAvantEpaule';
 import AtlasBoeufAvantCollier from './pages/atlas/AtlasBoeufAvantCollier';
 import AtlasBoeufAvantCaparacon from './pages/atlas/AtlasBoeufAvantCaparacon';
+import AtlasBoeufArriere from './pages/atlas/AtlasBoeufArriere';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/atlas/boeuf/avant/epaule" element={<AtlasBoeufAvantEpaule />} />
         <Route path="/atlas/boeuf/avant/collier" element={<AtlasBoeufAvantCollier />} />
         <Route path="/atlas/boeuf/avant/caparacon" element={<AtlasBoeufAvantCaparacon />} />
+        <Route path="/atlas/boeuf/arriere" element={<AtlasBoeufArriere />} />
       </Routes>
     </Box>
     <Footer />
