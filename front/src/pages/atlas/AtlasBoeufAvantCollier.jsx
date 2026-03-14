@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from "react";
-import api from "../../api/api";
-import { Box, Container, Button, VStack, Breadcrumb, Spinner, Flex } from "@chakra-ui/react";
+import { Box, Container, Button, VStack, Spinner, Flex } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi"; 
 
 import InteractiveDiagram from "../../components/atlas/InteractiveDiagram"; 
 import AtlasDetails from "../../components/atlas/AtlasDetails";
+// 👇 1. On importe notre service
+import { getAllPieces } from "../../services/PiecesService"; 
 
 const AtlasBoeufAvantCollier = () => {
   const [selectedPiece, setSelectedPiece] = useState(null);
-  const [piecesData, setPiecesData] = useState([]);
-  const [partieInfo, setPartieInfo] = useState(null);
+  // On remplace piecesData par visiblePieces pour stocker les données fusionnées
+  const [visiblePieces, setVisiblePieces] = useState([]); 
   const [loading, setLoading] = useState(true);
   
   // Ici, on utilise une seule face fixe
   const currentFace = "unique"; 
-  const setCurrentFace = () => {}; // Fonction vide car pas de changement
+  const setCurrentFace = () => {}; 
 
-  // --- CONFIGURATION ---
+  // --- CONFIGURATION VISUELLE (Top, Left, Nom) ---
   const piecesConfig = [
     { 
       nomBdd: "Collier", 
@@ -35,62 +36,53 @@ const AtlasBoeufAvantCollier = () => {
     }
   ];
 
-  // --- CHARGEMENT ---
+  // 👇 2. Le useEffect pour appeler l'API et fusionner les données
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPiecesData = async () => {
       try {
-        const [partieRes, piecesRes] = await Promise.all([
-             api.get("/parties/2"),
-             api.get("/pieces/partie/2")
-        ]);
+        setLoading(true);
+        const response = await getAllPieces();
+        const piecesFromDB = response.data;
 
-        const info = Array.isArray(partieRes.data) ? partieRes.data[0] : partieRes.data;
-        setPartieInfo(info);
-        
-        const mergedData = piecesRes.data.map(pieceBdd => {
-            const config = piecesConfig.find(c => c.nomBdd === pieceBdd.nomPiece);
-            return config ? { ...pieceBdd, ...config } : { ...pieceBdd, face: "unique", top: "50%", left: "50%" };
+        // On fusionne la config avec les données de la BDD
+        const mergedPieces = piecesConfig.map(config => {
+          const dbData = piecesFromDB.find(p => p.nomPiece === config.nomBdd);
+          
+          if (dbData) {
+            return {
+              ...config,       
+              ...dbData        
+            };
+          }
+          return config; 
         });
 
-        setPiecesData(mergedData);
-        setLoading(false);
+        setVisiblePieces(mergedPieces);
       } catch (error) {
-        console.error("Erreur chargement:", error);
+        console.error("Erreur lors de la récupération des pièces :", error);
+      } finally {
         setLoading(false);
       }
     };
-    fetchData();
+
+    fetchPiecesData();
   }, []);
 
-  const getImageUrl = (path) => {
-      if (!path) return undefined;
-      const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
-      return `${baseUrl}/uploads/${path}`;
+  const getImageUrl = (imagePath) => {
+    const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+    return `${baseUrl}/uploads/${imagePath}`;
   };
 
-  // On prend toutes les pièces configurées en "unique"
-  const visiblePieces = piecesData.filter(p => p.face === "unique");
-
-  // On prend juste l'image principale
-  const currentBackgroundImage = partieInfo 
-      ? getImageUrl(`parties/${partieInfo.imagePartie}`) 
-      : undefined;
+  const currentBackgroundImage = "boeuf_avant_collier.png";
 
   return (
     <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="40px">
       <Container maxW="1360px" px={6}>
         
-        {/* HEADER */}
         <VStack align="start" spacing="12px" mb={10}>
-             <Breadcrumb.Root color="gray.500" fontSize="sm">
-                <Breadcrumb.List>
-                    <Breadcrumb.Item><Breadcrumb.Link as={RouterLink} to="/atlas/boeuf/avant">L'Avant</Breadcrumb.Link></Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item><Breadcrumb.CurrentLink color="brand.rouge" fontWeight="medium">Collier & Basses Côtes</Breadcrumb.CurrentLink></Breadcrumb.Item>
-                </Breadcrumb.List>
-            </Breadcrumb.Root>
             <Button 
-                as={RouterLink} to="/atlas/boeuf/avant" variant="outline" borderColor="brand.brun" 
+                as={RouterLink} to="/atlas/boeuf/avant"
+                variant="outline" borderColor="brand.brun" 
                 color="brand.brun" borderRadius="full" bg="white"
                 _hover={{ bg: "brand.brun", color: "white" }} size="md" px={8} fontSize="sm"
             >
@@ -107,16 +99,16 @@ const AtlasBoeufAvantCollier = () => {
                 <InteractiveDiagram 
                     currentFace={currentFace}
                     setCurrentFace={setCurrentFace}
-                    currentBackgroundImage={currentBackgroundImage}
-                    visiblePieces={visiblePieces}
+                    currentBackgroundImage={getImageUrl(`parties/${currentBackgroundImage}`)}
+                    visiblePieces={visiblePieces} // 👈 On passe bien nos pièces fusionnées
                     selectedPiece={selectedPiece}
                     onSelectPiece={setSelectedPiece}
-                    enableSwitch={false} // 👈 On cache les boutons ici
+                    enableSwitch={false} 
                     customHeight={{ base: "400px", lg: "500px" }}
-                    imageScale={1.4} // 👈 On zoome à 150%
+                    imageScale={1.4} 
                 />
 
-                {/* 2. DÉTAILS (Aligné directement car pas de boutons en face) */}
+                {/* 2. DÉTAILS */}
                 <Box w={{ base: "100%", lg: "400px" }}>
                     <AtlasDetails 
                         selectedPiece={selectedPiece}

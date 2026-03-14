@@ -1,122 +1,84 @@
 import React, { useState, useEffect } from "react";
-import api from "../../api/api";
-import { Box, Container, Button, VStack, Breadcrumb, Spinner, Flex } from "@chakra-ui/react";
+import { Box, Container, Button, VStack, Spinner, Flex } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi"; 
 
 import InteractiveDiagram from "../../components/atlas/InteractiveDiagram"; 
 import AtlasDetails from "../../components/atlas/AtlasDetails";
+import { getAllPieces } from "../../services/PiecesService"; 
 
 const AtlasBoeufAvantCaparacon = () => {
   const [selectedPiece, setSelectedPiece] = useState(null);
-  const [piecesData, setPiecesData] = useState([]);
-  const [partieInfo, setPartieInfo] = useState(null);
+  // On stockera nos pièces fusionnées (Config Visuelle + Données BDD)
+  const [visiblePieces, setVisiblePieces] = useState([]); 
   const [loading, setLoading] = useState(true);
   
   const currentFace = "unique"; 
   const setCurrentFace = () => {}; 
 
-  // --- CONFIGURATION ---
+  // --- CONFIGURATION VISUELLE ---
   const piecesConfig = [
     { 
       nomBdd: "Gros Bout de Poitrine", 
       face: "unique", 
-      top: "50%",  // Tout en haut, la partie la plus épaisse
-      left: "35%", // Légèrement à gauche (côté charnu)
+      top: "50%",  
+      left: "35%", 
       recetteUrl: "/recettes/gros-bout-poitrine" 
     },
     { 
       nomBdd: "Milieu de Poitrine", 
       face: "unique", 
-      top: "50%",  // Juste en dessous du Gros Bout
-      left: "20%", // Au centre de la masse de viande
+      top: "50%", 
+      left: "65%", 
       recetteUrl: "/recettes/milieu-poitrine" 
-    },
-    { 
-      nomBdd: "Tendron", 
-      face: "unique", 
-      top: "70%",  // Au milieu verticalement
-      left: "20%", // Tout au bord GAUCHE (c'est la partie cartilagineuse/sternum)
-      recetteUrl: "/recettes/tendron" 
-    },
-    { 
-      nomBdd: "Plat de Côtes Couvert", 
-      face: "unique", 
-      top: "25%",  // En haut
-      left: "65%", // Sur la droite (là où on voit bien les os/côtes)
-      recetteUrl: "/recettes/plat-cotes" 
-    },
-    { 
-      nomBdd: "Plat de Côtes Découvert", 
-      face: "unique", 
-      top: "50%",  // Au milieu, sous le couvert
-      left: "50%", // Sur la droite (partie plus maigre des côtes)
-      recetteUrl: "/recettes/plat-cotes" 
-    },
-    { 
-      nomBdd: "Flanchet", 
-      face: "unique", 
-      top: "80%",  // Tout en BAS (la pointe)
-      left: "45%", // Au centre de la pointe
-      recetteUrl: "/recettes/flanchet" 
     }
   ];
 
-  // --- CHARGEMENT ---
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPiecesData = async () => {
       try {
-        const [partieRes, piecesRes] = await Promise.all([
-             api.get("/parties/3"), 
-             api.get("/pieces/partie/3")
-        ]);
-
-        const info = Array.isArray(partieRes.data) ? partieRes.data[0] : partieRes.data;
-        setPartieInfo(info);
-        
-        const mergedData = piecesRes.data.map(pieceBdd => {
-            const config = piecesConfig.find(c => c.nomBdd === pieceBdd.nomPiece);
-            // Si pas de config, on place au centre
-            return config ? { ...pieceBdd, ...config } : { ...pieceBdd, face: "unique", top: "50%", left: "50%" };
+        setLoading(true);
+        const response = await getAllPieces();
+        const piecesFromDB = response.data;
+        const mergedPieces = piecesConfig.map(config => {
+          const dbData = piecesFromDB.find(p => p.nomPiece === config.nomBdd);
+          
+          if (dbData) {
+            return {
+              ...config,
+              ...dbData 
+            };
+          }
+          return config; // Sécurité si la pièce n'est pas encore dans la BDD
         });
 
-        setPiecesData(mergedData);
-        setLoading(false);
+        setVisiblePieces(mergedPieces);
       } catch (error) {
-        console.error("Erreur chargement:", error);
+        console.error("Erreur lors de la récupération des pièces :", error);
+      } finally {
         setLoading(false);
       }
     };
-    fetchData();
+
+    fetchPiecesData();
   }, []);
 
-  const getImageUrl = (path) => {
-      if (!path) return undefined;
-      const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
-      return `${baseUrl}/uploads/${path}`;
+  // Fonction pour gérer l'URL de l'image (si besoin pour AtlasDetails)
+  const getImageUrl = (imagePath) => {
+    const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+    return `${baseUrl}/uploads/${imagePath}`;
   };
 
-  const visiblePieces = piecesData.filter(p => p.face === "unique");
-
-  const currentBackgroundImage = partieInfo 
-      ? getImageUrl(`parties/${partieInfo.imagePartie}`) 
-      : undefined;
+  const currentBackgroundImage = "boeuf_avant_caparacon.png";
 
   return (
     <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="40px">
       <Container maxW="1360px" px={6}>
         
-        {/* HEADER */}
         <VStack align="start" spacing="12px" mb={10}>
-             <Breadcrumb.Root color="gray.500" fontSize="sm">
-                <Breadcrumb.List>
-                    <Breadcrumb.Item><Breadcrumb.Link as={RouterLink} to="/atlas/boeuf/avant">L'Avant</Breadcrumb.Link></Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item><Breadcrumb.CurrentLink color="brand.rouge" fontWeight="medium">Le Caparaçon</Breadcrumb.CurrentLink></Breadcrumb.Item>
-                </Breadcrumb.List>
-            </Breadcrumb.Root>
             <Button 
-                as={RouterLink} to="/atlas/boeuf/avant" variant="outline" borderColor="brand.brun" 
+                as={RouterLink} to="/atlas/boeuf/avant"
+                variant="outline" borderColor="brand.brun" 
                 color="brand.brun" borderRadius="full" bg="white"
                 _hover={{ bg: "brand.brun", color: "white" }} size="md" px={8} fontSize="sm"
             >
@@ -133,7 +95,7 @@ const AtlasBoeufAvantCaparacon = () => {
                 <InteractiveDiagram 
                     currentFace={currentFace}
                     setCurrentFace={setCurrentFace}
-                    currentBackgroundImage={currentBackgroundImage}
+                    currentBackgroundImage={getImageUrl(`parties/${currentBackgroundImage}`)}
                     visiblePieces={visiblePieces}
                     selectedPiece={selectedPiece}
                     onSelectPiece={setSelectedPiece}
@@ -145,7 +107,7 @@ const AtlasBoeufAvantCaparacon = () => {
                 {/* 2. DÉTAILS */}
                 <Box w={{ base: "100%", lg: "400px" }}>
                     <AtlasDetails 
-                        selectedPiece={selectedPiece}
+                        selectedPiece={selectedPiece} // selectedPiece contient maintenant la data de la BDD !
                         getImageUrl={getImageUrl}
                     />
                 </Box>

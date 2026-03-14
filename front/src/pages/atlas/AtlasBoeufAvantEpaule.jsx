@@ -1,89 +1,86 @@
 import React, { useState, useEffect } from "react";
-import api from "../../api/api";
-import { Box, Container, Button, VStack, Breadcrumb, Spinner, Flex } from "@chakra-ui/react";
+import { Box, Container, Button, VStack, Spinner, Flex } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi"; 
 
-// IMPORT DES COMPOSANTS ENFANTS
 import InteractiveDiagram from "../../components/atlas/InteractiveDiagram"; 
 import AtlasDetails from "../../components/atlas/AtlasDetails";
+import { getAllPieces } from "../../services/PiecesService";
 
 const AtlasBoeufAvantEpaule = () => {
-  // --- ÉTATS ---
   const [selectedPiece, setSelectedPiece] = useState(null);
-  const [piecesData, setPiecesData] = useState([]);
-  const [partieInfo, setPartieInfo] = useState(null);
+  const [allMergedPieces, setAllMergedPieces] = useState([]); 
   const [loading, setLoading] = useState(true);
   
   // Vue par défaut : Interne
   const [currentFace, setCurrentFace] = useState("interne"); 
 
-  // --- CONFIGURATION ---
+  // --- CONFIGURATION DE TOUTES LES PASTILLES ---
   const piecesConfig = [
+    // --- Face Externe ---
     { nomBdd: "Paleron", face: "externe", top: "30%", left: "50%", recetteUrl: "/recettes/paleron" },
+    
+    // --- Face Interne ---
+    { nomBdd: "Dessus de Palette", face: "interne", top: "20%", left: "45%", recetteUrl: "/recettes/dessus-palette" },
     { nomBdd: "Jarret Avant", face: "interne", top: "60%", left: "25%", recetteUrl: "/recettes/jarret" },
-    { nomBdd: "Macreuse à Braiser", face: "interne", top: "40%", left: "35%", recetteUrl: "/recettes/macreuse-braisee" },
-    { nomBdd: "Macreuse à Bifteck", face: "interne", top: "25%", left: "45%", recetteUrl: "/recettes/macreuse-bifteck" },
-    { nomBdd: "Jumeau à Bifteck", face: "interne", top: "30%", left: "83%", recetteUrl: "/recettes/jumeau" },
-    { nomBdd: "Dessus de Palette", face: "interne", top: "25%", left: "65%", recetteUrl: "/recettes/dessus-palette" }
+    { nomBdd: "Macreuse à Braiser", face: "interne", top: "40%", left: "35%", recetteUrl: "/recettes/macreuse-braiser" },
+    { nomBdd: "Jumeau à pot-au-feu", face: "interne", top: "25%", left: "30%", recetteUrl: "/recettes/jumeau-pot-au-feu" },
+    { nomBdd: "Macreuse à Bifteck", face: "interne", top: "50%", left: "45%", recetteUrl: "/recettes/macreuse-bifteck" },
+    { nomBdd: "Jumeau à Bifteck", face: "interne", top: "35%", left: "50%", recetteUrl: "/recettes/jumeau-bifteck" }
   ];
 
-  // --- LOGIQUE DONNÉES ---
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPiecesData = async () => {
       try {
-        const [partieRes, piecesRes] = await Promise.all([
-             api.get("/parties/1"),
-             api.get("/pieces/partie/1")
-        ]);
+        setLoading(true);
+        const response = await getAllPieces();
+        const piecesFromDB = response.data;
 
-        const info = Array.isArray(partieRes.data) ? partieRes.data[0] : partieRes.data;
-        setPartieInfo(info);
-        
-        const mergedData = piecesRes.data.map(pieceBdd => {
-            const config = piecesConfig.find(c => c.nomBdd === pieceBdd.nomPiece);
-            return config ? { ...pieceBdd, ...config } : null;
-        }).filter(item => item !== null);
+        // Fusion Config Visuelle + BDD (Insensible à la casse)
+        const mergedPieces = piecesConfig.map(config => {
+          const dbData = piecesFromDB.find(p => 
+            p.nomPiece.toLowerCase().trim() === config.nomBdd.toLowerCase().trim()
+          );
+          
+          if (dbData) {
+            return { ...config, ...dbData };
+          } else {
+            console.warn(`⚠️ ERREUR DE LIAISON : La pièce "${config.nomBdd}" n'a pas été trouvée dans la base de données.`);
+            return config;
+          }
+        });
 
-        setPiecesData(mergedData);
-        setLoading(false);
+        setAllMergedPieces(mergedPieces);
       } catch (error) {
-        console.error("Erreur chargement:", error);
+        console.error("Erreur lors de la récupération des pièces :", error);
+      } finally {
         setLoading(false);
       }
     };
-    fetchData();
+
+    fetchPiecesData();
   }, []);
 
-  const getImageUrl = (path) => {
-      if (!path) return undefined;
-      const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
-      return `${baseUrl}/uploads/${path}`;
+  // Filtre les pièces selon la face affichée
+  const visiblePieces = allMergedPieces.filter(piece => piece.face === currentFace);
+
+  const getImageUrl = (imagePath) => {
+    const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+    return `${baseUrl}/uploads/${imagePath}`;
   };
 
-  const visiblePieces = piecesData.filter(p => p.face === currentFace);
-
-  const currentBackgroundImage = partieInfo ? (
-      currentFace === "externe" 
-      ? getImageUrl(`parties/${partieInfo.imagePartie}`) 
-      : getImageUrl(`parties/${partieInfo.imagePartieInterieur}`)
-  ) : undefined;
+  const currentBackgroundImage = currentFace === "interne" 
+    ? "boeuf_epaule_interieur.png" 
+    : "boeuf_epaule_exterieur.png";
 
   return (
     <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="40px">
       <Container maxW="1360px" px={6}>
         
-        {/* HEADER */}
         <VStack align="start" spacing="12px" mb={10}>
-             <Breadcrumb.Root color="gray.500" fontSize="sm">
-                <Breadcrumb.List>
-                    <Breadcrumb.Item><Breadcrumb.Link as={RouterLink} to="/atlas/boeuf/avant">L'Avant</Breadcrumb.Link></Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item><Breadcrumb.CurrentLink color="brand.rouge" fontWeight="medium">L'Épaule</Breadcrumb.CurrentLink></Breadcrumb.Item>
-                </Breadcrumb.List>
-            </Breadcrumb.Root>
             <Button 
-                as={RouterLink} to="/atlas/boeuf/avant" variant="outline" borderColor="brand.brun" 
+                as={RouterLink} to="/atlas/boeuf/avant"
+                variant="outline" borderColor="brand.brun" 
                 color="brand.brun" borderRadius="full" bg="white"
                 _hover={{ bg: "brand.brun", color: "white" }} size="md" px={8} fontSize="sm"
             >
@@ -100,15 +97,18 @@ const AtlasBoeufAvantEpaule = () => {
                 <InteractiveDiagram 
                     currentFace={currentFace}
                     setCurrentFace={setCurrentFace}
-                    currentBackgroundImage={currentBackgroundImage}
+                    currentBackgroundImage={getImageUrl(`parties/${currentBackgroundImage}`)}
                     visiblePieces={visiblePieces}
                     selectedPiece={selectedPiece}
                     onSelectPiece={setSelectedPiece}
+                    enableSwitch={true}
+                    customHeight={{ base: "400px", lg: "550px" }}
                 />
 
                 {/* 2. COMPOSANT DROITE : DÉTAILS */}
                 <Box w={{ base: "100%", lg: "400px" }}>
-
+                    
+                    {/* Espacement invisible pour compenser la hauteur du bouton Switch */}
                     <Box h={{ base: "0px", lg: "80px" }} w="100%" />
 
                     <AtlasDetails 
