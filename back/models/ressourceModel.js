@@ -13,12 +13,12 @@ export const createRessource = async (typeTechnique, titre, urlVideo, descriptio
 // Afficher toutes les ressources
 export const getAllRessources = async () => {
     const selectAll = `
-    SELECT typeTechnique, titre, urlVideo, descriptionTechnique, pieceId, utilisateurId, pieces.nomPiece, parties.nomPartie, animaux.nomAnimal, utilisateurs.nom AS auteurNom, utilisateurs.prenom AS auteurPrenom
+    SELECT idRessource, typeTechnique, titre, urlVideo, descriptionTechnique, pieceId, utilisateurId, pieces.nomPiece, parties.nomPartie, animaux.nomAnimal, utilisateurs.nom AS auteurNom, utilisateurs.prenom AS auteurPrenom
     FROM ressources 
-    JOIN pieces ON ressources.pieceId = pieces.idPiece 
-    JOIN parties ON pieces.partieId = parties.idPartie 
-    JOIN animaux ON parties.animalId = animaux.idAnimal 
-    JOIN utilisateurs ON ressources.utilisateurId = utilisateurs.idUtilisateur
+    LEFT JOIN pieces ON ressources.pieceId = pieces.idPiece 
+    LEFT JOIN parties ON pieces.partieId = parties.idPartie 
+    LEFT JOIN animaux ON parties.animalId = animaux.idAnimal 
+    LEFT JOIN utilisateurs ON ressources.utilisateurId = utilisateurs.idUtilisateur
     `;
     const [result] = await connexion.query(selectAll);
     return result;
