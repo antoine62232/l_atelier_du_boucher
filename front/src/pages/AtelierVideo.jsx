@@ -117,13 +117,12 @@ const AtelierVideo = () => {
 
       </Container>
 
-      {/* 🎬 MODALE DE LECTURE VIDÉO CORRIGÉE 🎬 */}
+      {/* MODALE DE LECTURE VIDÉO CORRIGÉE */}
       <Dialog.Root 
         open={!!selectedVideo} 
         onOpenChange={(e) => !e.open && setSelectedVideo(null)}
         placement="center"
       >
-        {/* 👇 C'est ça qu'il manquait pour afficher la modale ! 👇 */}
         <Dialog.Backdrop backdropFilter="blur(5px)" bg="blackAlpha.700" zIndex="1400" />
         <Dialog.Positioner zIndex="1500">
             <Dialog.Content bg="white" borderRadius="xl" overflow="hidden" w={{ base: "95vw", md: "800px" }} maxW="100%" position="relative">

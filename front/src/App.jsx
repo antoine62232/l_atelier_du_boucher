@@ -18,6 +18,8 @@ import AtlasBoeufArriere from './pages/atlas/AtlasBoeufArriere';
 import AtlasBoeufArriereCuisse from './pages/atlas/AtlasBoeufArriereCuisse';
 import AtlasBoeufArriereCuisseDetail from './pages/atlas/AtlasBoeufArriereCuisseDetail';
 import AtelierVideo from './pages/AtelierVideo';
+import LaboCalcul from './pages/LaboCalcul';
+
 
 function App() {
   return (
@@ -38,6 +40,9 @@ function App() {
         <Route path="/atlas/boeuf/arriere/cuisse" element={<AtlasBoeufArriereCuisse />} />
         <Route path="/atlas/boeuf/arriere/cuisse/:id" element={<AtlasBoeufArriereCuisseDetail />} />
         <Route path="/videos" element={<AtelierVideo />} />
+        <Route path="/outils" element={<LaboCalcul />} />
+
+
       </Routes>
     </Box>
     <Footer />
