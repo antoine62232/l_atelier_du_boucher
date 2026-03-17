@@ -5,10 +5,12 @@ import { FiInfo, FiExternalLink } from "react-icons/fi";
 
 const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
     return (
+        // Détails de la pièce sélectionnée
         <Box w={{ base: "100%", lg: "400px" }} bg="white" p={6} borderRadius="xl" shadow="lg" minH="400px">
             {selectedPiece ? (
                 <VStack align="start" spacing={4} animation="fadeIn 0.5s">
                     <Flex justify="space-between" w="100%" align="center">
+                        // Titre de la pièce et badge d'utilisation
                         <Heading size="lg" color="brand.rouge" fontFamily="title" lineHeight="1.2">
                             {selectedPiece.nomPiece}
                         </Heading>
@@ -22,32 +24,30 @@ const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
                         <Image 
                             src={getImageUrl(`pieces/${selectedPiece.imagePiece}`)} 
                             alt={selectedPiece.nomPiece} 
-                            w="100%" 
-                            h="auto"
-                            maxH="350px"
-                            objectFit="contain"
-                            fallbackSrc="https://via.placeholder.com/400x300?text=Image+Piece"
+                            w="100%" h="200px" objectFit="contain" p={2}
                         />
                     </Box>
-
+                    // Description de la pièce
                     <Text fontSize="md" color="gray.600" lineHeight="1.6">
                         {selectedPiece.descriptionPiece}
                     </Text>
-                    
+                    // Détails de cuisson
                     <Box w="100%" bg="orange.50" p={3} borderRadius="md" borderLeft="3px solid" borderColor="orange.400">
                         <Text fontSize="sm" color="orange.800" fontWeight="bold">Cuisson :</Text>
                         <Text fontSize="sm" color="orange.700">{selectedPiece.cuisson}</Text>
                     </Box>
 
                     <Box w="100%" h="1px" bg="gray.200" my={2} />
-
+    
                     <Button 
-                        as={RouterLink} to={selectedPiece.recetteUrl}
+                        as={RouterLink} 
+                        to={`/recettes?pieceId=${selectedPiece.idPiece}`} 
                         colorScheme="red" variant="solid" bg="brand.rouge" w="full"
                         _hover={{ bg: "brand.brun" }}
                     >
                         <FiExternalLink style={{ marginRight: "8px" }} /> Voir les recettes
                     </Button>
+
                 </VStack>
             ) : (
                 <VStack justify="center" h="100%" spacing={4} textAlign="center" color="gray.400">

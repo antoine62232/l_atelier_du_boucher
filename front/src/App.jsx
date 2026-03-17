@@ -19,6 +19,8 @@ import AtlasBoeufArriereCuisse from './pages/atlas/AtlasBoeufArriereCuisse';
 import AtlasBoeufArriereCuisseDetail from './pages/atlas/AtlasBoeufArriereCuisseDetail';
 import AtelierVideo from './pages/AtelierVideo';
 import LaboCalcul from './pages/LaboCalcul';
+import Recettes from './pages/Recettes';
+import RecetteDetail from './pages/RecetteDetail';
 
 
 function App() {
@@ -41,7 +43,8 @@ function App() {
         <Route path="/atlas/boeuf/arriere/cuisse/:id" element={<AtlasBoeufArriereCuisseDetail />} />
         <Route path="/videos" element={<AtelierVideo />} />
         <Route path="/outils" element={<LaboCalcul />} />
-
+        <Route path="/recettes" element={<Recettes />} />
+        <Route path="/recettes/:id" element={<RecetteDetail />} />
 
       </Routes>
     </Box>
