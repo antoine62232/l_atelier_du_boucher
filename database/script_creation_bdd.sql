@@ -257,3 +257,6 @@ CREATE TABLE faq (
     reponse TEXT NOT NULL,
     ordre INT DEFAULT 0
 );
+
+ALTER TABLE recettes 
+ADD COLUMN imageRecette VARCHAR(255) NULL AFTER titre;
