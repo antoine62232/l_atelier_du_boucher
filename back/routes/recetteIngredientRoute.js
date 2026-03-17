@@ -5,7 +5,7 @@ import { checkToken } from '../middleware/checkToken.js';
 const router = express.Router();
 
 router.post('/add', checkToken, recetteIngredientController.addIngredient);
-router.get('/:recetteId', checkToken, recetteIngredientController.getAllIngredientsByRecette);
+router.get('/:recetteId', recetteIngredientController.getAllIngredientsByRecette);
 router.put('/update', checkToken, recetteIngredientController.updateIngredient);
 router.delete('/delete/:recetteId/:ingredientId', checkToken, recetteIngredientController.deleteIngredient);
 
