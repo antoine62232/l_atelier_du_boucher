@@ -22,6 +22,8 @@ import LaboCalcul from './pages/LaboCalcul';
 import Recettes from './pages/Recettes';
 import RecetteDetail from './pages/RecetteDetail';
 import Quiz from './pages/Quiz';
+import Actualites from './pages/Actualites';
+import ActualiteDetail from './pages/ActualiteDetail';
 
 
 function App() {
@@ -47,6 +49,8 @@ function App() {
         <Route path="/recettes" element={<Recettes />} />
         <Route path="/recettes/:id" element={<RecetteDetail />} />
         <Route path="/quiz" element={<Quiz />} />
+        <Route path="/actualites/" element={<Actualites />} />
+        <Route path="/actualites/:id" element={<ActualiteDetail />} />
 
 
       </Routes>

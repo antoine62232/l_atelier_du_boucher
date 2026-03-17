@@ -57,22 +57,28 @@ const Actuality = () => {
             gap="82px" 
             wrap={{ base: "wrap", xl: "nowrap" }}
         >
-            {actualities.slice(0, 3).map((actu) => (
-                <ActualityCard 
-                    key={actu.idActualite} 
-                    title={actu.titre} 
-                    category={actu.categorie}
-                    date={new Date(actu.datePublication).toLocaleDateString('fr-FR', { 
-                        day: 'numeric', month: 'short', year: 'numeric' 
-                    })}
-                    excerpt={actu.contenu ? actu.contenu.substring(0, 60) + "..." : ""}
-                    image={actu.imageActualite 
-                        ? `${import.meta.env.VITE_SERVER_URL}/uploads/${actu.imageActualite}` 
-                        : defaultImg
-                    }
-                    link={`/actu/${actu.idActualite}`}
-                />
-            ))}
+            {actualities.slice(0, 3).map((actu) => {
+                // 👇 On prépare le bon chemin d'image ici 👇
+                const imagePath = actu.imageActualite?.startsWith('http')
+                  ? actu.imageActualite
+                  : actu.imageActualite
+                    ? `${import.meta.env.VITE_SERVER_URL}/uploads/actualites/${actu.imageActualite}` // Ajout de /actualites/
+                    : defaultImg;
+
+                return (
+                  <ActualityCard 
+                      key={actu.idActualite} 
+                      title={actu.titre} 
+                      category={actu.categorie}
+                      date={new Date(actu.datePublication).toLocaleDateString('fr-FR', { 
+                          day: 'numeric', month: 'short', year: 'numeric' 
+                      })}
+                      excerpt={actu.contenu ? actu.contenu.substring(0, 60) + "..." : ""}
+                      image={imagePath}
+                      link={`/actualites/${actu.idActualite}`}
+                  />
+                );
+            })}
         </Flex>
 
         <Box textAlign="center" mt="60px">
@@ -84,11 +90,7 @@ const Actuality = () => {
                 color="brand.brun" 
                 fontWeight="bold"
                 textDecoration="none"
-                
-                _hover={{ 
-                    color: "brand.rouge", 
-                    textDecoration: "underline" 
-                }}
+                _hover={{ color: "brand.rouge", textDecoration: "underline" }}
             >
                 Voir toutes les actualités &gt;
             </Link>

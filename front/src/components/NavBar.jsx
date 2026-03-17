@@ -94,7 +94,7 @@ const DesktopLinks = () => {
         <MenuItemLink to="/outils">Outils</MenuItemLink>
         <MenuItemLink to="/recettes">Recettes</MenuItemLink>
         <MenuItemLink to="/quiz">Quiz</MenuItemLink>
-        <MenuItemLink to="/actu">Actualités</MenuItemLink>
+        <MenuItemLink to="/actualites">Actualités</MenuItemLink>
       </HStack>
     )
   }
