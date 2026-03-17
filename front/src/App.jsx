@@ -21,6 +21,7 @@ import AtelierVideo from './pages/AtelierVideo';
 import LaboCalcul from './pages/LaboCalcul';
 import Recettes from './pages/Recettes';
 import RecetteDetail from './pages/RecetteDetail';
+import Quiz from './pages/Quiz';
 
 
 function App() {
@@ -45,6 +46,8 @@ function App() {
         <Route path="/outils" element={<LaboCalcul />} />
         <Route path="/recettes" element={<Recettes />} />
         <Route path="/recettes/:id" element={<RecetteDetail />} />
+        <Route path="/quiz" element={<Quiz />} />
+
 
       </Routes>
     </Box>
