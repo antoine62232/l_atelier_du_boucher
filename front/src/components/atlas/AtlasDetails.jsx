@@ -10,7 +10,6 @@ const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
             {selectedPiece ? (
                 <VStack align="start" spacing={4} animation="fadeIn 0.5s">
                     <Flex justify="space-between" w="100%" align="center">
-                        // Titre de la pièce et badge d'utilisation
                         <Heading size="lg" color="brand.rouge" fontFamily="title" lineHeight="1.2">
                             {selectedPiece.nomPiece}
                         </Heading>
@@ -27,11 +26,9 @@ const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
                             w="100%" h="200px" objectFit="contain" p={2}
                         />
                     </Box>
-                    // Description de la pièce
                     <Text fontSize="md" color="gray.600" lineHeight="1.6">
                         {selectedPiece.descriptionPiece}
                     </Text>
-                    // Détails de cuisson
                     <Box w="100%" bg="orange.50" p={3} borderRadius="md" borderLeft="3px solid" borderColor="orange.400">
                         <Text fontSize="sm" color="orange.800" fontWeight="bold">Cuisson :</Text>
                         <Text fontSize="sm" color="orange.700">{selectedPiece.cuisson}</Text>

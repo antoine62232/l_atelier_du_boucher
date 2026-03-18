@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Container, Button, VStack, Spinner, Flex } from "@chakra-ui/react";
-import { Link as RouterLink } from "react-router-dom";
+import { useSearchParams, Link as RouterLink } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi"; 
 
 import InteractiveDiagram from "../../components/atlas/InteractiveDiagram"; 
@@ -29,6 +29,20 @@ const AtlasBoeufAvantEpaule = () => {
     { nomBdd: "Jumeau à Bifteck", face: "interne", top: "35%", left: "50%", recetteUrl: "/recettes/jumeau-bifteck" }
   ];
 
+  // LOGIQUE DE SÉLECTION VIA PARAMÈTRE URL
+  const [searchParams] = useSearchParams();
+  const pieceIdCible = searchParams.get('pieceId');
+
+  useEffect(() => {
+    if (pieceIdCible && allMergedPieces.length > 0) {
+      const targetPiece = allMergedPieces.find(p => p.idPiece === Number(pieceIdCible));
+      if (targetPiece) {
+        setSelectedPiece(targetPiece);
+        if (targetPiece.face) setCurrentFace(targetPiece.face);
+      }
+    }
+  }, [pieceIdCible, allMergedPieces]);
+
   useEffect(() => {
     const fetchPiecesData = async () => {
       try {
@@ -36,7 +50,7 @@ const AtlasBoeufAvantEpaule = () => {
         const response = await getAllPieces();
         const piecesFromDB = response.data;
 
-        // Fusion Config Visuelle + BDD (Insensible à la casse)
+        // Fusion Config Visuelle + BDD
         const mergedPieces = piecesConfig.map(config => {
           const dbData = piecesFromDB.find(p => 
             p.nomPiece.toLowerCase().trim() === config.nomBdd.toLowerCase().trim()
@@ -108,7 +122,6 @@ const AtlasBoeufAvantEpaule = () => {
                 {/* 2. COMPOSANT DROITE : DÉTAILS */}
                 <Box w={{ base: "100%", lg: "400px" }}>
                     
-                    {/* Espacement invisible pour compenser la hauteur du bouton Switch */}
                     <Box h={{ base: "0px", lg: "80px" }} w="100%" />
 
                     <AtlasDetails 

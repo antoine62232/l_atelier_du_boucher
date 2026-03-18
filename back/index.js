@@ -23,6 +23,7 @@ import contactRoute from './routes/contactRoute.js';
 import faqRoute from './routes/faqRoute.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import searchRoute from './routes/searchRoute.js';
 // Import de la connexion BDD (on s'assure qu'elle se lance)
 import connexion from './config/bdd.js';
 
@@ -65,7 +66,8 @@ app.use('/api/calculs-rendement', calculsRendementRoute);
 app.use('/api/actualites', actualiteRoute);
 app.use('/api/contacts', contactRoute);
 app.use('/api/faq', faqRoute);
-// Route de test 
+app.use('/api/search', searchRoute);
+
 app.get('/', (req, res) => {
     res.send("API L'Atelier du Boucher : En ligne 🥩");
 });
