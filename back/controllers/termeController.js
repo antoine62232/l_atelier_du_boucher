@@ -29,7 +29,7 @@ export const getAllTermes = async (req, res) => {
     }
 };
 
-export const getTermeById = async (res, req) => {
+export const getTermeById = async (req, res) => {
     const idTerme = req.params.id;
     try {
         const result = await termeModel.getTermeById(idTerme);

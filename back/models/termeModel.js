@@ -20,9 +20,9 @@ export const getTermeNyId = async (idTerme) => {
 
 //Recherche d'un terme (Moteur de recherche)
 export const searchTerme = async (recherche) => {
-    const query = "SELECT idTerme, nomTerme, definition, exemple FROM termes WHERE nomTerme LIKE ?;";
+    const query = "SELECT idTerme, nomTerme, definition, exemple FROM termes WHERE nomTerme LIKE ? OR definition LIKE ?;";
     // % = tous les caractères avant et après la recherche
-    const [result] = await connexion.query(query, [`%${recherche}%`]);
+    const [result] = await connexion.query(query, [`%${recherche}%`, `%${recherche}%`]);
     return result;
 };
 
