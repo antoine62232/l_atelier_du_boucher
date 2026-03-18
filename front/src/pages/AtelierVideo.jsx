@@ -54,15 +54,6 @@ const AtelierVideo = () => {
   return (
     <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="84px">
       <Container maxW="1360px" px={6}>
-        
-        {/* FIL D'ARIANE */}
-        <VStack align="start" spacing="12px" mb={10}>
-             <Flex align="center" gap={2} color="gray.500" fontSize="sm">
-                <Text as={RouterLink} to="/" _hover={{ textDecoration: "underline" }}>Accueil</Text>
-                <Text>/</Text>
-                <Text color="brand.rouge" fontWeight="medium">Atelier Vidéo</Text>
-             </Flex>
-        </VStack>
 
         {/* EN-TÊTE */}
         <Box textAlign="center" mb={10}>
