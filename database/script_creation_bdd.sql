@@ -280,3 +280,12 @@ CREATE TABLE favorisRessources (
     CONSTRAINT fk_fav_ressources_user FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE,
     CONSTRAINT fk_fav_ressources_video FOREIGN KEY (ressourceId) REFERENCES ressources(idRessource) ON DELETE CASCADE
 );
+
+-- Table pour stocker les résultats des quiz
+CREATE TABLE resultatsQuiz (
+    idResultat INT AUTO_INCREMENT PRIMARY KEY,
+    utilisateurId INT NOT NULL,
+    score INT NOT NULL,
+    total INT NOT NULL,
+    datePassage DATETIME DEFAULT CURRENT_TIMESTAMP
+);
