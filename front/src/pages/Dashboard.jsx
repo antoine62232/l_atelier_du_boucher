@@ -2,19 +2,21 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Box, Flex, VStack, Heading, Text, Tabs, Avatar,
-    Spinner, Center, SimpleGrid, Container, Badge, IconButton
+    Spinner, Center, SimpleGrid, Container
 } from '@chakra-ui/react';
 
-// Import de tes services
+// Import des services
 import * as UsersService from '../services/UsersService';
 import * as RecettesService from '../services/RecettesService';
 import * as RessourcesService from '../services/RessourcesService';
 import * as CalculsService from '../services/CalculsService';
+import * as QuizService from '../services/QuizService';
 
-// Import de tes composants de cartes
+// Import des cartes
 import RecetteCard from '../components/dashboard/RecetteCard';
 import RessourceCard from '../components/dashboard/RessourceCard';
 import CalculCard from '../components/dashboard/CalculCard';
+import ScoreCard from '../components/dashboard/ScoreCard';
 
 const Dashboard = () => {
     const [loading, setLoading] = useState(true);
@@ -23,12 +25,14 @@ const Dashboard = () => {
     const [favorisRecettes, setFavorisRecettes] = useState([]);
     const [favorisRessources, setFavorisRessources] = useState([]);
     const [mesCalculs, setMesCalculs] = useState([]);
+    const [mesScores, setMesScores] = useState([]);
 
     useEffect(() => {
         const fetchAllData = async () => {
             setLoading(true);
             setError(null);
             try {
+                // 1. Récupération des infos de base
                 const [userRes, recipesRes, videosRes] = await Promise.all([
                     UsersService.getProfile(),
                     RecettesService.getFavoris(),
@@ -40,11 +44,17 @@ const Dashboard = () => {
                 setFavorisRecettes(recipesRes.data || recipesRes);
                 setFavorisRessources(videosRes.data || videosRes);
 
+                // 2. Récupération des calculs et scores avec l'ID utilisateur
                 const userId = userData.id || userData.idUtilisateur || userData.utilisateurId;
                 
                 if (userId) {
-                    const calculsRes = await CalculsService.getCalculsByUser(userId);
+                    const [calculsRes, scoresRes] = await Promise.all([
+                        CalculsService.getCalculsByUser(userId),
+                        QuizService.getMesScores()
+                    ]);
+                    
                     setMesCalculs(calculsRes.data || calculsRes);
+                    setMesScores(scoresRes.data || scoresRes);
                 }
 
             } catch (err) {
@@ -118,9 +128,9 @@ const Dashboard = () => {
                                 <Heading as="h2" size="md" fontFamily="title" color="brand.rouge">
                                     {user?.prenom} {user?.nom}
                                 </Heading>
-                                <Badge colorScheme="red" variant="subtle">
-                                    {user?.nomRole || "Artisan"}
-                                </Badge>
+                                <Text color="brand.acier" fontWeight="bold" fontSize="sm" textTransform="uppercase">
+                                    {user?.nomRole || "Étudiant Boucher"}
+                                </Text>
                             </VStack>
                         </VStack>
                     </Box>
@@ -130,16 +140,16 @@ const Dashboard = () => {
                         <Tabs.Root defaultValue="calculs">
                             <Tabs.List bg="white" borderRadius="md" borderWidth="1px" borderColor="brand.acier" p={1} mb={6} display="flex" flexWrap="wrap">
                                 <Tabs.Trigger value="calculs" flex="1" fontFamily="title" _selected={{ color: "brand.rouge", bg: "brand.beige" }}>
-                                    Calculs
+                                    Calculs 🧮
                                 </Tabs.Trigger>
                                 <Tabs.Trigger value="quiz" flex="1" fontFamily="title" _selected={{ color: "brand.rouge", bg: "brand.beige" }}>
-                                    Quiz
+                                    Quiz 🏆
                                 </Tabs.Trigger>
                                 <Tabs.Trigger value="recettes" flex="1" fontFamily="title" _selected={{ color: "brand.rouge", bg: "brand.beige" }}>
-                                    Recettes
+                                    Recettes 🍳
                                 </Tabs.Trigger>
                                 <Tabs.Trigger value="videos" flex="1" fontFamily="title" _selected={{ color: "brand.rouge", bg: "brand.beige" }}>
-                                    Vidéos
+                                    Vidéos 🎥
                                 </Tabs.Trigger>
                             </Tabs.List>
 
@@ -165,14 +175,63 @@ const Dashboard = () => {
 
                             {/* 2. ONGLET QUIZ */}
                             <Tabs.Content value="quiz">
-                                <Box>
-                                    <Heading as="h3" size="sm" color="brand.gris" mb={4} borderBottomWidth="1px" borderColor="brand.acier" pb={2}>
-                                        Mes Scores aux Quiz
-                                    </Heading>
-                                    <Center p={10} bg="white" borderRadius="md" border="1px dashed" borderColor="brand.acier">
-                                        <Text color="gray.500" fontStyle="italic">Historique des quiz bientôt disponible.</Text>
-                                    </Center>
-                                </Box>
+                                <VStack align="stretch" gap={10}>
+                                    
+                                    <Box>
+                                        <Heading as="h3" size="sm" color="brand.gris" mb={4} borderBottomWidth="1px" borderColor="brand.acier" pb={2}>
+                                            Mes Compétences
+                                        </Heading>
+                                        <Box bg="white" p={6} borderRadius="md" border="1px solid" borderColor="brand.acier" boxShadow="sm">
+                                            <VStack align="stretch" gap={5}>
+                                                <Box>
+                                                    <Flex justify="space-between" mb={1}>
+                                                        <Text fontSize="sm" fontWeight="bold" color="brand.brun">Anatomie & Découpe</Text>
+                                                        <Text fontSize="sm" color="green.600" fontWeight="bold">85%</Text>
+                                                    </Flex>
+                                                    <Box w="100%" bg="gray.100" h="8px" borderRadius="full" overflow="hidden">
+                                                        <Box w="85%" h="100%" bg="green.400" transition="all 1s ease-out" />
+                                                    </Box>
+                                                </Box>
+
+                                                <Box>
+                                                    <Flex justify="space-between" mb={1}>
+                                                        <Text fontSize="sm" fontWeight="bold" color="brand.brun">Hygiène & Sécurité</Text>
+                                                        <Text fontSize="sm" color="brand.rouge" fontWeight="bold">40%</Text>
+                                                    </Flex>
+                                                    <Box w="100%" bg="gray.100" h="8px" borderRadius="full" overflow="hidden">
+                                                        <Box w="40%" h="100%" bg="brand.rouge" transition="all 1s ease-out" />
+                                                    </Box>
+                                                </Box>
+                                            </VStack>
+                                        </Box>
+                                    </Box>
+
+                                    <Box>
+                                        <Heading as="h3" size="sm" color="brand.gris" mb={4} borderBottomWidth="1px" borderColor="brand.acier" pb={2}>
+                                            Historique des Tests
+                                        </Heading>
+                                        
+                                        {mesScores.length === 0 ? (
+                                            <Center p={10} bg="white" borderRadius="md" border="1px dashed" borderColor="brand.acier">
+                                                <Text color="gray.500" fontStyle="italic">Vous n'avez pas encore passé de quiz.</Text>
+                                            </Center>
+                                        ) : (
+                                            <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+                                                {mesScores.map(score => (
+                                                    <ScoreCard 
+                                                        key={score.idResultat} 
+                                                        quiz={{ 
+                                                            titre: "Le Test de l'Apprenti", 
+                                                            score: score.score, 
+                                                            total: score.total, 
+                                                            date: score.datePassage 
+                                                        }} 
+                                                    />
+                                                ))}
+                                            </SimpleGrid>
+                                        )}
+                                    </Box>
+                                </VStack>
                             </Tabs.Content>
 
                             {/* 3. ONGLET RECETTES */}

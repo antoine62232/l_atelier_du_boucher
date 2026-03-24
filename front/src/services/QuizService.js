@@ -19,3 +19,13 @@ export const getReponsesByQuestion = (questionId) => {
 export const getAllReponses = () => {
   return api.get("/reponses-qcm/all");
 };
+
+// Sauvegarder un score
+export const saveQuizScore = (scoreData) => {
+  return api.post("/resultats-quiz/save", scoreData);
+};
+
+// Récupérer l'historique des scores
+export const getMesScores = () => {
+  return api.get("/resultats-quiz/mes-scores");
+};

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Box, Container, Heading, Text, VStack, Button, Flex, Center, Spinner, Icon } from "@chakra-ui/react";
 import { FiCheckCircle, FiXCircle, FiInfo, FiRotateCcw } from "react-icons/fi";
-import { getAllQuestions, getAllReponses } from "../services/QuizService";
+import { getAllQuestions, getAllReponses, saveQuizScore } from "../services/QuizService";
 import QuizCard from "../components/quiz/QuizCard";
+
 
 const Quiz = () => {
   const [questions, setQuestions] = useState([]);
@@ -38,7 +39,7 @@ const Quiz = () => {
     fetchQuizData();
   }, []);
 
-  const handleAnswer = (reponse) => {
+  const handleAnswer = async (reponse) => {
     const currentQuestion = questions[currentIndex];
     
     const newAnswer = {
@@ -47,12 +48,27 @@ const Quiz = () => {
       estCorrect: reponse.resultatReponse === 1 || reponse.resultatReponse === true
     };
 
-    setUserAnswers([...userAnswers, newAnswer]);
+    // On crée le nouveau tableau de réponses complet
+    const updatedAnswers = [...userAnswers, newAnswer];
+    setUserAnswers(updatedAnswers);
 
     if (currentIndex < questions.length - 1) {
+      // On passe à la question suivante
       setCurrentIndex(currentIndex + 1);
     } else {
+      // LE QUIZ EST FINI !
       setIsFinished(true);
+      
+      // On calcule le score final
+      const finalScore = updatedAnswers.filter(a => a.estCorrect).length;
+      
+      // On l'envoie à la base de données
+      try {
+        await saveQuizScore({ score: finalScore, total: questions.length });
+        console.log("Score sauvegardé avec succès !");
+      } catch (error) {
+        console.error("Erreur lors de la sauvegarde du score :", error);
+      }
     }
   };
 
