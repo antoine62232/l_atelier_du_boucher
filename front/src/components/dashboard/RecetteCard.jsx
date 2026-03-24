@@ -1,68 +1,71 @@
-import React from 'react';
-import { Box, Image, Flex, Text, Heading } from '@chakra-ui/react';
+import React from "react";
+import { Box, Image, Text, Flex, Heading, IconButton } from "@chakra-ui/react";
+import { FiClock, FiTrash2 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const RecetteCard = ({ recette, onToggleFavori }) => {
-    // Si pas d'image, on met un placeholder
-    const imageUrl = recette.imageRecette || 'https://via.placeholder.com/300x200?text=Atelier+du+Boucher';
+  const navigate = useNavigate();
 
-    return (
-        <Box
-            borderWidth="1px"
-            borderColor="brand.acier"
-            borderRadius="md"
-            overflow="hidden"
-            bg="white"
-            boxShadow="md"
-            transition="transform 0.2s"
-            _hover={{ transform: 'translateY(-4px)' }} // Petit effet au survol
-            display="flex"
-            flexDirection="column"
-            h="100%"
-        >
-            {/* Haut de la carte (Image + Bouton Favori) */}
-            <Box position="relative" h="140px">
-                <Image src={imageUrl} alt={recette.titre} objectFit="cover" w="100%" h="100%" />
-                <Box
-                    as="button"
-                    position="absolute"
-                    top="2"
-                    right="2"
-                    bg="white"
-                    borderRadius="full"
-                    w="8"
-                    h="8"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    boxShadow="md"
-                    color="brand.rouge"
-                    onClick={(e) => { e.stopPropagation(); onToggleFavori(recette.idRecette); }}
-                    cursor="pointer"
-                    title="Retirer des favoris"
-                >
-                    ♥️
-                </Box>
-            </Box>
+  // Fonction pour retirer des favoris sans ouvrir la recette
+  const handleRemove = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onToggleFavori) {
+      onToggleFavori(recette.idRecette);
+    }
+  };
 
-            {/* Corps de la carte */}
-            <Flex p="4" direction="column" flex="1">
-                <Heading as="h4" size="md" fontFamily="title" color="brand.gris" mb="1" noOfLines={1}>
-                    {recette.titre}
-                </Heading>
+  const nomImage = recette.imageRecette || recette.image || "";
 
-                <Text fontSize="sm" fontFamily="body" color="brand.acier" mb="3">
-                    <Box as="span" color="brand.rouge" mr="1">●</Box>
-                    {recette.nomPiece}
-                </Text>
+  return (
+    <Box
+      onClick={() => navigate(`/recettes/${recette.idRecette}`)}
+      w="100%" bg="white" borderRadius="xl" overflow="hidden" boxShadow="sm" cursor="pointer"
+      transition="all 0.3s ease"
+      css={{ "&:hover": { transform: "translateY(-5px)", boxShadow: "var(--chakra-shadows-md)" } }}
+      position="relative"
+    >
+      {/* LA POUBELLE POUR LE DASHBOARD */}
+      <IconButton
+        aria-label="Retirer des favoris"
+        position="absolute"
+        top="12px"
+        right="12px"
+        zIndex="2"
+        color="red.500"
+        bg="white"
+        borderRadius="full"
+        boxShadow="md"
+        size="sm"
+        onClick={handleRemove}
+        _hover={{ bg: "red.50", transform: "scale(1.1)" }}
+      >
+        <FiTrash2 />
+      </IconButton>
 
-                {/* Footer de la carte (Temps et Difficulté) */}
-                <Flex justify="space-between" mt="auto" pt="3" borderTopWidth="1px" borderColor="brand.acier">
-                    <Text fontSize="xs" color="brand.gris">⏱️ {recette.tempsPreparation} min</Text>
-                    <Text fontSize="xs" color="brand.gris">📊 {recette.difficulte}</Text>
-                </Flex>
-            </Flex>
-        </Box>
-    );
+      <Box h="150px" w="100%" overflow="hidden">
+        <Image
+          src={nomImage ? getImageUrl(`recettes/${nomImage}`) : undefined}
+          fallbackSrc="https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=800&auto=format&fit=crop"
+          alt={recette.titre}
+          w="100%" h="100%" objectFit="cover"
+        />
+      </Box>
+
+      <Flex direction="column" p={4} gap={2}>
+        <Heading fontFamily="title" fontSize="lg" color="brand.gris" noOfLines={1} lineHeight="1.2">
+          {recette.titre}
+        </Heading>
+        
+        {(recette.tempsPreparation !== undefined) && (
+          <Flex align="center" gap={1} color="brand.brun" fontSize="sm" fontWeight="medium">
+            <FiClock /> {(recette.tempsPreparation || 0) + (recette.tempsCuisson || 0)} min
+          </Flex>
+        )}
+      </Flex>
+    </Box>
+  );
 };
 
 export default RecetteCard;

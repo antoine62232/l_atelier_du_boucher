@@ -13,6 +13,7 @@ import {
 } from "../services/RecettesService";
 
 import { getImageUrl } from "../utils/imageUtils";
+import FavoriteButton from "../components/common/FavoriteButton";
 
 const RecetteDetail = () => {
   const { id } = useParams();
@@ -78,17 +79,27 @@ const RecetteDetail = () => {
         {/* En-tête */}
         <Box bg="white" borderRadius="2xl" overflow="hidden" boxShadow="lg" mb={10}>
             
-            {/* L'image de couverture */}
-            <Image 
-                src={getImageUrl(`recettes/${recette.imageRecette}`)} 
-                fallbackSrc="https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=1200&auto=format&fit=crop"
-                alt={recette.titre} 
-                w="100%" 
-                h={{ base: "250px", md: "400px" }} 
-                objectFit="cover"
-            />
+            {/* L'image de couverture*/}
+            <Box position="relative" w="100%" h={{ base: "250px", md: "400px" }}>
+                
+                {/* 👈 LE BOUTON COEUR */}
+                <FavoriteButton 
+                  itemId={recette.idRecette} 
+                  type="recette" 
+                  isInitiallyFavorite={recette.isFavori || false} 
+                />
 
-            {/* Le bloc de texte (Titre, Badges, Temps...) avec ses marges */}
+                <Image 
+                    src={getImageUrl(`recettes/${recette.imageRecette}`)} 
+                    fallbackSrc="https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=1200&auto=format&fit=crop"
+                    alt={recette.titre} 
+                    w="100%" 
+                    h="100%" 
+                    objectFit="cover"
+                />
+            </Box>
+
+            {/* Le bloc de texte (Titre, Badges, Temps...)*/}
             <Box p={{ base: 6, md: 10 }}>
                 <Flex justify="space-between" align="flex-start" wrap="wrap" gap={4}>
                     <Box>

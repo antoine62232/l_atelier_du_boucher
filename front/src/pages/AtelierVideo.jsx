@@ -4,6 +4,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { FiX } from "react-icons/fi";
 import { getAllRessources } from "../services/RessourcesService";
 import VideoCard from "../components/videos/VideoCard";
+import FavoriteButton from "../components/common/FavoriteButton";
 
 // Imports pour le lecteur YouTube
 import LiteYouTubeEmbed from 'react-lite-youtube-embed';
@@ -108,7 +109,7 @@ const AtelierVideo = () => {
 
       </Container>
 
-      {/* MODALE DE LECTURE VIDÉO CORRIGÉE */}
+      {/* MODALE DE LECTURE VIDÉO */}
       <Dialog.Root 
         open={!!selectedVideo} 
         onOpenChange={(e) => !e.open && setSelectedVideo(null)}
@@ -150,9 +151,22 @@ const AtelierVideo = () => {
                         {/* Zone Description en dessous de la vidéo */}
                         <Box p={6}>
                             <Flex justify="space-between" align="center" mb={2} wrap="wrap" gap={2}>
-                                <Heading fontFamily="title" color="brand.rouge" size="lg">
-                                    {selectedVideo.titre}
-                                </Heading>
+                                {/* On groupe le titre et le coeur */}
+                                <Flex align="center" gap={4}>
+                                    <Heading fontFamily="title" color="brand.rouge" size="lg">
+                                        {selectedVideo.titre}
+                                    </Heading>
+                                    
+                                    {/* LE COEUR */}
+                                    <Box position="relative" display="inline-block" w="40px" h="40px">
+                                        <FavoriteButton 
+                                            itemId={selectedVideo.idRessource} 
+                                            type="video" 
+                                            isInitiallyFavorite={selectedVideo.isFavori || false} 
+                                        />
+                                    </Box>
+                                </Flex>
+
                                 <Text color="brand.brun" fontSize="sm" fontWeight="bold" textTransform="uppercase">
                                     {selectedVideo.typeTechnique}
                                 </Text>

@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Image, Text, Badge, Flex, Heading } from "@chakra-ui/react";
 import { FiPlayCircle } from "react-icons/fi";
+import FavoriteButton from "../common/FavoriteButton"; 
 
 const VideoCard = ({ video, onClick }) => {
-  // Fonction pour extraire l'ID Youtube et récupérer la miniature
   const getYoutubeThumbnail = (url) => {
     if (!url) return "https://via.placeholder.com/640x360?text=Vidéo+Non+Disponible";
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -24,7 +24,6 @@ const VideoCard = ({ video, onClick }) => {
       cursor="pointer"
       transition="all 0.3s ease"
       onClick={() => onClick(video)}
-      // 👇 La méthode infaillible pour le survol
       css={{
         "&:hover": {
             transform: "translateY(-5px)",
@@ -34,8 +33,15 @@ const VideoCard = ({ video, onClick }) => {
         "&:hover .video-image": { transform: "scale(1.05)" }
       }}
     >
-      {/* SECTION IMAGE ET ICONE PLAY */}
       <Box position="relative" h="200px" w="100%" overflow="hidden">
+        
+        {/* BOUTON COEUR */}
+        <FavoriteButton 
+          itemId={video.idRessource}
+          type="video"
+          isInitiallyFavorite={video.isFavori || false} 
+        />
+
         <Image 
           className="video-image"
           src={getYoutubeThumbnail(video.urlVideo)} 
@@ -43,18 +49,17 @@ const VideoCard = ({ video, onClick }) => {
           w="100%" h="100%" objectFit="cover" transition="transform 0.4s ease"
         />
         
-        {/* Overlay sombre au survol avec l'icône Play */}
         <Flex 
             className="video-overlay"
             position="absolute" top="0" left="0" w="100%" h="100%" 
             bg="blackAlpha.500" justify="center" align="center"
             opacity={0} transition="opacity 0.3s ease"
+            pointerEvents="none"
         >
             <FiPlayCircle size={60} color="white" />
         </Flex>
       </Box>
 
-      {/* SECTION INFORMATIONS */}
       <Flex direction="column" p={5} gap={2}>
         <Badge 
             bg="brand.rouge" color="white" px={2} py={1} borderRadius="md" 
