@@ -260,3 +260,23 @@ CREATE TABLE faq (
 
 ALTER TABLE recettes 
 ADD COLUMN imageRecette VARCHAR(255) NULL AFTER titre;
+
+-- Table pour les recettes favorites
+CREATE TABLE favorisRecettes (
+    utilisateurId INT NOT NULL,
+    recetteId INT NOT NULL,
+    dateAjout DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (utilisateurId, recetteId),
+    CONSTRAINT fk_fav_recettes_user FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE,
+    CONSTRAINT fk_fav_recettes_recette FOREIGN KEY (recetteId) REFERENCES recettes(idRecette) ON DELETE CASCADE
+);
+
+-- Table pour les vidéos/ressources favorites
+CREATE TABLE favorisRessources (
+    utilisateurId INT NOT NULL,
+    ressourceId INT NOT NULL,
+    dateAjout DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (utilisateurId, ressourceId),
+    CONSTRAINT fk_fav_ressources_user FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE,
+    CONSTRAINT fk_fav_ressources_video FOREIGN KEY (ressourceId) REFERENCES ressources(idRessource) ON DELETE CASCADE
+);
