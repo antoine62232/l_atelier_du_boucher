@@ -24,6 +24,7 @@ import RecetteDetail from './pages/RecetteDetail';
 import Quiz from './pages/Quiz';
 import Actualites from './pages/Actualites';
 import ActualiteDetail from './pages/ActualiteDetail';
+import Dashboard from './pages/Dashboard';
 
 
 function App() {
@@ -51,6 +52,7 @@ function App() {
         <Route path="/quiz" element={<Quiz />} />
         <Route path="/actualites/" element={<Actualites />} />
         <Route path="/actualites/:id" element={<ActualiteDetail />} />
+        <Route path="/profil" element={<Dashboard />} />
 
 
       </Routes>

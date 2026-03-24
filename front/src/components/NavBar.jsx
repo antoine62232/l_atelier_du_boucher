@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link as RouterLink, NavLink } from "react-router-dom";
+import { Link as RouterLink, NavLink, useNavigate } from "react-router-dom"; // ✅ Ajout de useNavigate
 import {
   Box,
   Flex,
@@ -140,6 +140,9 @@ const RightActions = ({ openSignUpClick, openLoginClick }) => {
   // On récupère les infos de l'utilisateur
   const userString = localStorage.getItem("user");
   const user = userString ? JSON.parse(userString) : null;
+  
+  // ✅ Outil de navigation React Router
+  const navigate = useNavigate();
 
   // Fonction de déconnexion
   const handleLogout = () => {
@@ -210,13 +213,16 @@ const RightActions = ({ openSignUpClick, openLoginClick }) => {
 
             {user ? (
               <>
-              {/* Menu pour UTILISATEUR CONNECTÉ */}
-              <Menu.Item value="profil" cursor="pointer" _hover={{ bg: "gray.100" }}>
+              {/* ✅ REDIRECTION VERS LE DASHBOARD ICI */}
+              <Menu.Item 
+                value="profil" 
+                cursor="pointer" 
+                _hover={{ bg: "gray.100" }}
+                onClick={() => navigate('/profil')}
+              >
                 Mon Profil
               </Menu.Item>
              
-            
-            
             <Menu.Item 
                 value="logout" 
                 color="red.500"
@@ -228,7 +234,7 @@ const RightActions = ({ openSignUpClick, openLoginClick }) => {
             </Menu.Item>
             </>
             ) : (
-<>
+            <>
                     {/* Menu pour VISITEUR */}
                     <Menu.Item 
                         value="connexion" 

@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { 
   Dialog, Button, Input, Stack, Field, Flex, Text, Link, Heading, Spinner 
 } from "@chakra-ui/react";
-import { Link as RouterLink } from "react-router-dom";
+// axios supprimé car inutile ici
 import { FiX } from "react-icons/fi";
 import { registerUser } from "../../services/UsersService";
 
@@ -39,7 +38,8 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     setIsLoading(true);
 
     try {
-      await registerUser({
+      // ✅ CORRECTION ICI : On stocke le résultat dans 'response'
+      const response = await registerUser({
         prenom: formData.prenom,
         nom: formData.nom,
         email: formData.email,
@@ -47,13 +47,12 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
         confirmationMotDePasse: formData.confirmPassword
       });
 
-      console.log("Inscription réussie :", response.data);
+      console.log("Inscription réussie :", response?.data);
       onClose();
       if (onSwitchToLogin) onSwitchToLogin();
       setFormData({ prenom: "", nom: "", email: "", password: "", confirmPassword: "" });
 
     } catch (err) {
-      // Gestion d'erreur propre à Axios/API
       setError(err.response?.data?.error || "Une erreur est survenue lors de l'inscription.");
     } finally {
       setIsLoading(false);
