@@ -8,14 +8,21 @@ const InteractiveDiagram = ({
     visiblePieces, 
     selectedPiece, 
     onSelectPiece,
-    enableSwitch = true, // permet d'activer ou de désactiver les boutons switch
+    enableSwitch = true, 
     customHeight = null,
-    imageScale = 1
+    imageScale = 1,
+    imageTranslateX = "0px",
+    imageTranslateY = "0px"
 }) => {
     const defaultHeight = currentFace === "externe"
     ? { base: "400px", lg: "600px" }
     : { base: "400px", lg: "500px" };
     const finalHeight = customHeight || defaultHeight;
+
+    // Calcul du contre-zoom pour les pastilles afin qu'elles gardent leur taille d'origine
+    const counterScale = 1 / imageScale;
+    const hoverScale = 1.2 / imageScale;
+
     return (
         <Box w={{ base: "100%", lg: "500px" }}>
             {/* BOUTONS SWITCH */}
@@ -45,6 +52,7 @@ const InteractiveDiagram = ({
                 </Button>
             </Flex>
             )}
+            
             {/* CARTE INTERACTIVE */}
             <Flex 
                 position="relative" 
@@ -58,11 +66,12 @@ const InteractiveDiagram = ({
                 align="center" 
                 justify="center"
             >
+                {/* BLOC QUI GROSSIT */}
                 <Box 
                 position="relative" 
                 w="fit-content" 
                 h="fit-content"
-                transform={`scale(${imageScale})`}
+                transform={`translate(${imageTranslateX}, ${imageTranslateY}) scale(${imageScale})`}
                 transition="transform 0.3s ease"
                 >
                     <Image 
@@ -76,6 +85,7 @@ const InteractiveDiagram = ({
                         fallbackSrc="https://via.placeholder.com/600x400?text=Chargement..."
                     />
                     
+                    {/* PASTILLES AVEC CONTRE-ZOOM */}
                     {visiblePieces.map((piece) => (
                         <Box
                             key={piece.idPiece}
@@ -84,7 +94,8 @@ const InteractiveDiagram = ({
                             position="absolute"
                             top={piece.top}
                             left={piece.left}
-                            transform="translate(-50%, -50%)"
+                            // 👇 ASTUCE ICI : On applique le contre-zoom calculé en haut
+                            transform={`translate(-50%, -50%) scale(${counterScale})`}
                             zIndex={10}
                             cursor="pointer"
                             w={selectedPiece?.idPiece === piece.idPiece ? "40px" : "30px"}
@@ -95,7 +106,12 @@ const InteractiveDiagram = ({
                             borderColor={selectedPiece?.idPiece === piece.idPiece ? "white" : "brand.rouge"}
                             boxShadow="0 0 0 4px rgba(197, 48, 48, 0.3)"
                             transition="all 0.3s"
-                            _hover={{ transform: "translate(-50%, -50%) scale(1.2)", bg: "brand.rouge", borderColor: "white" }}
+                            // 👇 ASTUCE ICI AUSSI : On gère le survol avec le contre-zoom
+                            _hover={{ 
+                                transform: `translate(-50%, -50%) scale(${hoverScale})`, 
+                                bg: "brand.rouge", 
+                                borderColor: "white" 
+                            }}
                         >
                         <Box 
                             w="8px" 
@@ -111,6 +127,7 @@ const InteractiveDiagram = ({
                     ))}
                 </Box>
             </Flex>
+            
             {enableSwitch && (
             <Text textAlign="center" fontSize="sm" color="gray.400" mt={2} fontStyle="italic">
                 {currentFace === "interne" ? "Vue interne" : "Vue externe"}

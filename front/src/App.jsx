@@ -17,6 +17,8 @@ import AtlasBoeufAvantCaparacon from './pages/atlas/AtlasBoeufAvantCaparacon';
 import AtlasBoeufArriere from './pages/atlas/AtlasBoeufArriere';
 import AtlasBoeufArriereCuisse from './pages/atlas/AtlasBoeufArriereCuisse';
 import AtlasBoeufArriereCuisseDetail from './pages/atlas/AtlasBoeufArriereCuisseDetail';
+import AtlasBoeufArriereBavettes from './pages/atlas/AtlasBoeufArriereBavettes';
+import AtlasBoeufArriereDehanche from './pages/atlas/AtlasBoeufArriereDehanche';
 import AtelierVideo from './pages/AtelierVideo';
 import LaboCalcul from './pages/LaboCalcul';
 import Recettes from './pages/Recettes';
@@ -25,6 +27,8 @@ import Quiz from './pages/Quiz';
 import Actualites from './pages/Actualites';
 import ActualiteDetail from './pages/ActualiteDetail';
 import Dashboard from './pages/Dashboard';
+
+
 
 
 function App() {
@@ -45,6 +49,8 @@ function App() {
         <Route path="/atlas/boeuf/arriere" element={<AtlasBoeufArriere />} />
         <Route path="/atlas/boeuf/arriere/cuisse" element={<AtlasBoeufArriereCuisse />} />
         <Route path="/atlas/boeuf/arriere/cuisse/:id" element={<AtlasBoeufArriereCuisseDetail />} />
+        <Route path="/atlas/boeuf/arriere/bavettes" element={<AtlasBoeufArriereBavettes />} />
+        <Route path="/atlas/boeuf/arriere/dehanche" element={<AtlasBoeufArriereDehanche />} />
         <Route path="/videos" element={<AtelierVideo />} />
         <Route path="/outils" element={<LaboCalcul />} />
         <Route path="/recettes" element={<Recettes />} />
