@@ -6,7 +6,7 @@ import { FiInfo, FiExternalLink } from "react-icons/fi";
 const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
     return (
         // Détails de la pièce sélectionnée
-        <Box w={{ base: "100%", lg: "400px" }} bg="white" p={6} borderRadius="xl" shadow="lg" minH="400px">
+        <Box w="100%" bg="white" p={6} borderRadius="xl" shadow="lg" minH="400px">
             {selectedPiece ? (
                 <VStack align="start" spacing={4} animation="fadeIn 0.5s">
                     <Flex justify="space-between" w="100%" align="center">

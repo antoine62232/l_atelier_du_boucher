@@ -146,9 +146,9 @@ const RecetteDetail = () => {
             <Box bg="white" p={8} borderRadius="xl" boxShadow="md" gridColumn={{ lg: "span 1" }}>
                 <Heading size="lg" color="brand.brun" mb={6} fontFamily="title">Ingrédients</Heading>
                 <VStack align="stretch" spacing={3}>
-                    {ingredients.length > 0 ? (
-                        ingredients.map((ing) => (
-                            <Flex key={ing.ingredientId} justify="space-between" align="center" borderBottom="1px dashed" borderColor="gray.200" pb={2}>
+                    {ingredients && ingredients.length > 0 ? (
+                        ingredients.map((ing, index) => (
+                            <Flex key={index} justify="space-between" align="center" borderBottom="1px dashed" borderColor="gray.200" pb={2}>
                                 <Text fontWeight="medium" color="gray.700">{ing.nomIngredient}</Text>
                                 <Text fontWeight="bold" color="brand.rouge">
                                     {ing.quantiteValeur} {ing.unite}

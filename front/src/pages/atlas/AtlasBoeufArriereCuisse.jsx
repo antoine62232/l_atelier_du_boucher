@@ -10,16 +10,16 @@ const AtlasBoeufArriereCuisse = () => {
 
   const sousParties = [
     { 
-        id: "rumsteck", 
+        id: 10, 
         nom: "Rumsteck", 
         contenu: "Cœur, Aiguillette...", 
         top: "38%", left: "65%",
-        color: "brand.brun" 
+        color: "brand.brun"
     },
     { 
         id: "semelle", 
         nom: "Semelle", 
-        contenu: "Gîte à la noix, Rond de gîte...", 
+        contenu: "Gîte à la noix, Rond de gîte...",
         top: "20%", left: "55%", 
         color: "orange.600" 
     },
