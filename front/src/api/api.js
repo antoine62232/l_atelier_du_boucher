@@ -1,11 +1,11 @@
 import axios from "axios";
 
-// 1. On crée l'instance Axios avec ton URL de base (ton serveur backend)
+// 1. On crée l'instance Axios avec l'URL de base
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000", // Modifie l'URL selon ton projet si besoin
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
 });
 
-// 2. L'INTERCEPTEUR MAGIQUE
+// 2. L'INTERCEPTEUR : Avant chaque requête, on ajoute le token d'authentification si présent
 api.interceptors.request.use(
   (config) => {
     // Avant que la requête parte, on cherche le token

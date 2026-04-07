@@ -82,7 +82,7 @@ const RecetteDetail = () => {
             {/* L'image de couverture*/}
             <Box position="relative" w="100%" h={{ base: "250px", md: "400px" }}>
                 
-                {/* 👈 LE BOUTON COEUR */}
+                {/* LE BOUTON COEUR */}
                 <FavoriteButton 
                   itemId={recette.idRecette} 
                   type="recette" 

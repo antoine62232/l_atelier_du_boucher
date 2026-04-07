@@ -1,9 +1,8 @@
 import api from "../api/api";
 
-// Récupérer toutes les actualités (du plus récent au plus ancien)
+// Récupérer toutes les actualités
 export const getAllActualites = () => {
   return api.get("/actualites/all"); 
-  // Note: Vérifie dans ton fichier backend (actualiteRoute.js) si la route est "/actualites" ou "/actualites/all" et ajuste si besoin !
 };
 
 // Récupérer une actualité spécifique par son ID

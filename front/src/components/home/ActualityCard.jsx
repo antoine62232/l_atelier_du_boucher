@@ -25,7 +25,7 @@ const ActualityCard = ({ title, category, date, excerpt, image, link }) => {
       <Box h="150px" w="100%" overflow="hidden" flexShrink={0}>
         <Image 
           src={image} 
-          // 👇 LA SÉCURITÉ ANTI-IMAGE CASSÉE 👇
+          // LA SÉCURITÉ ANTI-IMAGE CASSÉE
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800&auto=format&fit=crop";

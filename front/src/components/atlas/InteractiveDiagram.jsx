@@ -94,7 +94,6 @@ const InteractiveDiagram = ({
                             position="absolute"
                             top={piece.top}
                             left={piece.left}
-                            // 👇 ASTUCE ICI : On applique le contre-zoom calculé en haut
                             transform={`translate(-50%, -50%) scale(${counterScale})`}
                             zIndex={10}
                             cursor="pointer"
@@ -106,7 +105,6 @@ const InteractiveDiagram = ({
                             borderColor={selectedPiece?.idPiece === piece.idPiece ? "white" : "brand.rouge"}
                             boxShadow="0 0 0 4px rgba(197, 48, 48, 0.3)"
                             transition="all 0.3s"
-                            // 👇 ASTUCE ICI AUSSI : On gère le survol avec le contre-zoom
                             _hover={{ 
                                 transform: `translate(-50%, -50%) scale(${hoverScale})`, 
                                 bg: "brand.rouge", 

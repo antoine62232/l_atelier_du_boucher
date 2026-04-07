@@ -15,7 +15,7 @@ const AnimalCard = ({ image, name, link }) => {
             borderRadius="2xl" 
             boxShadow="lg" 
             overflow="hidden" 
-            w="320px" // Largeur fixe pour l'instant
+            w="320px"
             transition="all 0.3s ease"
             _hover={{ 
                 transform: "translateY(-5px)", 

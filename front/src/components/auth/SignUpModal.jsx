@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { 
   Dialog, Button, Input, Stack, Field, Flex, Text, Link, Heading, Spinner 
 } from "@chakra-ui/react";
-// axios supprimé car inutile ici
 import { FiX } from "react-icons/fi";
 import { registerUser } from "../../services/UsersService";
 
@@ -38,7 +37,6 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     setIsLoading(true);
 
     try {
-      // ✅ CORRECTION ICI : On stocke le résultat dans 'response'
       const response = await registerUser({
         prenom: formData.prenom,
         nom: formData.nom,

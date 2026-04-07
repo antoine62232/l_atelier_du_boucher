@@ -58,7 +58,7 @@ const Actuality = () => {
             wrap={{ base: "wrap", xl: "nowrap" }}
         >
             {actualities.slice(0, 3).map((actu) => {
-                // 👇 On prépare le bon chemin d'image ici 👇
+                // On prépare le bon chemin d'image ici
                 const imagePath = actu.imageActualite?.startsWith('http')
                   ? actu.imageActualite
                   : actu.imageActualite

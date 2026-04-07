@@ -3,7 +3,7 @@ import { useParams, Link as RouterLink } from "react-router-dom";
 import { 
   Box, Container, Heading, Text, Flex, Image, 
   Button, Spinner, Center, Badge, Icon, VStack 
-} from "@chakra-ui/react"; // 👈 Divider supprimé d'ici
+} from "@chakra-ui/react";
 import { FiCalendar, FiArrowLeft, FiExternalLink } from "react-icons/fi";
 import { getActualiteById } from "../services/ActualitesService";
 import { getImageUrl } from "../utils/imageUtils";
@@ -96,7 +96,6 @@ const ActualiteDetail = () => {
                 {actualite.contenu}
             </Text>
 
-            {/* 👇 Remplacement du Divider par une Box avec bordure 👇 */}
             {actualite.lienSource && (
                 <>
                     <Box borderBottom="1px solid" borderColor="gray.200" w="100%" my={10} />

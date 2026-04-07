@@ -42,7 +42,6 @@ const ResetPassword = () => {
       // 3. Redirection vers l'accueil après 3 secondes
       setTimeout(() => {
         navigate("/"); 
-        // Optionnel : Tu pourrais aussi ouvrir la modale de login ici si tu avais un contexte global
       }, 3000);
 
     } catch (error) {

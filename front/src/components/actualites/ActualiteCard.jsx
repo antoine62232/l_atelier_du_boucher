@@ -17,7 +17,6 @@ const ActualiteCard = ({ actualite }) => {
     ? actualite.imageActualite 
     : getImageUrl(`actualites/${actualite.imageActualite}`);
 
-  // 👇 LA MÉTHODE BOUCHER : On coupe physiquement le texte en JavaScript 👇
   const couperTexte = (texte, max) => {
     if (!texte) return "";
     return texte.length > max ? texte.substring(0, max).trim() + "..." : texte;
