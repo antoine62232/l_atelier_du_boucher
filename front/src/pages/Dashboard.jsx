@@ -140,16 +140,16 @@ const Dashboard = () => {
                         <Tabs.Root defaultValue="calculs">
                             <Tabs.List bg="white" borderRadius="md" borderWidth="1px" borderColor="brand.acier" p={1} mb={6} display="flex" flexWrap="wrap">
                                 <Tabs.Trigger value="calculs" flex="1" fontFamily="title" _selected={{ color: "brand.rouge", bg: "brand.beige" }}>
-                                    Calculs 🧮
+                                    Calculs 
                                 </Tabs.Trigger>
                                 <Tabs.Trigger value="quiz" flex="1" fontFamily="title" _selected={{ color: "brand.rouge", bg: "brand.beige" }}>
-                                    Quiz 🏆
+                                    Quiz 
                                 </Tabs.Trigger>
                                 <Tabs.Trigger value="recettes" flex="1" fontFamily="title" _selected={{ color: "brand.rouge", bg: "brand.beige" }}>
-                                    Recettes 🍳
+                                    Recettes 
                                 </Tabs.Trigger>
                                 <Tabs.Trigger value="videos" flex="1" fontFamily="title" _selected={{ color: "brand.rouge", bg: "brand.beige" }}>
-                                    Vidéos 🎥
+                                    Vidéos 
                                 </Tabs.Trigger>
                             </Tabs.List>
 
@@ -176,36 +176,6 @@ const Dashboard = () => {
                             {/* 2. ONGLET QUIZ */}
                             <Tabs.Content value="quiz">
                                 <VStack align="stretch" gap={10}>
-                                    
-                                    <Box>
-                                        <Heading as="h3" size="sm" color="brand.gris" mb={4} borderBottomWidth="1px" borderColor="brand.acier" pb={2}>
-                                            Mes Compétences
-                                        </Heading>
-                                        <Box bg="white" p={6} borderRadius="md" border="1px solid" borderColor="brand.acier" boxShadow="sm">
-                                            <VStack align="stretch" gap={5}>
-                                                <Box>
-                                                    <Flex justify="space-between" mb={1}>
-                                                        <Text fontSize="sm" fontWeight="bold" color="brand.brun">Anatomie & Découpe</Text>
-                                                        <Text fontSize="sm" color="green.600" fontWeight="bold">85%</Text>
-                                                    </Flex>
-                                                    <Box w="100%" bg="gray.100" h="8px" borderRadius="full" overflow="hidden">
-                                                        <Box w="85%" h="100%" bg="green.400" transition="all 1s ease-out" />
-                                                    </Box>
-                                                </Box>
-
-                                                <Box>
-                                                    <Flex justify="space-between" mb={1}>
-                                                        <Text fontSize="sm" fontWeight="bold" color="brand.brun">Hygiène & Sécurité</Text>
-                                                        <Text fontSize="sm" color="brand.rouge" fontWeight="bold">40%</Text>
-                                                    </Flex>
-                                                    <Box w="100%" bg="gray.100" h="8px" borderRadius="full" overflow="hidden">
-                                                        <Box w="40%" h="100%" bg="brand.rouge" transition="all 1s ease-out" />
-                                                    </Box>
-                                                </Box>
-                                            </VStack>
-                                        </Box>
-                                    </Box>
-
                                     <Box>
                                         <Heading as="h3" size="sm" color="brand.gris" mb={4} borderBottomWidth="1px" borderColor="brand.acier" pb={2}>
                                             Historique des Tests
