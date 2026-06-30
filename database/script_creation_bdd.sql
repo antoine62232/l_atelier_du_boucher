@@ -107,19 +107,6 @@ nbPersonnes INT NOT NULL,
 pieceId INT NOT NULL
 );
 
-CREATE TABLE calculsRendement (
-idCalcul INT AUTO_INCREMENT PRIMARY KEY,
-poidsBrut FLOAT NOT NULL,
-prixAchatKg FLOAT NOT NULL,
-poidsNet FLOAT NOT NULL,
-poidsPerte FLOAT,
-margeVisee FLOAT,
-resultatRendement FLOAT NOT NULL,
-dateCalcul DATETIME DEFAULT CURRENT_TIMESTAMP,
-utilisateurId INT NOT NULL,
-pieceId INT NOT NULL
-);
-
 CREATE TABLE questions (
 idQuestion INT AUTO_INCREMENT PRIMARY KEY,
 texteQuestion TEXT NOT NULL,
