@@ -14,11 +14,14 @@ const connexion = mysql.createPool({
 });
 
 // Test de connexion (optionnel mais recommandé au début)
-connexion.getConnection();
-try {
-    console.log("✅ Connecté à la base de données 'atelier_boucher'");
-} catch (error) {
-    console.error("❌ Erreur de connexion BDD :", error);
-}
+(async () => {
+    try {
+        const conn = await connexion.getConnection();
+        console.log("Connecté à la base de données 'atelier_boucher'");
+        conn.release();
+    } catch (error) {
+        console.error("Erreur de connexion BDD :", error.message);
+    }
+})();
 
 export default connexion;

@@ -75,11 +75,11 @@ app.use('/api/favoris-ressources', favorisRessourceRoute);
 app.use('/api/resultats-quiz', resultatQuizRoute);
 
 app.get('/', (req, res) => {
-    res.send("API L'Atelier du Boucher : En ligne 🥩");
+    res.send("API L'Atelier du Boucher : En ligne");
 });
 
 // Lancement du serveur
 app.listen(process.env.PORT, () => {
-    console.log(`🚀 Serveur démarré sur le port ${process.env.PORT}`);
-    console.log(`🔗 http://localhost:${process.env.PORT}`);
+    console.log(`Serveur démarré sur le port ${process.env.PORT}`);
+    console.log(`http://localhost:${process.env.PORT}`);
 });
