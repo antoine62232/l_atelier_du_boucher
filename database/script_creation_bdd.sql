@@ -19,7 +19,9 @@ idPartie INT AUTO_INCREMENT PRIMARY KEY,
 nomPartie VARCHAR(255) NOT NULL,
 descriptionPartie TEXT NOT NULL,
 imagePartie VARCHAR(255) NOT NULL,
-animalId INT NOT NULL
+imagePartieInterieur VARCHAR(255) NULL,
+animalId INT NOT NULL,
+parentId INT NULL
 );
 
 CREATE TABLE termes (
@@ -183,6 +185,9 @@ ADD CONSTRAINT fkPiecesParties FOREIGN KEY (partieId) REFERENCES parties(idParti
 ALTER TABLE parties
 ADD CONSTRAINT fkPartiesAnimaux FOREIGN KEY (animalId) REFERENCES animaux(idAnimal) ON DELETE CASCADE;
 
+ALTER TABLE parties
+ADD CONSTRAINT fkPartieParente FOREIGN KEY (parentId) REFERENCES parties(idPartie) ON DELETE SET NULL;
+
 ALTER TABLE races
 ADD CONSTRAINT fkRacesAnimaux FOREIGN KEY (animalId) REFERENCES animaux(idAnimal) ON DELETE CASCADE;
 
@@ -208,10 +213,7 @@ ADD COLUMN animalId INT NULL,
 ADD COLUMN raceId INT NULL,
 ADD CONSTRAINT fk_questions_parties FOREIGN KEY (partieId) REFERENCES parties(idPartie) ON DELETE CASCADE,
 ADD CONSTRAINT fk_questions_animaux FOREIGN KEY (animalId) REFERENCES animaux(idAnimal) ON DELETE CASCADE,
-ADD CONSTRAINT fk_questions_races FOREIGN KEY (raceId) REFERENCES races(idRace) ON DELETE CASCADE;
-
-ALTER TABLE calculsRendement 
-ADD COLUMN tauxTVA DECIMAL(4,2) NOT NULL DEFAULT 5.50 AFTER margeVisee;                           
+ADD CONSTRAINT fk_questions_races FOREIGN KEY (raceId) REFERENCES races(idRace) ON DELETE CASCADE;                         
 
 CREATE TABLE actualites (
     idActualite INT AUTO_INCREMENT PRIMARY KEY,
@@ -276,3 +278,6 @@ CREATE TABLE resultatsQuiz (
     total INT NOT NULL,
     datePassage DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE resultatsQuiz
+ADD CONSTRAINT fkResultatsQuizUtilisateurs FOREIGN KEY (utilisateurId) REFERENCES utilisateurs(idUtilisateur) ON DELETE CASCADE;
