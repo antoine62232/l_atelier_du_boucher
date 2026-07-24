@@ -86,9 +86,12 @@ app.use((req, res) => {
     res.status(404).json({ message: "Route introuvable" });
 });
 
-app.use ((err, req, res, next) => {
+app.use((err, req, res, next) => {
     console.error(err);
-    res.status(err.status || 500).json({ message: "Erreur serveur" });
+    const status = err.status || 500;
+    res.status(status).json({
+        message: status === 500 ? "Erreur serveur" : "Requête invalide"
+    });
 });
 
 // Lancement du serveur
