@@ -9,6 +9,19 @@ dotenv.config();
 export const createUser = async (req, res) => {
     const { nom, prenom, email, motDePasse, confirmationMotDePasse } = req.body;
 
+    if (!nom || !prenom || !email || !motDePasse || !confirmationMotDePasse) {
+        return res.status(400).json({ error: "Tous les champs sont obligatoires" });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: "Format d'email invalide" });
+    }
+
+    if (motDePasse.length < 8) {
+        return res.status(400).json({ error: "Le mot de passe doit contenir au moins 8 caractères" });
+    }
+
     if (motDePasse !== confirmationMotDePasse) {
         return res.status(400).json({ error: "Les mots de passe ne correspondent pas" });
     }
@@ -143,8 +156,8 @@ export const updatePasswordUser = async (req, res) => {
     const id = req.params.id;
     const { ancienMotDePasse, nouveauMotDePasse } = req.body;
 
-    if (!ancienMotDePasse || !nouveauMotDePasse) {
-        return res.status(400).json({ error: "Les mots de passe sont obligatoires" });
+    if (!ancienMotDePasse || !nouveauMotDePasse || nouveauMotDePasse.length < 8) {
+        return res.status(400).json({ error: "Mot de passe manquant ou trop court" });
     }
 
     try {
@@ -182,7 +195,7 @@ export const forgotPassword = async (req, res) => {
         const user = await userModel.getUserByEmail(email);
 
         if (!user) {
-            return res.status(200).json({ error: "Si l'email existe, le lien de réinitialisation a été envoyé." });
+            return res.status(200).json({ error: "Si l'email existe, un lien de réinitialisation a été envoyé." });
         }
 
         const secret = process.env.JWT_SECRET + user.motDePasse;
@@ -213,7 +226,7 @@ export const forgotPassword = async (req, res) => {
         `;
 
         await sendEmail(email, subject, textMessage, htmlMessage);
-        res.status(200).json({ message: "Email envoyé avec succès" });
+        res.status(200).json({ message: "Si l'email existe, un lien de réinitialisation a été envoyé." });
 
     } catch (error) {
         console.error(error);
@@ -226,6 +239,10 @@ export const resetPassword = async (req, res) => {
     const { nouveauMotDePasse } = req.body;
 
     try {
+        if (!nouveauMotDePasse || nouveauMotDePasse.length < 8) {
+            return res.status(400).json({ error: "Le mot de passe doit contenir au moins 8 caractères" });
+        }
+
         const userPasswordData = await userModel.getPasswordById(id);
         
         if (!userPasswordData) {

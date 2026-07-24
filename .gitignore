@@ -1,0 +1,9 @@
+node_modules/
+.env
+front/.vite/
+back/uploads/
+
+# Fichiers temporaires drawio
+.$*
+*.bkp
+*.dtmp
