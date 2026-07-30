@@ -2,11 +2,9 @@ import * as calculsRendementModel from "../models/calculsRendementModel.js";
 import { calculerRendement } from "../utils/calculsRendement.js";
 
 export const createCalcul = async (req, res) => {
-    // Récupération des données
     const { pieceId, titreCalcul, poidsBrut, prixAchatKg, poidsNet, margeVisee, tauxTva, commentaire } = req.body;
-    // Récupération de l'utilisateur
     const utilisateurId = req.user.id;
-    // Vérification des données
+
     if (!pieceId || !titreCalcul || !poidsBrut || !prixAchatKg || !poidsNet || !margeVisee) {
         return res.status(400).json({ message: "Les champs obligatoires sont manquants" });
     }
@@ -19,7 +17,6 @@ export const createCalcul = async (req, res) => {
         const { poidsPerte, resultatRendement, prixRevientKg, prixVenteConseilleKg, tva } =
             calculerRendement({ poidsBrut, poidsNet, prixAchatKg, margeVisee, tauxTva });
 
-        // Préparation objet (Ordre des propriétés aligné sur la BDD pour la lisibilité)
         const calculData = {
             titreCalcul,
             poidsBrut: parseFloat(poidsBrut),
