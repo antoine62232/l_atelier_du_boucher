@@ -46,6 +46,10 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json()); 
+app.use((req, res, next) => {
+    if (!req.body) req.body = {};
+    next();
+});
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
@@ -78,8 +82,22 @@ app.get('/', (req, res) => {
     res.send("API L'Atelier du Boucher : En ligne");
 });
 
+app.use((req, res) => {
+    res.status(404).json({ message: "Route introuvable" });
+});
+
+app.use((err, req, res, next) => {
+    console.error(err);
+    const status = err.status || 500;
+    res.status(status).json({
+        message: status === 500 ? "Erreur serveur" : "Requête invalide"
+    });
+});
+
 // Lancement du serveur
-app.listen(process.env.PORT, () => {
-    console.log(`Serveur démarré sur le port ${process.env.PORT}`);
-    console.log(`http://localhost:${process.env.PORT}`);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`Serveur démarré sur le port ${PORT}`);
+    console.log(`http://localhost:${PORT}`);
 });

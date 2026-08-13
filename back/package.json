@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "start": "node index.js",
-  "dev": "nodemon index.js"
-},
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
   "keywords": [],
   "author": "Antoine Bayart",
   "license": "ISC",
@@ -19,7 +20,10 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "mysql2": "^3.16.1",
-    "nodemailer": "^7.0.13",
+    "nodemailer": "^9.0.5",
     "nodemon": "^3.1.11"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
   }
 }
