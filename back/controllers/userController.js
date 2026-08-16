@@ -6,6 +6,8 @@ import { sendEmail } from '../services/emailService.js';
 
 dotenv.config();
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const createUser = async (req, res) => {
     const { nom, prenom, email, motDePasse, confirmationMotDePasse } = req.body;
 
@@ -13,7 +15,6 @@ export const createUser = async (req, res) => {
         return res.status(400).json({ error: "Tous les champs sont obligatoires" });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         return res.status(400).json({ error: "Format d'email invalide" });
     }
@@ -34,6 +35,9 @@ export const createUser = async (req, res) => {
             idUtilisateur: result.insertId,
             roleId: 2 });
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: "Un compte existe déjà avec cet email" });
+        }
         console.error(error);
         res.status(500).json({ error: "Erreur lors de la création de l'utilisateur" });
     }
@@ -125,11 +129,19 @@ export const updateUser = async (req, res) => {
     if (!nom || !prenom || !email) {
         return res.status(400).json({ error: "Tous les champs sont obligatoires" });        
     }
+
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: "Format d'email invalide" });
+    }
+    
     try {
         const result = await userModel.updateUser(id, nom, prenom, email);
         if (result.affectedRows === 0) return res.status(404).json({ error: "Utilisateur non trouvé" });
         res.status(200).json({ message: "Utilisateur mis à jour avec succès" });
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: "Un compte existe déjà avec cet email" });
+        }
         console.error(error);
         res.status(500).json({ error: "Erreur serveur lors de la mise à jour de l'utilisateur" });
     }
@@ -142,11 +154,19 @@ export const updateRoleUser = async (req, res) => {
     if (!nom || !prenom || !email || !roleId) {
         return res.status(400).json({ error: "Tous les champs sont obligatoires" });        
     }
+
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: "Format d'email invalide" });
+    }
+
     try {
         const result = await userModel.updateRoleUser(id, nom, prenom, email, roleId);
         if (result.affectedRows === 0) return res.status(404).json({ error: "Utilisateur non trouvé" });
         res.status(200).json({ message: "Utilisateur mis à jour avec succès" });
     } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: "Un compte existe déjà avec cet email" });
+        }
         console.error(error);
         res.status(500).json({ error: "Erreur serveur lors de la mise à jour de l'utilisateur" });
     }
@@ -165,7 +185,7 @@ export const updatePasswordUser = async (req, res) => {
         if (!user) return res.status(404).json({ error: "Utilisateur non trouvé" });
 
         const isMatch = await bcrypt.compare(ancienMotDePasse, user.motDePasse);
-        if (!isMatch) return res.status(401).json({ error: "Identifiants incorrects" });
+        if (!isMatch) return res.status(400).json({ error: "Ancien mot de passe incorrect" });
 
         const nouveauHash = await bcrypt.hash(nouveauMotDePasse, 10);
         await userModel.updatePasswordUser(id, nouveauHash);
@@ -195,7 +215,7 @@ export const forgotPassword = async (req, res) => {
         const user = await userModel.getUserByEmail(email);
 
         if (!user) {
-            return res.status(200).json({ error: "Si l'email existe, un lien de réinitialisation a été envoyé." });
+            return res.status(200).json({ message: "Si l'email existe, un lien de réinitialisation a été envoyé." });
         }
 
         const secret = process.env.JWT_SECRET + user.motDePasse;
