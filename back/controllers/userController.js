@@ -7,6 +7,7 @@ import { sendEmail } from '../services/emailService.js';
 dotenv.config();
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const HASH_FACTICE = '$2b$10$kqkLEtCSjyP5mp/ewJuKO.CIrJmyzxZ5TWIcSsfZd.NFCSI3vXuSS'; // Hash factice pour éviter les attaques par timing
 
 export const createUser = async (req, res) => {
     const { nom, prenom, email, motDePasse, confirmationMotDePasse } = req.body;
@@ -62,20 +63,22 @@ export const loginUser = async (req, res) => {
 
     try {
         const user = await userModel.getUserByEmail(email);
-        
-        if (!user) {
-            return res.status(401).json({ error: "Identifiants incorrects." });
+
+        let hashCible;
+        if (user) {
+            hashCible = user.motDePasse;
+        } else {
+            hashCible = HASH_FACTICE;
         }
+        const isMatch = await bcrypt.compare(motDePasse, hashCible);
 
-        const isMatch = await bcrypt.compare(motDePasse, user.motDePasse);
-
-        if (!isMatch) {
+        if (!user || !isMatch) {
             return res.status(401).json({ error: "Identifiants incorrects." });
         }
 
         const token = jwt.sign(
-            { id: user.idUtilisateur, role: user.roleId }, 
-            process.env.JWT_SECRET, 
+            { id: user.idUtilisateur, role: user.roleId },
+            process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
