@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram name="Page-1" id="oNQwFQ-Jnz7-y7kF8gmH">
-    <mxGraphModel dx="4323" dy="3158" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2060" dy="963" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -358,7 +358,7 @@
             <mxPoint x="1140" y="435" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="3lAqeuaWegKJj3Y-UY_6-38" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="1,1" vertex="1">
+        <mxCell id="3lAqeuaWegKJj3Y-UY_6-38" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="0,1" vertex="1">
           <mxGeometry height="30" width="60" x="780" y="340" as="geometry" />
         </mxCell>
         <mxCell id="3lAqeuaWegKJj3Y-UY_6-39" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="0,N" vertex="1">
@@ -412,7 +412,7 @@
         <mxCell id="3lAqeuaWegKJj3Y-UY_6-52" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="0,N" vertex="1">
           <mxGeometry height="30" width="60" x="-540" y="815" as="geometry" />
         </mxCell>
-        <mxCell id="3lAqeuaWegKJj3Y-UY_6-56" parent="1" style="ellipse;whiteSpace=wrap;html=1;align=center;" value="valoriser" vertex="1">
+        <mxCell id="3lAqeuaWegKJj3Y-UY_6-56" parent="1" style="ellipse;whiteSpace=wrap;html=1;align=center;" value="cuisiner" vertex="1">
           <mxGeometry height="40" width="100" x="-260" y="280" as="geometry" />
         </mxCell>
         <mxCell id="3lAqeuaWegKJj3Y-UY_6-57" edge="1" parent="1" source="BsPiRsu8And8koNxipv2-31" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmandOne;startArrow=ERmandOne;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.154;exitDx=0;exitDy=0;exitPerimeter=0;" target="3lAqeuaWegKJj3Y-UY_6-56" value="">
