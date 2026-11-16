@@ -5,7 +5,7 @@ import { Box, VStack, Heading, Input, Flex, Text, Textarea } from "@chakra-ui/re
 const CalculForm = ({ formData, handleChange, pieces, successMessage }) => {
   return (
     <Box bg="white" p={8} borderRadius="xl" boxShadow="md" as="form" onSubmit={(e) => e.preventDefault()}>
-      <VStack spacing={5} align="stretch">
+      <VStack gap={5} align="stretch">
         <Heading size="md" color="brand.brun" mb={2}>Données de la pièce</Heading>
         
         {successMessage && (

@@ -33,7 +33,7 @@ const ActualiteDetail = () => {
     <Center h="70vh">
         <VStack>
             <Text fontSize="xl">Article introuvable.</Text>
-            <Button as={RouterLink} to="/actualites" colorScheme="red" variant="link">Retour aux actualités</Button>
+            <Button as={RouterLink} to="/actualites" colorPalette="red" variant="link">Retour aux actualités</Button>
         </VStack>
     </Center>
   );
@@ -59,7 +59,7 @@ const ActualiteDetail = () => {
         <Box bg="white" p={{ base: 6, md: 10 }} borderRadius="2xl" boxShadow="lg">
             
             <Flex justify="space-between" align="center" mb={6} wrap="wrap" gap={4}>
-                <Badge colorScheme="red" fontSize="md" px={3} py={1} borderRadius="md">
+                <Badge colorPalette="red" fontSize="md" px={3} py={1} borderRadius="md">
                     {actualite.categorie}
                 </Badge>
                 <Flex align="center" gap={2} color="gray.500">
@@ -99,7 +99,7 @@ const ActualiteDetail = () => {
             {actualite.lienSource && (
                 <>
                     <Box borderBottom="1px solid" borderColor="gray.200" w="100%" my={10} />
-                    <VStack align="flex-start" spacing={4}>
+                    <VStack align="flex-start" gap={4}>
                         <Text fontWeight="bold" color="brand.brun">Pour aller plus loin :</Text>
                         <Button 
                             as="a" 
@@ -107,7 +107,7 @@ const ActualiteDetail = () => {
                             target="_blank" 
                             rel="noopener noreferrer"
                             rightIcon={<FiExternalLink />}
-                            colorScheme="blue"
+                            colorPalette="blue"
                             variant="outline"
                             _hover={{ bg: "blue.50" }}
                         >

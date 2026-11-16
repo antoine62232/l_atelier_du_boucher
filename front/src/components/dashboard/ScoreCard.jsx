@@ -27,7 +27,7 @@ const ScoreCard = ({ quiz }) => {
                 {isSuccess ? <FiCheckCircle /> : <FiXCircle />}
                 {isSuccess ? "Validé" : "À réviser"}
             </Badge>
-            <Heading size="sm" color="brand.gris" fontFamily="title" noOfLines={2}>
+            <Heading size="sm" color="brand.gris" fontFamily="title" lineClamp={2}>
                 {quiz.titre}
             </Heading>
         </VStack>

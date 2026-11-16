@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { IconButton, Spinner } from "@chakra-ui/react";
+import { toaster } from "../ui/toaster";
 import { FiHeart } from "react-icons/fi"; // Coeur vide (non favori)
 import { FaHeart } from "react-icons/fa"; // Coeur plein (favori)
 
@@ -21,7 +22,7 @@ const FavoriteButton = ({ itemId, type, isInitiallyFavorite = false }) => {
     e.stopPropagation();
 
     if (!isLoggedIn) {
-      alert("Vous devez être connecté pour ajouter un favori !");
+      toaster.create({ type: "info", title: "Connectez-vous pour ajouter un favori." });
       return;
     }
 
@@ -40,7 +41,7 @@ const FavoriteButton = ({ itemId, type, isInitiallyFavorite = false }) => {
       
     } catch (error) {
       console.error(`Erreur lors de l'ajout aux favoris (${type}):`, error);
-      alert("Une erreur est survenue lors de l'ajout aux favoris.");
+      toaster.create({ type: "error", title: "Le favori n'a pas pu être enregistré.", description: "Vérifiez votre connexion puis réessayez." });
     } finally {
       setIsLoading(false);
     }
@@ -51,15 +52,17 @@ const FavoriteButton = ({ itemId, type, isInitiallyFavorite = false }) => {
 
   return (
     <IconButton
-      aria-label="Ajouter aux favoris"
+      aria-label={isFavori ? "Retirer des favoris" : "Ajouter aux favoris"}
+      aria-pressed={isFavori}
       onClick={handleToggle}
       disabled={isLoading}
       bg="white"
       color="brand.rouge"
       borderRadius="full"
       boxShadow="md"
-      w="40px"
-      h="40px"
+      w="44px"
+      h="44px"
+      minW="44px"
       _hover={{ transform: "scale(1.1)", bg: "gray.50" }}
       transition="all 0.2s"
       position="absolute"
@@ -70,9 +73,9 @@ const FavoriteButton = ({ itemId, type, isInitiallyFavorite = false }) => {
       {isLoading ? (
         <Spinner size="sm" color="brand.rouge" />
       ) : isFavori ? (
-        <FaHeart size={20} />
+        <FaHeart size={20} aria-hidden="true" />
       ) : (
-        <FiHeart size={20} />
+        <FiHeart size={20} aria-hidden="true" />
       )}
     </IconButton>
   );

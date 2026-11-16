@@ -32,7 +32,7 @@ const QuizCard = ({ currentQ, currentIndex, totalQuestions, progressPercent, onA
           <Button 
             key={reponse.idReponse}
             height="auto" p={6} whiteSpace="normal"
-            variant="outline" colorScheme="red" borderColor="gray.300" color="gray.700"
+            variant="outline" colorPalette="red" borderColor="gray.300" color="gray.700"
             _hover={{ bg: "brand.rouge", color: "white", borderColor: "brand.rouge" }}
             onClick={() => onAnswer(reponse)} 
           >

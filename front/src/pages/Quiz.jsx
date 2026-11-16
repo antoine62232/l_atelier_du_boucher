@@ -98,18 +98,18 @@ const Quiz = () => {
             </Text>
           </Box>
 
-          <VStack spacing={8}>
+          <VStack gap={8}>
             <Box bg="white" p={8} borderRadius="2xl" w="100%" textAlign="center" shadow="lg">
               <Heading color="brand.rouge" mb={2}>Résultat Final</Heading>
               <Text fontSize="2xl" fontWeight="bold" color={score > questions.length / 2 ? "green.500" : "orange.500"}>
                 Votre score : {score} / {questions.length}
               </Text>
-              <Button leftIcon={<FiRotateCcw />} colorScheme="red" bg="brand.rouge" mt={6} onClick={handleRestart}>
+              <Button leftIcon={<FiRotateCcw />} colorPalette="red" bg="brand.rouge" mt={6} onClick={handleRestart}>
                 Rejouer
               </Button>
             </Box>
 
-            <VStack w="100%" spacing={6} align="stretch">
+            <VStack w="100%" gap={6} align="stretch">
               {userAnswers.map((item, index) => {
                 const bonneReponse = item.question.reponses.find(r => r.resultatReponse === 1 || r.resultatReponse === true);
 

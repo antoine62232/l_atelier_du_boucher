@@ -5,28 +5,29 @@ import { Link as RouterLink } from "react-router-dom";
 const ToolsCard = ({ title, description, image, link, buttonText }) => {
   return (
     <Card.Root 
-      w="280px"
-      h="400px"
+      w="100%"
+      h="100%"
       overflow="hidden"
       bg="white"
-      boxShadow="lg"
+      boxShadow="carte"
       borderRadius="xl"
       border="none"
       transition="all 0.3s"
-      _hover={{ transform: "translateY(-5px)", boxShadow: "2xl" }}
+      _hover={{ transform: "translateY(-4px)", boxShadow: "carteSurvol" }}
       display="flex"
       flexDirection="column"
     >
       <Image
         src={image}
-        alt={title}
-        h="180px"
+        alt=""
+        h={{ base: "200px", md: "180px" }}
         w="100%"
         objectFit="cover"
       />
       
-      <Card.Body gap="2" p={4}>
+      <Card.Body gap="2" p={5}>
         <Card.Title 
+          as="h3"
           textAlign="center"
           fontFamily="title" 
           fontWeight="bold"
@@ -52,7 +53,7 @@ const ToolsCard = ({ title, description, image, link, buttonText }) => {
           fontSize="sm" 
           color="brand.gris" 
           lineHeight="1.5"
-          noOfLines={3} 
+          lineClamp={3}
         >
           {description}
         </Card.Description>
@@ -67,7 +68,7 @@ const ToolsCard = ({ title, description, image, link, buttonText }) => {
             borderColor="brand.brun"
             color="brand.brun"
             fontWeight="medium"
-            size="sm"   
+            size="md"
             px={6}
             _hover={{ 
                 bg: "brand.brun", 

@@ -56,7 +56,7 @@ const AdminLayout = () => {
           </Stack>
         </Box>
 
-        <Box as="main" flex="1" minW={0}>
+        <Box flex="1" minW={0}>
           <Outlet />
         </Box>
       </Flex>

@@ -96,7 +96,7 @@ const RessourceCard = ({ ressource, onToggleFavori }) => {
             {ressource.typeTechnique?.toUpperCase() || "TECHNIQUE"}
           </Badge>
 
-          <Heading fontFamily="title" fontSize="lg" color="brand.gris" noOfLines={1} lineHeight="1.2">
+          <Heading fontFamily="title" fontSize="lg" color="brand.gris" lineClamp={1} lineHeight="1.2">
             {ressource.titre}
           </Heading>
         </Flex>

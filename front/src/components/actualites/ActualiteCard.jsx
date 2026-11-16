@@ -51,7 +51,7 @@ const ActualiteCard = ({ actualite }) => {
       <Box p={6} display="flex" flexDirection="column" flex="1">
         
         <Flex justify="space-between" align="center" mb={4}>
-          <Badge colorScheme="red" variant="subtle" px={2} py={1} borderRadius="md">
+          <Badge colorPalette="red" variant="subtle" px={2} py={1} borderRadius="md">
             {actualite.categorie}
           </Badge>
           <Flex align="center" gap={1} color="gray.500" fontSize="xs">

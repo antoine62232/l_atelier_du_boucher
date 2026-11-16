@@ -51,7 +51,7 @@ const AtlasBoeufArriereCuisse = () => {
       <Container maxW="1360px" px={6}>
         
         {/* HEADER & FIL D'ARIANE */}
-        <VStack align="start" spacing="12px" mb={10}>
+        <VStack align="start" gap="12px" mb={10}>
              <Breadcrumb.Root color="gray.500" fontSize="sm">
                 <Breadcrumb.List>
                     <Breadcrumb.Item><Breadcrumb.Link as={RouterLink} to="/atlas/boeuf">Le Bœuf</Breadcrumb.Link></Breadcrumb.Item>

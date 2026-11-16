@@ -81,7 +81,7 @@ const AtlasBoeufArriereBavettes = () => {
       <Container maxW="1360px" px={6}>
         
         {/* BOUTON RETOUR (Pointe vers l'Arrière au lieu de l'Avant) */}
-        <VStack align="start" spacing="12px" mb={10}>
+        <VStack align="start" gap="12px" mb={10}>
             <Button 
                 as={RouterLink} to="/atlas/boeuf/arriere"
                 variant="outline" borderColor="brand.brun" 

@@ -60,7 +60,7 @@ const CalculCard = ({ calcul, onDelete }) => {
         {/* EN-TÊTE AVEC TITRE, PIÈCE ET DATE */}
         <Flex justify="space-between" align="center" mb={3} pr={6}>
           <VStack align="start" gap={0}>
-              <Heading size="sm" color="brand.gris" fontFamily="title" noOfLines={1}>
+              <Heading size="sm" color="brand.gris" fontFamily="title" lineClamp={1}>
               {calcul.titreCalcul}
               </Heading>
               <Text fontSize="xs" color="gray.500">{calcul.nomPiece || "Pièce non définie"}</Text>
@@ -117,7 +117,7 @@ const CalculCard = ({ calcul, onDelete }) => {
                 </Box>
 
                 <Box p={8}>
-                    <VStack spacing={5} align="stretch" fontFamily="mono">
+                    <VStack gap={5} align="stretch" fontFamily="mono">
                         
                         <VStack textAlign="center" mb={2}>
                             <Heading fontFamily="title" color="brand.brun" size="xl">TICKET D'ARCHIVE</Heading>
@@ -137,7 +137,7 @@ const CalculCard = ({ calcul, onDelete }) => {
 
                         <Box borderBottom="1px dashed" borderColor="gray.400" w="100%" my={2} />
 
-                        <VStack align="stretch" spacing={2}>
+                        <VStack align="stretch" gap={2}>
                             <Flex justify="space-between">
                                 <Text color="gray.600">Poids Brut :</Text>
                                 <Text fontWeight="bold">{parseFloat(calcul.poidsBrut).toFixed(3)} kg</Text>
@@ -161,7 +161,7 @@ const CalculCard = ({ calcul, onDelete }) => {
 
                         <Box borderBottom="1px dashed" borderColor="gray.400" w="100%" my={2} />
 
-                        <VStack align="stretch" spacing={2}>
+                        <VStack align="stretch" gap={2}>
                             <Flex justify="space-between">
                                 <Text color="gray.600">Prix d'achat brut :</Text>
                                 <Text fontWeight="bold">{euroFormatter.format(calcul.prixAchatKg)}/kg</Text>
@@ -174,7 +174,7 @@ const CalculCard = ({ calcul, onDelete }) => {
 
                         <Box borderBottom="1px dashed" borderColor="gray.400" w="100%" my={2} />
 
-                        <VStack align="stretch" spacing={1} bg="green.50" border="1px solid" borderColor="green.200" p={4} borderRadius="md">
+                        <VStack align="stretch" gap={1} bg="green.50" border="1px solid" borderColor="green.200" p={4} borderRadius="md">
                             <Flex justify="space-between" align="center">
                                 <Text fontWeight="bold" color="green.700">PRIX DE VENTE CONSEILLÉ (TTC) :</Text>
                                 <VStack align="end" gap={0}>
@@ -192,7 +192,7 @@ const CalculCard = ({ calcul, onDelete }) => {
                         {calcul.commentaire && (
                             <>
                                 <Box borderBottom="1px dashed" borderColor="gray.400" w="100%" my={2} />
-                                <VStack align="stretch" spacing={1}>
+                                <VStack align="stretch" gap={1}>
                                     <Text color="gray.500" fontSize="xs" textTransform="uppercase">Observations :</Text>
                                     <Box 
                                         p={3}

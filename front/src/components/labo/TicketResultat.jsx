@@ -25,7 +25,7 @@ const TicketResultat = ({ formData, onSave, isLoading }) => {
     <Box bg="#fdfbf7" p={8} borderRadius="md" boxShadow="xl" border="1px solid #e2e8f0" position="relative">
       <Box position="absolute" top="-10px" left="0" right="0" height="20px" bgImage="radial-gradient(circle, transparent 10px, #fdfbf7 11px)" bgSize="20px 20px" />
 
-      <VStack spacing={4} align="stretch" fontFamily="mono">
+      <VStack gap={4} align="stretch" fontFamily="mono">
         <Box textAlign="center" mb={4}>
             <Heading fontFamily="title" color="brand.brun" size="lg">TICKET D'ANALYSE</Heading>
             <Text fontSize="sm" color="gray.500" mt={1}>L'Atelier du Boucher</Text>

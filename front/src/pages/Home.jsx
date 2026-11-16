@@ -8,7 +8,7 @@ import Actuality from '../components/home/Actuality';
 
 const Home = () => {
     return (
-        <Box as="main" w="100%" overflowX="hidden">
+        <Box w="100%" overflowX="hidden">
             <Hero />
             <Tools />
             <CourseResume />

@@ -4,13 +4,13 @@ import ChallengeCard from "./ChallengeCard";
 
 const ChallengesPractice = () => {
   return (
-    <Box as="section" bg="brand.beige" pb="84px">
+    <Box as="section" bg="brand.beige" pb={{ base: 14, md: "84px" }}>
       <Container maxW="1400px">
         
         {/* TITRE DE SECTION */}
         <Heading 
           textAlign="center" 
-          mb={8}
+          mb={4}
           color="brand.rouge" 
           fontFamily="title"
           fontSize={{ base: "3xl", md: "5xl" }}
@@ -24,7 +24,7 @@ const ChallengesPractice = () => {
             fontSize="md" 
             maxW="600px" 
             mx="auto" 
-            mb="84px"
+            mb={{ base: 10, md: "64px" }}
         >
             Testez vos connaissances théoriques et techniques à travers des quiz interactifs et des mises en situation réelles.
         </Text>
@@ -32,10 +32,10 @@ const ChallengesPractice = () => {
         {/* CONTENEUR FLEX */}
         <Flex 
             direction={{ base: "column", md: "row" }}
-            gap="106px"
+            gap={{ base: 6, md: 8, lg: 12 }}
             justify="center"
             align="stretch"
-            maxW="1280px"
+            maxW={{ base: "400px", md: "1100px" }}
             mx="auto"
         >
             
@@ -48,10 +48,10 @@ const ChallengesPractice = () => {
                     link="/outils"
                     iconChar="%"
                     titleColor="brand.gris"
-                    iconBg="#F7F9FA"       
-                    iconColor="brand.gris" 
-                    btnColor="brand.acier" 
-                    btnBorderColor="brand.acier"
+                    iconBg="brand.beige"
+                    iconColor="brand.gris"
+                    btnColor="brand.gris"
+                    btnBorderColor="brand.gris"
                 />
             </Box>
 
@@ -59,13 +59,13 @@ const ChallengesPractice = () => {
             <Box flex="1" w="100%">
                 <ChallengeCard 
                     title="Le Quiz du Jour"
-                    description="Testez vos connaissances : Reconnaître les morceaux du Bœuf (Niveau 1)"
+                    description="Une série de questions sur les pièces, la découpe et la cuisson, avec la correction expliquée."
                     buttonText="LANCER LE DÉFI"
                     link="/quiz"
                     iconChar="?"
                     titleColor="brand.rouge" 
                     iconBg="brand.rouge"     
-                    iconColor="#581218"      
+                    iconColor="brand.creme"
                     btnColor="brand.rouge"   
                     btnBorderColor="brand.rouge"
                 />

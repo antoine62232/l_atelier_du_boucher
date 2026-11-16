@@ -50,10 +50,10 @@ const RecetteCard = ({ recette }) => {
       </Box>
 
       <Flex direction="column" p={5} gap={3}>
-        <Heading fontFamily="title" fontSize="xl" color="brand.gris" lineHeight="1.2" noOfLines={2}>
+        <Heading fontFamily="title" fontSize="xl" color="brand.gris" lineHeight="1.2" lineClamp={2}>
             {recette.titre}
         </Heading>
-        <Text color="gray.500" fontSize="sm" noOfLines={2}>
+        <Text color="gray.500" fontSize="sm" lineClamp={2}>
             Découvrez cette délicieuse recette...
         </Text>
         <Box borderBottom="1px solid" borderColor="gray.200" my={1} />

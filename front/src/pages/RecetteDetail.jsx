@@ -106,7 +106,7 @@ const RecetteDetail = () => {
                         <Heading fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
                             {recette.titre}
                         </Heading>
-                        <HStack spacing={4} color="gray.600" fontSize="lg" flexWrap="wrap">
+                        <HStack gap={4} color="gray.600" fontSize="lg" flexWrap="wrap">
                             <Badge bg={difficulte.color} color="white" px={3} py={1} borderRadius="full">
                                 {difficulte.label}
                             </Badge>
@@ -145,7 +145,7 @@ const RecetteDetail = () => {
             
             <Box bg="white" p={8} borderRadius="xl" boxShadow="md" gridColumn={{ lg: "span 1" }}>
                 <Heading size="lg" color="brand.brun" mb={6} fontFamily="title">Ingrédients</Heading>
-                <VStack align="stretch" spacing={3}>
+                <VStack align="stretch" gap={3}>
                     {ingredients && ingredients.length > 0 ? (
                         ingredients.map((ing, index) => (
                             <Flex key={index} justify="space-between" align="center" borderBottom="1px dashed" borderColor="gray.200" pb={2}>
@@ -163,7 +163,7 @@ const RecetteDetail = () => {
 
             <Box bg="white" p={8} borderRadius="xl" boxShadow="md" gridColumn={{ lg: "span 2" }}>
                 <Heading size="lg" color="brand.brun" mb={6} fontFamily="title">Préparation</Heading>
-                <VStack align="stretch" spacing={6}>
+                <VStack align="stretch" gap={6}>
                     {instructions.length > 0 ? (
                         instructions.map((etape) => (
                             <Flex key={etape.ordreEtape} gap={4}>

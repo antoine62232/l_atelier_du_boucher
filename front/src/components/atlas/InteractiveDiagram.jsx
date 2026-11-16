@@ -31,7 +31,7 @@ const InteractiveDiagram = ({
                 <Button 
                     size="sm" borderRadius="full" px={6}
                     variant={currentFace === "interne" ? "solid" : "ghost"}
-                    colorScheme={currentFace === "interne" ? "red" : "gray"}
+                    colorPalette={currentFace === "interne" ? "red" : "gray"}
                     onClick={() => { setCurrentFace("interne"); onSelectPiece(null); }}
                     bg={currentFace === "interne" ? "brand.rouge" : "transparent"}
                     color={currentFace === "interne" ? "white" : "gray.500"}
@@ -42,7 +42,7 @@ const InteractiveDiagram = ({
                 <Button 
                     size="sm" borderRadius="full" px={6}
                     variant={currentFace === "externe" ? "solid" : "ghost"}
-                    colorScheme={currentFace === "externe" ? "red" : "gray"}
+                    colorPalette={currentFace === "externe" ? "red" : "gray"}
                     onClick={() => { setCurrentFace("externe"); onSelectPiece(null); }}
                     bg={currentFace === "externe" ? "brand.rouge" : "transparent"}
                     color={currentFace === "externe" ? "white" : "gray.500"}

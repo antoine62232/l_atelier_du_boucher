@@ -53,7 +53,7 @@ const AtlasBoeufArriereCuisseDetail = () => {
       <Center h="50vh">
         <VStack>
           <Heading size="md" color="gray.500">Partie introuvable</Heading>
-          <Button as={RouterLink} to="/atlas" mt={4} colorScheme="red">Retour à l'Atlas</Button>
+          <Button as={RouterLink} to="/atlas" mt={4} colorPalette="red">Retour à l'Atlas</Button>
         </VStack>
       </Center>
     );
@@ -64,7 +64,7 @@ const AtlasBoeufArriereCuisseDetail = () => {
       <Container maxW="container.xl">
         
         {/* HEADER & FIL D'ARIANE */}
-        <VStack align="start" spacing="12px" mb={10}>
+        <VStack align="start" gap="12px" mb={10}>
              <Breadcrumb.Root color="gray.500" fontSize="sm">
                 <Breadcrumb.List>
                     <Breadcrumb.Item><Breadcrumb.Link as={RouterLink} to="/atlas/boeuf">Le Bœuf</Breadcrumb.Link></Breadcrumb.Item>
@@ -94,7 +94,7 @@ const AtlasBoeufArriereCuisseDetail = () => {
             <Text color="gray.700" fontSize="md" maxW="3xl" mx="auto">
                 {partie.descriptionPartie}
             </Text>
-            <Badge colorScheme="red" variant="solid" borderRadius="full" px={4} py={1} mt={4} fontSize="sm">
+            <Badge colorPalette="red" variant="solid" borderRadius="full" px={4} py={1} mt={4} fontSize="sm">
                 {pieces.length} morceaux
             </Badge>
         </Box>
@@ -125,7 +125,7 @@ const AtlasBoeufArriereCuisseDetail = () => {
             {pieces.length === 0 ? (
                 <Text color="gray.500" fontStyle="italic">Aucun morceau enregistré pour cette zone.</Text>
             ) : (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
                     {pieces.map((piece) => (
                         <AtlasDetails 
                             key={piece.idPiece} 

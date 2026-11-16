@@ -92,7 +92,7 @@ const AtlasBoeufAvantEpaule = () => {
     <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="40px">
       <Container maxW="1360px" px={6}>
         
-        <VStack align="start" spacing="12px" mb={10}>
+        <VStack align="start" gap="12px" mb={10}>
             <Button 
                 as={RouterLink} to="/atlas/boeuf/avant"
                 variant="outline" borderColor="brand.brun" 

@@ -43,14 +43,13 @@ const Tools = () => {
     <Box
     as="section"
     bg="brand.beige" 
-    pt="84px" 
-    pb="84px">
+    py={{ base: 14, md: "84px" }}>
 
       <Container maxW="1400px"> 
         
         <Heading 
           textAlign="center"
-          mb={8}
+          mb={4}
           color="brand.rouge" 
           fontFamily="title"
           fontSize={{ base: "3xl", md: "5xl" }}
@@ -64,19 +63,20 @@ const Tools = () => {
             fontSize="md" 
             maxW="600px" 
             mx="auto" 
-            mb="84px"
+            mb={{ base: 10, md: "64px" }}
         >
             Une suite complète de ressources interactives conçues pour vous accompagner du laboratoire à la vente.
         </Text>
 
         <SimpleGrid 
             columns={{ base: 1, md: 2, xl: 4 }} 
-            spacing="62px" 
-            justifyItems="center"
+            gap={{ base: 6, md: 8 }}
+            maxW={{ base: "400px", md: "760px", xl: "100%" }}
+            mx="auto"
         >
-          {toolsData.map((tool, index) => (
+          {toolsData.map((tool) => (
             <ToolsCard 
-              key={index}
+              key={tool.link}
               {...tool} 
             />
           ))}

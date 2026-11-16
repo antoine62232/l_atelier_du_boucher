@@ -8,12 +8,12 @@ const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
         // Détails de la pièce sélectionnée
         <Box w="100%" bg="white" p={6} borderRadius="xl" shadow="lg" minH="400px">
             {selectedPiece ? (
-                <VStack align="start" spacing={4} animation="fadeIn 0.5s">
+                <VStack align="start" gap={4} animation="fadeIn 0.5s">
                     <Flex justify="space-between" w="100%" align="center">
                         <Heading size="lg" color="brand.rouge" fontFamily="title" lineHeight="1.2">
                             {selectedPiece.nomPiece}
                         </Heading>
-                        <Badge colorScheme="orange" variant="subtle" fontSize="0.8em" px={2} py={1} borderRadius="md">
+                        <Badge colorPalette="orange" variant="subtle" fontSize="0.8em" px={2} py={1} borderRadius="md">
                             {selectedPiece.utilisation}
                         </Badge>
                     </Flex>
@@ -39,7 +39,7 @@ const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
                     <Button 
                         as={RouterLink} 
                         to={`/recettes?pieceId=${selectedPiece.idPiece}`} 
-                        colorScheme="red" variant="solid" bg="brand.rouge" w="full"
+                        colorPalette="red" variant="solid" bg="brand.rouge" w="full"
                         _hover={{ bg: "brand.brun" }}
                     >
                         <FiExternalLink style={{ marginRight: "8px" }} /> Voir les recettes
@@ -47,7 +47,7 @@ const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
 
                 </VStack>
             ) : (
-                <VStack justify="center" h="100%" spacing={4} textAlign="center" color="gray.400">
+                <VStack justify="center" h="100%" gap={4} textAlign="center" color="gray.400">
                     <Box p={4} borderRadius="full" bg="gray.50"><FiInfo size={40} /></Box>
                     <Heading size="md" color="gray.500">Sélectionnez une pièce</Heading>
                     <Text fontSize="sm">Cliquez sur les pastilles rouges pour voir les détails.</Text>
