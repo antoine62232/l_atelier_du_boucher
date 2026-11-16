@@ -88,7 +88,7 @@ const InteractiveDiagram = ({
                     {/* PASTILLES AVEC CONTRE-ZOOM */}
                     {visiblePieces.map((piece) => (
                         <Box
-                            key={piece.idPiece}
+                            key={piece.idPiece ?? piece.nomBdd}
                             as="button"
                             onClick={() => onSelectPiece(piece)}
                             position="absolute"
