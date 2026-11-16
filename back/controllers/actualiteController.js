@@ -49,6 +49,9 @@ export const getActualiteById = async (req, res) => {
     const id = req.params.id;
     try {
         const result = await actualiteModel.getActualiteById(id);
+        if (!result) {
+            return res.status(404).json({ error: "Actualité non trouvée" });
+        }
         return res.status(200).json(result);
     } catch (error) {
         console.error(error);
