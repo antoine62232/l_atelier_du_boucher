@@ -122,3 +122,23 @@ describe('Routes réservées au propriétaire ou à un admin', () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe('Upload d\'image des actualités', () => {
+  test('refuse un fichier qui n\'est pas une image', async () => {
+    const res = await request(app)
+      .post('/api/actualites/create')
+      .set('Authorization', 'Bearer ' + tokenAdmin())
+      .attach('image', Buffer.from('pas une image'), { filename: 'virus.txt', contentType: 'text/plain' });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "Format d'image non accepté" });
+  });
+
+  test('refuse une image de plus de 5 Mo', async () => {
+    const res = await request(app)
+      .post('/api/actualites/create')
+      .set('Authorization', 'Bearer ' + tokenAdmin())
+      .attach('image', Buffer.alloc(6 * 1024 * 1024), { filename: 'lourde.png', contentType: 'image/png' });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Image trop lourde (5 Mo maximum)' });
+  });
+});

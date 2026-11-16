@@ -1,17 +1,7 @@
 import * as actualiteModel from "../models/actualiteModel.js";
-import fs from "fs";
+import { uploadImage, supprimerImage } from "../services/imageService.js";
 
 export const createActualite = async (req, res) => {
-    let imagePath = "";
-    if (req.file) {
-        imagePath = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    } else if (req.body.imageActualite) {
-        imagePath = req.body.imageActualite;
-    } else {
-        imagePath = null;
-    }
-
-
     const { titre, contenu, categorie, lienSource } = req.body;
     const utilisateurId = req.user.id;
 
@@ -20,6 +10,11 @@ export const createActualite = async (req, res) => {
     }
 
     try {
+        let imagePath = req.body.imageActualite || null;
+        if (req.file) {
+            imagePath = await uploadImage(req.file.buffer);
+        }
+
         const result = await actualiteModel.createActualite({
             titre, 
             contenu, 
@@ -71,16 +66,7 @@ export const updateActualite = async (req, res) => {
 
         let imagePath = actualite.imageActualite;
         if (req.file) {
-            imagePath = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-
-            if (actualite.imageActualite && actualite.imageActualite.includes('/uploads/')) {
-                const ancienFichier = actualite.imageActualite.split('/uploads/')[1];
-                fs.unlink(`uploads/${ancienFichier}`, (err) => {
-                    if (err) {
-                        console.log("Erreur suppression ancienne image : ", err);
-                    }
-                });
-            }
+            imagePath = await uploadImage(req.file.buffer);
         } else if (req.body.imageActualite !== undefined) {
             imagePath = req.body.imageActualite;
         }
@@ -88,6 +74,9 @@ export const updateActualite = async (req, res) => {
         const result = await actualiteModel.updateActualite(id, {titre, contenu, imageActualite: imagePath, categorie, lienSource});
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Actualité non trouvée" });
+        }
+        if (req.file) {
+            await supprimerImage(actualite.imageActualite);
         }
         return res.status(200).json({ message: "Actualité mise à jour avec succès", id: id });
     } catch (error) {
@@ -106,22 +95,12 @@ export const deleteActualite = async (req, res) => {
             return res.status(404).json({ error: "Actualité non trouvée" });
         }
 
-        if (actualite.imageActualite) {
-            const nomFichier = actualite.imageActualite.split('/uploads/')[1];
-            fs.unlink(`uploads/${nomFichier}`, (err) => {
-                if (err) {
-                    console.log("Erreur suppression image : ", err);
-                } else {
-                    console.log("Image supprimée avec succès");
-                }
-            });
-        }
-
         const result = await actualiteModel.deleteActualite(id);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Erreur lors de la suppression de l'actualité." });
         }
+        await supprimerImage(actualite.imageActualite);
         return res.status(200).json({ message: "Actualité et image supprimées avec succès" });
     } catch (error) {
         console.error(error);

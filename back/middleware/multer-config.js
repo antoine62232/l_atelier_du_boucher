@@ -1,28 +1,30 @@
 import multer from 'multer';
 
-// Dictionnaire des types de fichiers acceptés
-const MIME_TYPES = {
-    'image/jpg': 'jpg',
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/webp': 'webp'
-};
+// Types de fichiers acceptés
+const MIME_TYPES = ['image/jpg', 'image/jpeg', 'image/png', 'image/webp'];
 
-const storage = multer.diskStorage({
-    // Spécification du dossier de destination
-    destination: (req, file, callback) => {
-        // Dossier de destination : uploads
-        callback(null, 'uploads');
-    },
-    // Spécification du nom du fichier
-    filename: (req, file, callback) => {
-        // On remplace les espaces par des underscores pour éviter les bugs
-        const name = file.originalname.split(' ').join('_').split('.')[0];
-        const extension = MIME_TYPES[file.mimetype];
-
-        // On ajoute un timestamp pour éviter les doublons : nom + timestamp + extension
-        callback(null, name + '_' + Date.now() + '.' + extension);
+// L'image reste en mémoire : elle est envoyée ensuite sur Cloudinary,
+// car le disque de Render est effacé à chaque redéploiement
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, callback) => {
+        if (MIME_TYPES.includes(file.mimetype)) {
+            callback(null, true);
+        } else {
+            const erreur = new Error("Format d'image non accepté");
+            erreur.status = 400;
+            callback(erreur);
+        }
     }
-});
+}).single('image');
 
-export default multer({ storage: storage }).single('image');
+// Une erreur multer (fichier trop lourd, mauvais format) renvoie un 400 au lieu d'un 500
+export default (req, res, next) => {
+    upload(req, res, (err) => {
+        if (err) {
+            return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? "Image trop lourde (5 Mo maximum)" : err.message });
+        }
+        next();
+    });
+};
