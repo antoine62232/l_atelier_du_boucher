@@ -2,7 +2,7 @@ import * as reponseQcmModel from "../models/reponseQcmModel.js";
 
 export const createReponseQcm = async (req, res) => {
     if (req.user.role !== 1) {
-        return res.status(403).json({ message: "Accès non autorisé" });
+        return res.status(403).json({ error: "Accès non autorisé" });
     }
     const { texteReponse, resultatReponse, questionId } = req.body;
 
@@ -56,7 +56,7 @@ export const getReponseQcmById = async (req, res) => {
 
 export const updateReponseQcm = async (req, res) => {
     if (req.user.role !== 1) {
-        return res.status(403).json({ message: "Accès non autorisé" });
+        return res.status(403).json({ error: "Accès non autorisé" });
     }
     const { texteReponse, resultatReponse, questionId } = req.body;
     const id = req.params.id;
@@ -74,7 +74,7 @@ export const updateReponseQcm = async (req, res) => {
 
 export const deleteReponseQcm = async (req, res) => {
     if (req.user.role !== 1) {
-        return res.status(403).json({ message: "Accès non autorisé" });
+        return res.status(403).json({ error: "Accès non autorisé" });
     }
     const id = req.params.id;
     try {

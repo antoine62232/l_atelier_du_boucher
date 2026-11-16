@@ -38,7 +38,7 @@ export const updateIngredient = async (req, res) => {
     try {
         const result = await recetteIngredientModel.updateRecetteIngredient(recetteId, ingredientId, quantiteValeur, unite);
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Ingrédient non trouvé." });
+            return res.status(404).json({ error: "Ingrédient non trouvé." });
         }
         res.status(200).json({ message: "Ingrédient modifié avec succès." });
     } catch (error) {
@@ -55,7 +55,7 @@ export const deleteIngredient = async (req, res) => {
     try {
         const result = await recetteIngredientModel.deleteIngredientFromRecette(recetteId, ingredientId);
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Lien introuvable." });
+            return res.status(404).json({ error: "Lien introuvable." });
         }
         res.status(200).json({ message: "Ingrédient retiré de la recette." });
     } catch (error) {

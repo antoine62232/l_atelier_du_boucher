@@ -13,6 +13,6 @@ export const getGlobalSearch = async (req, res) => {
         res.status(200).json(resultats);
     } catch (error) {
         console.error("Erreur lors de la recherche globale:", error);
-        res.status(500).json({ message: "Erreur serveur lors de la recherche" });
+        res.status(500).json({ error: "Erreur serveur lors de la recherche" });
     }
 };

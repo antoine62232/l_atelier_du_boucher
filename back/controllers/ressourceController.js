@@ -46,7 +46,7 @@ export const getRessourceByPiece = async (req, res) => {
     try {
         const result = await ressourceModel.getRessourceByPiece(pieceId);
         if(!result) {
-            return res.status(404).json({ message: "Aucune ressource trouvée pour cette pièce" });
+            return res.status(404).json({ error: "Aucune ressource trouvée pour cette pièce" });
         }
         res.status(200).json(result);
     } catch (error) {
@@ -60,7 +60,7 @@ export const getRessourceByPartie = async (req, res) => {
     try {
         const result = await ressourceModel.getRessourceByPartie(partieId);
         if(!result) {
-            return res.status(404).json({ message: "Aucune ressource trouvée pour cette partie" });
+            return res.status(404).json({ error: "Aucune ressource trouvée pour cette partie" });
         }
         res.status(200).json(result);
     } catch (error) {
@@ -74,7 +74,7 @@ export const getRessourceByAnimal = async (req, res) => {
     try {
         const result = await ressourceModel.getRessourceByAnimal(animalId);
         if(!result) {
-            return res.status(404).json({ message: "Aucune ressource trouvée pour cet animal" });
+            return res.status(404).json({ error: "Aucune ressource trouvée pour cet animal" });
         }
         res.status(200).json(result);
     } catch (error) {

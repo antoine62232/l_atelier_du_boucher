@@ -83,14 +83,14 @@ app.get('/', (req, res) => {
 });
 
 app.use((req, res) => {
-    res.status(404).json({ message: "Route introuvable" });
+    res.status(404).json({ error: "Route introuvable" });
 });
 
 app.use((err, req, res, next) => {
     console.error(err);
     const status = err.status || 500;
     res.status(status).json({
-        message: status === 500 ? "Erreur serveur" : "Requête invalide"
+        error: status === 500 ? "Erreur serveur" : "Requête invalide"
     });
 });
 

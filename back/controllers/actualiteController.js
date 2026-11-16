@@ -3,7 +3,7 @@ import fs from "fs";
 
 export const createActualite = async (req, res) => {
     if (req.user.role !== 1) {
-        return res.status(403).json({ message: "Accès non autorisé" });
+        return res.status(403).json({ error: "Accès non autorisé" });
     }
 
     let imagePath = "";
@@ -20,7 +20,7 @@ export const createActualite = async (req, res) => {
     const utilisateurId = req.user.id;
 
     if (!titre || !contenu || !categorie) {
-        return res.status(400).json({ message: "Titre, contenu et categorie sont obligatoires" });
+        return res.status(400).json({ error: "Titre, contenu et categorie sont obligatoires" });
     }
 
     try {
@@ -62,7 +62,7 @@ export const getActualiteById = async (req, res) => {
 
 export const updateActualite = async (req, res) => {
     if (req.user.role !== 1) {
-        return res.status(403).json({ message: "Accès non autorisé" });
+        return res.status(403).json({ error: "Accès non autorisé" });
     }
     const id = req.params.id;
     const { titre, contenu, categorie, lienSource } = req.body;
@@ -102,7 +102,7 @@ export const updateActualite = async (req, res) => {
 
 export const deleteActualite = async (req, res) => {
     if (req.user.role !== 1) {
-        return res.status(403).json({ message: "Accès non autorisé" });
+        return res.status(403).json({ error: "Accès non autorisé" });
     }
     const id = req.params.id;
 
