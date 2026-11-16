@@ -2,10 +2,6 @@ import * as actualiteModel from "../models/actualiteModel.js";
 import fs from "fs";
 
 export const createActualite = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ message: "Accès non autorisé" });
-    }
-
     let imagePath = "";
     if (req.file) {
         imagePath = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
@@ -20,7 +16,7 @@ export const createActualite = async (req, res) => {
     const utilisateurId = req.user.id;
 
     if (!titre || !contenu || !categorie) {
-        return res.status(400).json({ message: "Titre, contenu et categorie sont obligatoires" });
+        return res.status(400).json({ error: "Titre, contenu et categorie sont obligatoires" });
     }
 
     try {
@@ -53,6 +49,9 @@ export const getActualiteById = async (req, res) => {
     const id = req.params.id;
     try {
         const result = await actualiteModel.getActualiteById(id);
+        if (!result) {
+            return res.status(404).json({ error: "Actualité non trouvée" });
+        }
         return res.status(200).json(result);
     } catch (error) {
         console.error(error);
@@ -61,14 +60,32 @@ export const getActualiteById = async (req, res) => {
 };
 
 export const updateActualite = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ message: "Accès non autorisé" });
-    }
     const id = req.params.id;
-    const { titre, contenu, imageActualite, categorie, lienSource } = req.body;
+    const { titre, contenu, categorie, lienSource } = req.body;
 
     try {
-        const result = await actualiteModel.updateActualite(id, {titre, contenu, imageActualite, categorie, lienSource});
+        const actualite = await actualiteModel.getActualiteById(id);
+        if (!actualite) {
+            return res.status(404).json({ error: "Actualité non trouvée" });
+        }
+
+        let imagePath = actualite.imageActualite;
+        if (req.file) {
+            imagePath = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
+            if (actualite.imageActualite && actualite.imageActualite.includes('/uploads/')) {
+                const ancienFichier = actualite.imageActualite.split('/uploads/')[1];
+                fs.unlink(`uploads/${ancienFichier}`, (err) => {
+                    if (err) {
+                        console.log("Erreur suppression ancienne image : ", err);
+                    }
+                });
+            }
+        } else if (req.body.imageActualite !== undefined) {
+            imagePath = req.body.imageActualite;
+        }
+
+        const result = await actualiteModel.updateActualite(id, {titre, contenu, imageActualite: imagePath, categorie, lienSource});
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Actualité non trouvée" });
         }
@@ -80,9 +97,6 @@ export const updateActualite = async (req, res) => {
 };
 
 export const deleteActualite = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ message: "Accès non autorisé" });
-    }
     const id = req.params.id;
 
     try {

@@ -52,7 +52,7 @@ const LaboCalcul = () => {
       setSuccessMessage("Votre ticket a été enregistré dans votre Établi avec succès !");
       setFormData({ ...formData, titreCalcul: "", poidsBrut: "", poidsNet: "", prixAchatKg: "", commentaire: "" });
     } catch (error) {
-      alert("Erreur: " + (error.response?.data?.message || "Impossible d'enregistrer le calcul."));
+      alert("Erreur: " + (error.response?.data?.error || "Impossible d'enregistrer le calcul."));
     } finally {
       setLoading(false);
     }

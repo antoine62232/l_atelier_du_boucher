@@ -1,9 +1,6 @@
 import * as instructionModel from "../models/instructionModel.js";
 
 export const addInstruction = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé." });
-    }
     
     const { ordreEtape, descriptionEtape, recetteId } = req.body;
 
@@ -35,9 +32,6 @@ export const getInstructionsByRecette = async (req, res) => {
 };
 
 export const updateInstruction = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé." });
-    }
     
     const { ordreEtape, descriptionEtape } = req.body;
     const id = req.params.id;
@@ -55,9 +49,6 @@ export const updateInstruction = async (req, res) => {
 };
 
 export const deleteInstruction = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé." });
-    }
     
     const id = req.params.id;
     

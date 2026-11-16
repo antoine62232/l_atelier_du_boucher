@@ -7,6 +7,28 @@ import InteractiveDiagram from "../../components/atlas/InteractiveDiagram";
 import AtlasDetails from "../../components/atlas/AtlasDetails";
 import { getAllPieces } from "../../services/PiecesService"; 
 
+// --- CONFIGURATION VISUELLE DU DÉHANCHÉ ---
+const piecesConfig = [
+  { 
+    nomBdd: "Filet", 
+    face: "unique", 
+    top: "55%",   // À ajuster selon l'image
+    left: "60%" 
+  },
+  { 
+    nomBdd: "Faux-filet", 
+    face: "unique", 
+    top: "45%",   // À ajuster
+    left: "65%" 
+  },
+  { 
+    nomBdd: "Milieu de train de côtes", 
+    face: "unique", 
+    top: "65%",   // À ajuster
+    left: "65%" 
+  }
+];
+
 const AtlasBoeufArriereDehanche = () => {
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [visiblePieces, setVisiblePieces] = useState([]); 
@@ -15,27 +37,6 @@ const AtlasBoeufArriereDehanche = () => {
   const currentFace = "unique"; 
   const setCurrentFace = () => {}; 
 
-  // --- CONFIGURATION VISUELLE DU DÉHANCHÉ ---
-  const piecesConfig = [
-    { 
-      nomBdd: "Filet", 
-      face: "unique", 
-      top: "55%",   // À ajuster selon l'image
-      left: "60%" 
-    },
-    { 
-      nomBdd: "Faux-filet", 
-      face: "unique", 
-      top: "45%",   // À ajuster
-      left: "65%" 
-    },
-    { 
-      nomBdd: "Milieu de train de côtes", 
-      face: "unique", 
-      top: "65%",   // À ajuster
-      left: "65%" 
-    }
-  ];
 
   useEffect(() => {
     // Remonter en haut de page au chargement

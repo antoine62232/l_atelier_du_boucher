@@ -6,11 +6,11 @@ export const createCalcul = async (req, res) => {
     const utilisateurId = req.user.id;
 
     if (!pieceId || !titreCalcul || !poidsBrut || !prixAchatKg || !poidsNet || !margeVisee) {
-        return res.status(400).json({ message: "Les champs obligatoires sont manquants" });
+        return res.status(400).json({ error: "Les champs obligatoires sont manquants" });
     }
 
     if (parseFloat(margeVisee) >= 100) {
-        return res.status(400).json({ message: "La marge visée doit être inférieure à 100%" });
+        return res.status(400).json({ error: "La marge visée doit être inférieure à 100%" });
     }
 
     try {
@@ -45,7 +45,7 @@ export const createCalcul = async (req, res) => {
 
     } catch (error) {
         console.error("Erreur lors de l'enregistrement du calcul :", error);
-        res.status(500).json({ message: "Erreur serveur" });
+        res.status(500).json({ error: "Erreur serveur" });
     }
 };
 
@@ -61,7 +61,7 @@ export const getCalculByUser = async (req, res) => {
         res.status(200).json(result);
     } catch (error) {
         console.error({ error: "Erreur lors de la récupération des calculs :" });
-        res.status(500).json({ message: "Erreur serveur" });
+        res.status(500).json({ error: "Erreur serveur" });
     }
 };
 

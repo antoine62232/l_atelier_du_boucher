@@ -1,8 +1,6 @@
 import * as recetteIngredientModel from "../models/recetteIngredientModel.js";
 
 export const addIngredient = async (req, res) => {
-    if (req.user.role !== 1) return res.status(403).json({ error: "Accès refusé." });
-
     const { recetteId, ingredientId, quantiteValeur, unite } = req.body;
 
     if (!recetteId || !ingredientId || !quantiteValeur) {
@@ -31,14 +29,12 @@ export const getAllIngredientsByRecette = async (req, res) => {
 };
 
 export const updateIngredient = async (req, res) => {
-    if (req.user.role !== 1) return res.status(403).json({ error: "Accès refusé." });
-
     const { recetteId, ingredientId, quantiteValeur, unite } = req.body;
 
     try {
         const result = await recetteIngredientModel.updateRecetteIngredient(recetteId, ingredientId, quantiteValeur, unite);
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Ingrédient non trouvé." });
+            return res.status(404).json({ error: "Ingrédient non trouvé." });
         }
         res.status(200).json({ message: "Ingrédient modifié avec succès." });
     } catch (error) {
@@ -47,15 +43,13 @@ export const updateIngredient = async (req, res) => {
 };
 
 export const deleteIngredient = async (req, res) => {
-    if (req.user.role !== 1) return res.status(403).json({ error: "Accès refusé." });
-
     // On récupère les données dans l'URL (ex: /api/recettesIngredients/1/2)
     const { recetteId, ingredientId } = req.params;
 
     try {
         const result = await recetteIngredientModel.deleteIngredientFromRecette(recetteId, ingredientId);
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Lien introuvable." });
+            return res.status(404).json({ error: "Lien introuvable." });
         }
         res.status(200).json({ message: "Ingrédient retiré de la recette." });
     } catch (error) {

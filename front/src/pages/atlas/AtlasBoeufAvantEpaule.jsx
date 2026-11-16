@@ -7,6 +7,20 @@ import InteractiveDiagram from "../../components/atlas/InteractiveDiagram";
 import AtlasDetails from "../../components/atlas/AtlasDetails";
 import { getAllPieces } from "../../services/PiecesService";
 
+// --- CONFIGURATION DE TOUTES LES PASTILLES ---
+const piecesConfig = [
+  // --- Face Externe ---
+  { nomBdd: "Paleron", face: "externe", top: "30%", left: "50%", recetteUrl: "/recettes/paleron" },
+  
+  // --- Face Interne ---
+  { nomBdd: "Dessus de Palette", face: "interne", top: "20%", left: "45%", recetteUrl: "/recettes/dessus-palette" },
+  { nomBdd: "Jarret Avant", face: "interne", top: "60%", left: "25%", recetteUrl: "/recettes/jarret" },
+  { nomBdd: "Macreuse à Braiser", face: "interne", top: "40%", left: "35%", recetteUrl: "/recettes/macreuse-braiser" },
+  { nomBdd: "Jumeau à pot-au-feu", face: "interne", top: "25%", left: "30%", recetteUrl: "/recettes/jumeau-pot-au-feu" },
+  { nomBdd: "Macreuse à Bifteck", face: "interne", top: "50%", left: "45%", recetteUrl: "/recettes/macreuse-bifteck" },
+  { nomBdd: "Jumeau à Bifteck", face: "interne", top: "35%", left: "50%", recetteUrl: "/recettes/jumeau-bifteck" }
+];
+
 const AtlasBoeufAvantEpaule = () => {
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [allMergedPieces, setAllMergedPieces] = useState([]); 
@@ -15,19 +29,6 @@ const AtlasBoeufAvantEpaule = () => {
   // Vue par défaut : Interne
   const [currentFace, setCurrentFace] = useState("interne"); 
 
-  // --- CONFIGURATION DE TOUTES LES PASTILLES ---
-  const piecesConfig = [
-    // --- Face Externe ---
-    { nomBdd: "Paleron", face: "externe", top: "30%", left: "50%", recetteUrl: "/recettes/paleron" },
-    
-    // --- Face Interne ---
-    { nomBdd: "Dessus de Palette", face: "interne", top: "20%", left: "45%", recetteUrl: "/recettes/dessus-palette" },
-    { nomBdd: "Jarret Avant", face: "interne", top: "60%", left: "25%", recetteUrl: "/recettes/jarret" },
-    { nomBdd: "Macreuse à Braiser", face: "interne", top: "40%", left: "35%", recetteUrl: "/recettes/macreuse-braiser" },
-    { nomBdd: "Jumeau à pot-au-feu", face: "interne", top: "25%", left: "30%", recetteUrl: "/recettes/jumeau-pot-au-feu" },
-    { nomBdd: "Macreuse à Bifteck", face: "interne", top: "50%", left: "45%", recetteUrl: "/recettes/macreuse-bifteck" },
-    { nomBdd: "Jumeau à Bifteck", face: "interne", top: "35%", left: "50%", recetteUrl: "/recettes/jumeau-bifteck" }
-  ];
 
   // LOGIQUE DE SÉLECTION VIA PARAMÈTRE URL
   const [searchParams] = useSearchParams();

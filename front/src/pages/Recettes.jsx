@@ -3,7 +3,7 @@ import { Box, Container, Heading, Text, Flex, SimpleGrid, Spinner, Center, Butto
 import { getAllRecettes } from "../services/RecettesService";
 import RecetteCard from "../components/recettes/RecetteCard";
 import Pagination from "../components/common/Pagination";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 const Recettes = () => {
   const [recettes, setRecettes] = useState([]);
@@ -17,7 +17,6 @@ const Recettes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const pieceIdCible = searchParams.get("pieceId");
 

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Box, Flex, VStack, Heading, Text, Tabs, Avatar,
-    Spinner, Center, SimpleGrid, Container
+    Spinner, Center, SimpleGrid, Container, Alert
 } from '@chakra-ui/react';
 
 // Import des services
@@ -105,7 +105,16 @@ const Dashboard = () => {
     return (
         <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="84px">
             <Container maxW="1200px" px={6}>
-                
+
+                {error && (
+                    <Alert.Root status="error" mb={8} borderRadius="md">
+                        <Alert.Indicator />
+                        <Alert.Content>
+                            <Alert.Title>{error}</Alert.Title>
+                        </Alert.Content>
+                    </Alert.Root>
+                )}
+
                 <Box textAlign="center" mb={12}>
                     <Heading fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
                         Mon Établi

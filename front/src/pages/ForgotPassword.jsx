@@ -29,7 +29,7 @@ const ForgotPassword = () => {
         message: "Si un compte existe avec cet e-mail, vous recevrez un lien de réinitialisation." 
       });
       setEmail("");
-    } catch (error) {
+    } catch {
       setStatus({ 
         type: "error", 
         message: "Une erreur est survenue. Veuillez réessayer plus tard." 

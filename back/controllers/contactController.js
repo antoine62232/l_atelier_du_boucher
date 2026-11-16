@@ -33,9 +33,6 @@ export const createContact = async (req, res) => {
 };
 
 export const getAllContacts = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     try {
         const contacts = await contactModel.getAllContacts();
         res.status(200).json(contacts);
@@ -46,9 +43,6 @@ export const getAllContacts = async (req, res) => {
 };
 
 export const updateStatutContact = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     const { id } = req.params;
     const { statut } = req.body;
     try {
@@ -64,9 +58,6 @@ export const updateStatutContact = async (req, res) => {
 };
 
 export const deleteContact = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     const { id } = req.params;
     try {
         const result = await contactModel.deleteContact(id);

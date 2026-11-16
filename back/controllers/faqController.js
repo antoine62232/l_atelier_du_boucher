@@ -1,9 +1,6 @@
 import * as faqModel from "../models/faqModel.js";
 
 export const createFaq = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     const { question, reponse, ordre } = req.body;
 
     if (!question || !reponse) {
@@ -31,9 +28,6 @@ export const getAllFaqs = async (req, res) => {
 };
 
 export const updateFaq = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     const { id } = req.params;
     const { question, reponse, ordre } = req.body;
     try {
@@ -49,9 +43,6 @@ export const updateFaq = async (req, res) => {
 };
 
 export const deleteFaq = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     const { id } = req.params;
     try {
         const result = await faqModel.deleteFaq(id);
