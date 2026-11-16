@@ -1,136 +1,101 @@
 import React from "react";
-import { Box, SimpleGrid, Text, Link, Stack, Image, Flex, Icon, Separator } from "@chakra-ui/react";
+import { Box, SimpleGrid, Text, Link, Stack, Image, Separator } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
-import { FaFacebook, FaInstagram, FaLinkedin } from "react-icons/fa"; 
 
-import logoFooter from "../assets/logoFooter.png"; 
+import logoFooter from "../assets/logoFooter.png";
+
+const LIENS_AIDE = [
+  { to: "/contact", label: "Contacter l'Atelier" },
+  { to: "/faq", label: "Questions fréquentes" },
+];
+
+const LIENS_LEGAUX = [
+  { to: "/mentions-legales", label: "Mentions légales" },
+  { to: "/cgu", label: "Conditions générales d'utilisation" },
+  { to: "/politique-confidentialite", label: "Politique de confidentialité" },
+];
+
+const TitreColonne = ({ children }) => (
+  <Text
+    as="h2"
+    color="brand.brun"
+    fontFamily="title"
+    fontWeight="bold"
+    fontSize="md"
+    letterSpacing="wide"
+    textTransform="uppercase"
+    mb={3}
+  >
+    {children}
+  </Text>
+);
+
+const LienFooter = ({ to, children }) => (
+  <Link
+    as={RouterLink}
+    to={to}
+    color="brand.beige"
+    fontSize="sm"
+    display="inline-flex"
+    alignItems="center"
+    minH="44px"
+    _hover={{ color: "white", textDecoration: "underline" }}
+  >
+    {children}
+  </Link>
+);
 
 const Footer = () => {
+  const annee = new Date().getFullYear();
+
   return (
-    <Box 
-      as="footer" 
-      bg="brand.gris" 
+    <Box
+      as="footer"
+      bg="brand.gris"
       color="brand.beige"
       w="100%"
-      py={{ base: 10, lg: "57px" }} 
-      px={{ base: 6, lg: "120px" }}
-      h="auto"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-
+      pt={{ base: 10, lg: 14 }}
+      pb={6}
+      px={{ base: 6, md: 10, lg: "120px" }}
     >
-      <Box w="100%">
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={10} alignItems="start">
-          
-          {/* ---------------- COLONNE 1 : MARQUE ---------------- */}
-          <Stack spacing={4} align="start">
-            {/* Logo */}
-            <Box w={{ base: "100px", md: "150px" }} mb={2}>
-               <Image src={logoFooter} alt="Logo Atelier du Boucher" opacity={0.9} />
-            </Box>
+      <SimpleGrid columns={{ base: 1, md: 3 }} gap={{ base: 8, md: 10 }} alignItems="start">
+        <Stack gap={3} align="start">
+          <Image src={logoFooter} alt="" w={{ base: "96px", md: "128px" }} opacity={0.9} />
+          <Text fontFamily="title" fontSize="xl" fontWeight="bold" letterSpacing="wide">
+            L'ATELIER DU BOUCHER
+          </Text>
+          <Text fontSize="sm" lineHeight="1.6" maxW="300px" opacity={0.9}>
+            L'atlas numérique et le compagnon technique des apprentis et artisans bouchers.
+          </Text>
+        </Stack>
 
-            <Box mb="24px">
-                <Text fontFamily="title" fontSize="2xl" fontWeight="bold" letterSpacing="wide" color="brand.beige">
-                L'ATELIER DU BOUCHER
-                </Text>
-                <Text fontSize="sm" color="brand.beige" mt={2} lineHeight="1.6" maxW="300px">
-                L'Atlas numérique et compagnon technique des futurs artisans.
-                </Text>
-            </Box>
-
-            {/* Réseaux Sociaux */}
-            <Flex gap={4} >
-              <Link 
-                href="https://facebook.com" 
-                isExternal 
-                color="brand.beige"
-                _hover={{ color: "brand.rouge" } }
-                transition="color 0.3s"
-                >
-                <Icon as={FaFacebook} boxSize={5} />
-              </Link>
-              <Link href="https://instagram.com" 
-              isExternal 
-              color="brand.beige"
-              _hover={{ color: "brand.rouge" }}
-              transition="color 0.3s"
-              >
-                <Icon as={FaInstagram} boxSize={5}/>
-              </Link>
-              <Link href="https://linkedin.com" 
-              isExternal 
-              color="brand.beige"
-              _hover={{ color: "brand.rouge" }}
-              transition="color 0.3s"
-              >
-                <Icon as={FaLinkedin} boxSize={5} />
-              </Link>
-            </Flex>
+        <Box as="nav" aria-label="Aide et contact">
+          <TitreColonne>Aide et contact</TitreColonne>
+          <Stack gap={0} align="start">
+            {LIENS_AIDE.map((lien) => (
+              <LienFooter key={lien.to} to={lien.to}>
+                {lien.label}
+              </LienFooter>
+            ))}
           </Stack>
+        </Box>
 
-          {/* ---------------- COLONNE 2 : AIDE & CONTACT ---------------- */}
-          <Stack spacing={0} align={{ base: "start", md: "center" }}>
-            <Text 
-                color="brand.brun" 
-                fontFamily="title" 
-                fontWeight="bold" 
-                fontSize="lg" 
-                mb={6}
-                textTransform="uppercase"
-            >
-              Aide & Contact
-            </Text>
-
-            <Stack spacing={3} textAlign={{ base: "left", md: "center" }} mb={8}>
-              <Link as={RouterLink} to="/contact" color="brand.beige" _hover={{ color: "brand.brun" }} fontSize="sm">
-                Contacter l'Atelier /Admin
-              </Link>
-              <Link as={RouterLink} to="/support" color="brand.beige" _hover={{ color: "brand.brun" }} fontSize="sm">
-                Support Technique
-              </Link>
-              <Link as={RouterLink} to="/faq" color="brand.beige" _hover={{ color: "brand.brun" }} fontSize="sm">
-                FAQ (Foire Aux Questions)
-              </Link>
-            </Stack>
-
-            {/* Copyright */}
-            <Box w="100%" maxW="250px" mx="auto">
-                <Separator borderColor="brand.beige" opacity={0.3} mb={4} />
-                <Text fontSize="xs" color="brand.beige" textAlign="center">
-                © 2026 L'Atelier du Boucher. Tous droits réservés
-                </Text>
-            </Box>
+        <Box as="nav" aria-label="Informations légales">
+          <TitreColonne>Informations légales</TitreColonne>
+          <Stack gap={0} align="start">
+            {LIENS_LEGAUX.map((lien) => (
+              <LienFooter key={lien.to} to={lien.to}>
+                {lien.label}
+              </LienFooter>
+            ))}
           </Stack>
+        </Box>
+      </SimpleGrid>
 
-          {/* ---------------- COLONNE 3 : INFORMATIONS LEGALES ---------------- */}
-          <Stack spacing={0} align={{ base: "start", md: "end" }} textAlign={{ base: "left", md: "right" }}>
-            <Text 
-                color="brand.brun" 
-                fontFamily="title" 
-                fontWeight="bold" 
-                fontSize="lg" 
-                mb={6}
-                textTransform="uppercase"
-            >
-              Informations Legales
-            </Text>
-
-            <Stack spacing={3} align={{ base: "start", md: "end" }}>
-              <Link as={RouterLink} to="/mentions-legales" color="brand.beige" _hover={{ color: "brand.brun" }} fontSize="sm">
-                Mentions Légales
-              </Link>
-              <Link as={RouterLink} to="/cgu" color="brand.beige" _hover={{ color: "brand.brun" }} fontSize="sm">
-                Conditions Générales (CGU)
-              </Link>
-              <Link as={RouterLink} to="/politique-confidentialite" color="brand.beige" _hover={{ color: "brand.brun" }} fontSize="sm">
-                Politique de Confidentialité
-              </Link>
-            </Stack>
-          </Stack>
-
-        </SimpleGrid>
-      </Box>
+      <Separator borderColor="brand.beige" opacity={0.2} mt={{ base: 8, md: 10 }} mb={5} />
+      <Text fontSize="xs" opacity={0.8} textAlign={{ base: "left", md: "center" }}>
+        © {annee} L'Atelier du Boucher. Tous droits réservés.
+      </Text>
     </Box>
   );
 };

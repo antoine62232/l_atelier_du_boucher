@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link as RouterLink, NavLink, useNavigate } from "react-router-dom"; // ✅ Ajout de useNavigate
+import { Link as RouterLink, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Flex,
@@ -10,7 +10,6 @@ import {
   HStack,
   IconButton,
   Menu,
-  Switch,
   Collapsible,
   Portal
 } from "@chakra-ui/react";
@@ -22,8 +21,10 @@ import LoginModal from "./auth/LoginModal";
 
 // --- COMPOSANT PRINCIPAL ---
 const NavBar = (props) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const toggle = () => setIsOpen(!isOpen);
+  const location = useLocation();
+  const [cheminMenuOuvert, setCheminMenuOuvert] = useState(null);
+  const isOpen = cheminMenuOuvert === location.pathname;
+  const toggle = () => setCheminMenuOuvert(isOpen ? null : location.pathname);
 
   // --- GESTION DES MODALES ---
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
@@ -42,7 +43,7 @@ const NavBar = (props) => {
   };
 
   return (
-    <NavBarContainer {...props}>
+    <NavBarContainer isOpen={isOpen} {...props}>
 
       {/* 1. ZONE GAUCHE (Logo) */}
       <Flex flex={{ base: 1, lg: 1 }} justify="flex-start" align="center">
@@ -87,15 +88,23 @@ const NavBar = (props) => {
   );
 };
 
+const LIENS = [
+  { to: "/atlas", label: "Atlas" },
+  { to: "/videos", label: "Vidéothèque" },
+  { to: "/outils", label: "Outils" },
+  { to: "/recettes", label: "Recettes" },
+  { to: "/quiz", label: "Quiz" },
+  { to: "/actualites", label: "Actualités" },
+];
+
 const DesktopLinks = () => {
     return (
       <HStack gap="32px">
-        <MenuItemLink to="/atlas">Atlas</MenuItemLink>
-        <MenuItemLink to="/videos">Vidéothèque</MenuItemLink>
-        <MenuItemLink to="/outils">Outils</MenuItemLink>
-        <MenuItemLink to="/recettes">Recettes</MenuItemLink>
-        <MenuItemLink to="/quiz">Quiz</MenuItemLink>
-        <MenuItemLink to="/actualites">Actualités</MenuItemLink>
+        {LIENS.map((lien) => (
+          <MenuItemLink key={lien.to} to={lien.to} py="10px">
+            {lien.label}
+          </MenuItemLink>
+        ))}
       </HStack>
     )
   }
@@ -108,14 +117,17 @@ const DesktopLinks = () => {
           as={RouterLink}
           to="/"
   
-          _focus={{ outline: "none", boxShadow: "none" }}
-          _focusVisible={{ outline: "none", boxShadow: "none" }}
+          aria-label="L'Atelier du Boucher, retour à l'accueil"
+          display="flex"
+          alignItems="center"
+          minH="44px"
+          rounded="md"
           textDecoration="none"
           _hover={{ textDecoration: "none" }}
         >
           <Image
             src={logoImg}
-            alt="Logo"
+            alt=""
             h="45px"
             fit="contain"
             transition="transform 0.2s"
@@ -155,36 +167,13 @@ const RightActions = ({ openSignUpClick, openLoginClick }) => {
 
   return (
     <Flex align="center" gap={4}>
-      {/* Switch Mode Atelier */}
-      <Flex align="center" gap={3}>
-        <Text color="brand.gris" fontWeight="medium" fontSize="16px">
-          Mode Atelier
-        </Text>
-        <Switch.Root size="md" colorPalette="red" cursor="pointer">
-          <Switch.HiddenInput />
-          <Switch.Control
-            css={{
-              display: "flex",
-              alignItems: "center",
-              bg: "gray.100",
-              borderColor: "brand.acier",
-              borderWidth: "1px",
-              _checked: { bg: "brand.rouge", borderColor: "brand.rouge" }
-            }}
-          >
-            <Switch.Thumb css={{ bg: "brand.gris", _checked: { bg: "#FFFCF5" } }} />
-          </Switch.Control>
-        </Switch.Root>
-      </Flex>
-
-      <Box h="32px" w="1px" bg="brand.gris" opacity="0.5" />
       {/* MENU PROFIL */}
       <Menu.Root>
         <Menu.Trigger asChild>
           <IconButton
             variant="ghost"
             rounded="full"
-            aria-label="Profil"
+            aria-label={user ? `Mon compte (${user.prenom})` : "Connexion ou inscription"}
             color="brand.gris"
             _hover={{ bg: 'brand.rouge', color: 'white' }}
             css={{ _open: { bg: 'brand.rouge', color: 'white' } }}
@@ -192,6 +181,8 @@ const RightActions = ({ openSignUpClick, openLoginClick }) => {
             alignItems="center"
             gap={2}
             w="auto"
+            minW="44px"
+            h="44px"
             px={2}
           >
             {/* AFFICHER LE PRÉNOM SI CONNECTÉ */}
@@ -293,14 +284,11 @@ const MenuItemLink = ({ children, to = "/", ...rest }) => {
           textDecoration: 'none'
         }}
   
-        // --- FOCUS (Pas de rectangle) ---
-        _focus={{ outline: "none", boxShadow: "none" }}
-        _focusVisible={{ outline: "none", boxShadow: "none" }}
-  
+        rounded="md"
         // --- QUAND ACTIF (Page courante) ---
         css={{
           "&.active": {
-            color: "#8A1C25",
+            color: "brand.rouge",
           }
         }}
   
@@ -314,28 +302,45 @@ const MenuItemLink = ({ children, to = "/", ...rest }) => {
 // --- MOBILE ---
 const MenuToggle = ({ toggle, isOpen }) => {
     return (
-      <Box display={{ base: "block", lg: "none" }} onClick={toggle} cursor="pointer" ml={4}>
+      <IconButton
+        display={{ base: "inline-flex", lg: "none" }}
+        onClick={toggle}
+        variant="ghost"
+        rounded="full"
+        w="44px"
+        h="44px"
+        ml={2}
+        aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        aria-expanded={isOpen}
+        aria-controls="menu-mobile"
+        _hover={{ bg: "brand.beige" }}
+      >
         {isOpen ? <CloseIcon /> : <MenuIcon />}
-      </Box>
+      </IconButton>
     );
   };
 
 const MobileMenu = ({ isOpen, openSignUpClick, openLoginClick }) => {
   return (
-    <Collapsible.Root open={isOpen}>
-      <Collapsible.Content>
-        <Box pb={4} display={{ lg: 'none' }}>
-          <Stack gap={4} align="center" mt={4} borderTop="1px solid" borderColor="brand.acier" pt={4}>
-            {/* ... Liens ... */}
-            <MenuItemLink to="/atlas">Atlas</MenuItemLink>
-            <MenuItemLink to="/videos">Vidéothèque</MenuItemLink>
-            <MenuItemLink to="/outils">Outils</MenuItemLink>
-            <MenuItemLink to="/recettes">Recettes</MenuItemLink>
-            <MenuItemLink to="/quiz">Quiz</MenuItemLink>
-            <MenuItemLink to="/actualites">Actualités</MenuItemLink>
-            <Box pt={4}>
+    <Collapsible.Root open={isOpen} w="100%" flexBasis="100%" display={{ lg: "none" }}>
+      <Collapsible.Content id="menu-mobile">
+        <Box pb={3}>
+          <Stack gap={0} mt={2} borderTop="1px solid" borderColor="brand.acier" pt={2}>
+            {LIENS.map((lien) => (
+              <MenuItemLink
+                key={lien.to}
+                to={lien.to}
+                fontSize="17px"
+                py="12px"
+                px={3}
+                _hover={{ bg: "brand.beige", color: "brand.rouge" }}
+              >
+                {lien.label}
+              </MenuItemLink>
+            ))}
+            <Flex justify="flex-end" borderTop="1px solid" borderColor="brand.acier" mt={2} pt={3}>
               <RightActions openSignUpClick={openSignUpClick} openLoginClick={openLoginClick} />
-            </Box>
+            </Flex>
           </Stack>
         </Box>
       </Collapsible.Content>
@@ -345,18 +350,18 @@ const MobileMenu = ({ isOpen, openSignUpClick, openLoginClick }) => {
 
 // ... (SVG Icons et NavBarContainer identiques) ...
 const CloseIcon = () => (
-    <svg width="24" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+    <svg width="22" aria-hidden="true" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
       <path fill="#8A1C25" d="M9.00023 7.58599L13.9502 2.63599L15.3642 4.04999L10.4142 8.99999L15.3642 13.95L13.9502 15.364L9.00023 10.414L4.05023 15.364L2.63623 13.95L7.58623 8.99999L2.63623 4.04999L4.05023 2.63599L9.00023 7.58599Z" />
     </svg>
   );
   const MenuIcon = () => (
-    <svg width="24px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="#8A1C25">
+    <svg width="22px" aria-hidden="true" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="#8A1C25">
       <path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z" />
     </svg>
   );
   
   // --- CONTENEUR ---
-  const NavBarContainer = ({ children, ...props }) => {
+  const NavBarContainer = ({ children, isOpen, ...props }) => {
     return (
       <Flex
         as="nav"
@@ -368,13 +373,14 @@ const CloseIcon = () => (
         top="20px"
         left="50%"
         transform="translateX(-50%)"
-        px="24px"
+        px={{ base: "16px", md: "24px" }}
         maxW="1360px"
-        w="calc(100% - 48px)"
+        w={{ base: "calc(100% - 24px)", md: "calc(100% - 48px)" }}
         bg="brand.creme"
         border="1px solid"
         borderColor="brand.acier"
-        borderRadius="100px"
+        borderRadius={isOpen ? "24px" : "100px"}
+        transition="border-radius 0.2s"
         boxShadow="0px 8px 24px rgba(44, 62, 80, 0.20)"
         minH="72px"
         {...props}
