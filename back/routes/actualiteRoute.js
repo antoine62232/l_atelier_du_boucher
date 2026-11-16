@@ -6,10 +6,10 @@ import multer from "../middleware/multer-config.js";
 
 const router = express.Router();
 
-router.post("/create", checkToken, checkRole(1), checkRole(1), multer, actualiteController.createActualite);
+router.post("/create", checkToken, checkRole(1), multer, actualiteController.createActualite);
 router.get("/all", actualiteController.getAllActualites);
 router.get("/:id", actualiteController.getActualiteById);
-router.put("/update/:id", checkToken, checkRole(1), checkRole(1), multer, actualiteController.updateActualite);
-router.delete("/delete/:id", checkToken, checkRole(1), checkRole(1), actualiteController.deleteActualite);
+router.put("/update/:id", checkToken, checkRole(1), multer, actualiteController.updateActualite);
+router.delete("/delete/:id", checkToken, checkRole(1), actualiteController.deleteActualite);
 
 export default router;
