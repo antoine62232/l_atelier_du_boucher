@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ImageAvecSecours from "../components/ImageAvecSecours";
 import { useParams, Link as RouterLink } from "react-router-dom";
 import { 
   Box, Container, Heading, Text, Flex, VStack, HStack, 
@@ -72,7 +73,7 @@ const RecetteDetail = () => {
     <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="84px">
       <Container maxW="1200px" px={6}>
         
-        <Flex as={RouterLink} to="/recettes" align="center" gap={2} color="brand.brun" fontWeight="bold" mb={6} _hover={{ color: "brand.rouge" }}>
+        <Flex as={RouterLink} to="/recettes" w="fit-content" minH="44px" align="center" gap={2} color="brand.brun" fontWeight="bold" mb={6} _hover={{ color: "brand.rouge" }}>
             <FiArrowLeft /> Retour aux recettes
         </Flex>
 
@@ -89,9 +90,8 @@ const RecetteDetail = () => {
                   isInitiallyFavorite={recette.isFavori || false} 
                 />
 
-                <Image 
+                <ImageAvecSecours 
                     src={getImageUrl(`recettes/${recette.imageRecette}`)} 
-                    fallbackSrc="https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=1200&auto=format&fit=crop"
                     alt={recette.titre} 
                     w="100%" 
                     h="100%" 
@@ -103,10 +103,10 @@ const RecetteDetail = () => {
             <Box p={{ base: 6, md: 10 }}>
                 <Flex justify="space-between" align="flex-start" wrap="wrap" gap={4}>
                     <Box>
-                        <Heading fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
+                        <Heading as="h1" fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
                             {recette.titre}
                         </Heading>
-                        <HStack spacing={4} color="gray.600" fontSize="lg" flexWrap="wrap">
+                        <HStack gap={4} color="gray.600" fontSize="lg" flexWrap="wrap">
                             <Badge bg={difficulte.color} color="white" px={3} py={1} borderRadius="full">
                                 {difficulte.label}
                             </Badge>
@@ -144,8 +144,8 @@ const RecetteDetail = () => {
         <SimpleGrid columns={{ base: 1, lg: 3 }} gap={10} alignItems="start">
             
             <Box bg="white" p={8} borderRadius="xl" boxShadow="md" gridColumn={{ lg: "span 1" }}>
-                <Heading size="lg" color="brand.brun" mb={6} fontFamily="title">Ingrédients</Heading>
-                <VStack align="stretch" spacing={3}>
+                <Heading as="h2" size="lg" color="brand.brun" mb={6} fontFamily="title">Ingrédients</Heading>
+                <VStack align="stretch" gap={3}>
                     {ingredients && ingredients.length > 0 ? (
                         ingredients.map((ing, index) => (
                             <Flex key={index} justify="space-between" align="center" borderBottom="1px dashed" borderColor="gray.200" pb={2}>
@@ -162,8 +162,8 @@ const RecetteDetail = () => {
             </Box>
 
             <Box bg="white" p={8} borderRadius="xl" boxShadow="md" gridColumn={{ lg: "span 2" }}>
-                <Heading size="lg" color="brand.brun" mb={6} fontFamily="title">Préparation</Heading>
-                <VStack align="stretch" spacing={6}>
+                <Heading as="h2" size="lg" color="brand.brun" mb={6} fontFamily="title">Préparation</Heading>
+                <VStack align="stretch" gap={6}>
                     {instructions.length > 0 ? (
                         instructions.map((etape) => (
                             <Flex key={etape.ordreEtape} gap={4}>

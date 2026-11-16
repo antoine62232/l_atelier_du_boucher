@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Box, Container, Heading, Text, Flex, Spinner, Center, Link } from "@chakra-ui/react";
+import { Box, Container, Heading, Text, SimpleGrid, Spinner, Center, Link } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import ActualityCard from "./ActualityCard";
-import defaultImg from "../../assets/laboCard.png"; 
 
 const Actuality = () => {
   const [actualities, setActualities] = useState([]);
@@ -36,12 +35,12 @@ const Actuality = () => {
     <Box as="section" bg="brand.beige" pb="84px">
       <Container maxW="1500px">
         
-        <Box textAlign="center" mb="84px">
+        <Box textAlign="center" mb={{ base: 10, md: "64px" }}>
           <Heading 
             color="brand.rouge" 
             fontFamily="title"
             fontSize={{ base: "3xl", md: "5xl" }}
-            mb={8}
+            mb={4}
           >
             L'Actualité de la Filière
           </Heading>
@@ -50,20 +49,14 @@ const Actuality = () => {
           </Text>
         </Box>
 
-        <Flex 
-            justify="center" 
-            align="center" 
-            direction={{ base: "column", xl: "row" }} 
-            gap="82px" 
-            wrap={{ base: "wrap", xl: "nowrap" }}
-        >
+        <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={{ base: 6, md: 8 }} maxW="1280px" mx="auto">
             {actualities.slice(0, 3).map((actu) => {
                 // On prépare le bon chemin d'image ici
                 const imagePath = actu.imageActualite?.startsWith('http')
                   ? actu.imageActualite
                   : actu.imageActualite
                     ? `${import.meta.env.VITE_SERVER_URL}/uploads/actualites/${actu.imageActualite}` // Ajout de /actualites/
-                    : defaultImg;
+                    : null;
 
                 return (
                   <ActualityCard 
@@ -73,26 +66,29 @@ const Actuality = () => {
                       date={new Date(actu.datePublication).toLocaleDateString('fr-FR', { 
                           day: 'numeric', month: 'short', year: 'numeric' 
                       })}
-                      excerpt={actu.contenu ? actu.contenu.substring(0, 60) + "..." : ""}
+                      excerpt={actu.contenu || ""}
                       image={imagePath}
                       link={`/actualites/${actu.idActualite}`}
                   />
                 );
             })}
-        </Flex>
+        </SimpleGrid>
 
-        <Box textAlign="center" mt="60px">
+        <Box textAlign="center" mt={{ base: 10, md: "56px" }}>
             <Link 
                 as={RouterLink} 
                 to="/actualites"
+                display="inline-flex"
+                alignItems="center"
+                minH="44px"
                 fontFamily="title" 
-                fontSize="2xl" 
+                fontSize={{ base: "xl", md: "2xl" }} 
                 color="brand.brun" 
                 fontWeight="bold"
                 textDecoration="none"
                 _hover={{ color: "brand.rouge", textDecoration: "underline" }}
             >
-                Voir toutes les actualités &gt;
+                Voir toutes les actualités →
             </Link>
         </Box>
 

@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
+import ImageAvecSecours from "../../components/ImageAvecSecours";
+import FilAriane from "../../components/atlas/FilAriane";
 import { useParams, Link as RouterLink } from "react-router-dom";
-import { 
-    Box, Container, Heading, Text, Button, VStack, Flex, 
-    Spinner, Center, Image, Badge, SimpleGrid, Breadcrumb 
-} from "@chakra-ui/react";
-import { FiArrowLeft } from "react-icons/fi";
+import { Box, Container, Heading, Text, Button, VStack, Flex, Spinner, Center, Image, Badge, SimpleGrid } from "@chakra-ui/react";
 import api from "../../api/api"; 
 
 import AtlasDetails from "../../components/atlas/AtlasDetails"; 
@@ -53,7 +51,7 @@ const AtlasBoeufArriereCuisseDetail = () => {
       <Center h="50vh">
         <VStack>
           <Heading size="md" color="gray.500">Partie introuvable</Heading>
-          <Button as={RouterLink} to="/atlas" mt={4} colorScheme="red">Retour à l'Atlas</Button>
+          <Button as={RouterLink} to="/atlas" mt={4} colorPalette="red">Retour à l'Atlas</Button>
         </VStack>
       </Center>
     );
@@ -64,37 +62,19 @@ const AtlasBoeufArriereCuisseDetail = () => {
       <Container maxW="container.xl">
         
         {/* HEADER & FIL D'ARIANE */}
-        <VStack align="start" spacing="12px" mb={10}>
-             <Breadcrumb.Root color="gray.500" fontSize="sm">
-                <Breadcrumb.List>
-                    <Breadcrumb.Item><Breadcrumb.Link as={RouterLink} to="/atlas/boeuf">Le Bœuf</Breadcrumb.Link></Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item><Breadcrumb.Link as={RouterLink} to="/atlas/boeuf/arriere">L'Arrière</Breadcrumb.Link></Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item><Breadcrumb.Link as={RouterLink} to="/atlas/boeuf/arriere/cuisse">Cuisse & Hanche</Breadcrumb.Link></Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item><Breadcrumb.CurrentLink color="brand.rouge" fontWeight="medium">{partie.nomPartie}</Breadcrumb.CurrentLink></Breadcrumb.Item>
-                </Breadcrumb.List>
-            </Breadcrumb.Root>
-
-            <Button 
-                as={RouterLink} to="/atlas/boeuf/arriere/cuisse" variant="outline" borderColor="brand.brun" 
-                color="brand.brun" borderRadius="full" bg="white" leftIcon={<FiArrowLeft />}
-                _hover={{ bg: "brand.brun", color: "white" }} size="md" px={8} fontSize="sm"
-            >
-                Retour à la Cuisse
-            </Button>
-        </VStack>
+        <FilAriane
+            etapes={[{ label: "Atlas", to: "/atlas" }, { label: "Le Bœuf", to: "/atlas/boeuf" }, { label: "L'Arrière", to: "/atlas/boeuf/arriere" }, { label: "Cuisse et hanche", to: "/atlas/boeuf/arriere/cuisse" }, { label: partie.nomPartie, to: "#" }]}
+        />
 
         {/* TITRE CENTRAL DYNAMIQUE */}
         <Box textAlign="center" mb="40px">
-            <Heading fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
+            <Heading as="h1" fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
                 {partie.nomPartie}
             </Heading>
             <Text color="gray.700" fontSize="md" maxW="3xl" mx="auto">
                 {partie.descriptionPartie}
             </Text>
-            <Badge colorScheme="red" variant="solid" borderRadius="full" px={4} py={1} mt={4} fontSize="sm">
+            <Badge colorPalette="red" variant="solid" borderRadius="full" px={4} py={1} mt={4} fontSize="sm">
                 {pieces.length} morceaux
             </Badge>
         </Box>
@@ -108,10 +88,9 @@ const AtlasBoeufArriereCuisseDetail = () => {
                 Vue d'ensemble
              </Heading>
              <Box bg="white" borderRadius="2xl" overflow="hidden" shadow="2xl" border="4px solid white">
-                <Image 
+                <ImageAvecSecours 
                     src={getImageUrl(`parties/${partie.imagePartie}`)} 
                     alt={partie.nomPartie}
-                    fallbackSrc="https://via.placeholder.com/600x400?text=Image+en+cours"
                 />
              </Box>
           </Box>
@@ -125,7 +104,7 @@ const AtlasBoeufArriereCuisseDetail = () => {
             {pieces.length === 0 ? (
                 <Text color="gray.500" fontStyle="italic">Aucun morceau enregistré pour cette zone.</Text>
             ) : (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
                     {pieces.map((piece) => (
                         <AtlasDetails 
                             key={piece.idPiece} 

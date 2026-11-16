@@ -4,6 +4,9 @@ import { Box, Flex } from '@chakra-ui/react';
 
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
+import Toaster from './components/ui/Toaster';
+import RemonterEnHaut from './components/RemonterEnHaut';
+import PageIntrouvable from './pages/PageIntrouvable';
 
 import Home from './pages/Home';
 import ForgotPassword from './pages/ForgotPassword';
@@ -39,8 +42,9 @@ import AdminActualiteForm from './pages/admin/AdminActualiteForm';
 function App() {
   return (
     <Flex direction="column" minH="100vh">
+      <RemonterEnHaut />
       <NavBar />
-    <Box flex="1">
+    <Box as="main" flex="1">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -70,11 +74,11 @@ function App() {
           <Route path="actualites/nouvelle" element={<AdminActualiteForm />} />
           <Route path="actualites/:id" element={<AdminActualiteForm />} />
         </Route>
-
-
+        <Route path="*" element={<PageIntrouvable />} />
       </Routes>
     </Box>
     <Footer />
+    <Toaster />
     </Flex>
   );
 }

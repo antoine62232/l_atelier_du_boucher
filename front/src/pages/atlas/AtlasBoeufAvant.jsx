@@ -1,7 +1,7 @@
 import React from "react";
-import { Box, Container, Heading, Text, Button, VStack, Flex, Image, Tooltip, Breadcrumb } from "@chakra-ui/react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import FilAriane from "../../components/atlas/FilAriane";
+import { Box, Container, Heading, Text, Flex, Image, Tooltip } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
 
 const imgEpaule = `${import.meta.env.VITE_API_URL.replace('/api', '')}/uploads/parties/boeuf_epaule_interieur.png`;
 import imgCollier from "../../assets/boeuf_avant_collier.png";
@@ -29,39 +29,12 @@ const AtlasBoeufAvant = () => {
       <Container maxW="1360px" px={6}>
         
         {/* En-tête */}
-        <VStack align="start" spacing="12px" mb={10}>
-             <Breadcrumb.Root color="gray.500" fontSize="sm">
-                <Breadcrumb.List>
-                    <Breadcrumb.Item>
-                        <Breadcrumb.Link as={RouterLink} to="/">Accueil</Breadcrumb.Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item>
-                        <Breadcrumb.Link as={RouterLink} to="/atlas">Atlas Anatomique</Breadcrumb.Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item>
-                        <Breadcrumb.Link as={RouterLink} to="/atlas/boeuf">Le Bœuf</Breadcrumb.Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item>
-                        <Breadcrumb.CurrentLink color="brand.rouge" fontWeight="medium">
-                            L'Avant (CAPA)
-                        </Breadcrumb.CurrentLink>
-                    </Breadcrumb.Item>
-                </Breadcrumb.List>
-            </Breadcrumb.Root>
-            <Button 
-                as={RouterLink} to="/atlas/boeuf" variant="outline" borderColor="brand.brun" 
-                color="brand.brun" borderRadius="full" bg="white" leftIcon={<FiArrowLeft />}
-                _hover={{ bg: "brand.brun", color: "white" }} size="md" px={8} fontSize="sm" fontWeight="normal"
-            >
-                Retour à la carcasse
-            </Button>
-        </VStack>
+        <FilAriane
+            etapes={[{ label: "Atlas", to: "/atlas" }, { label: "Le Bœuf", to: "/atlas/boeuf" }, { label: "L'Avant", to: "#" }]}
+        />
 
         <Box textAlign="center" mb="40px">
-            <Heading fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
+            <Heading as="h1" fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
                 L'Avant : Détail des parties
             </Heading>
             <Text color="brand.gris" fontSize="md">

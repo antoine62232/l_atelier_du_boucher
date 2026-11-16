@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ImageAvecSecours from "../ImageAvecSecours";
 import { Box, Image, Text, Flex, Heading, IconButton, Badge, Dialog, Button, Center } from "@chakra-ui/react";
 import { FiPlayCircle, FiTrash2, FiX } from "react-icons/fi";
 
@@ -16,7 +17,7 @@ const getYoutubeId = (url) => {
 
 const getYoutubeThumbnail = (url) => {
     const id = getYoutubeId(url);
-    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : "https://via.placeholder.com/640x360?text=Vidéo";
+    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 };
 
 const RessourceCard = ({ ressource, onToggleFavori }) => {
@@ -71,7 +72,7 @@ const RessourceCard = ({ ressource, onToggleFavori }) => {
 
         {/* IMAGE ET OVERLAY PLAY */}
         <Box position="relative" h="150px" w="100%" overflow="hidden">
-          <Image
+          <ImageAvecSecours
             className="video-image"
             src={getYoutubeThumbnail(ressource.urlVideo)}
             alt={ressource.titre}
@@ -96,7 +97,7 @@ const RessourceCard = ({ ressource, onToggleFavori }) => {
             {ressource.typeTechnique?.toUpperCase() || "TECHNIQUE"}
           </Badge>
 
-          <Heading fontFamily="title" fontSize="lg" color="brand.gris" noOfLines={1} lineHeight="1.2">
+          <Heading fontFamily="title" fontSize="lg" color="brand.gris" lineClamp={1} lineHeight="1.2">
             {ressource.titre}
           </Heading>
         </Flex>

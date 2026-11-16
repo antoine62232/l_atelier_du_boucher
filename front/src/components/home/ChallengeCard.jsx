@@ -23,17 +23,17 @@ const ChallengeCard = ({
   return (
     <Card.Root
       bg="white"
-      boxShadow="lg"
+      boxShadow="carte"
       borderRadius="xl"
       border="none"
       overflow="hidden"
       variant="elevated"
       h="100%"
-      py={8}
-      px={6}
+      py={{ base: 6, md: 8 }}
+      px={{ base: 4, md: 6 }}
       textAlign="center"
       transition="transform 0.3s"
-      _hover={{ transform: "translateY(-5px)", boxShadow: "xl" }}
+      _hover={{ transform: "translateY(-4px)", boxShadow: "carteSurvol" }}
     >
       <Card.Body gap={6} w="100%">
         <Box
@@ -55,6 +55,7 @@ const ChallengeCard = ({
             color={iconColor}
             fontSize="2xl"
             fontFamily="title"
+            aria-hidden="true"
           >
             {iconChar}
           </Box>
@@ -64,12 +65,12 @@ const ChallengeCard = ({
           as="h3"
           mt="2"
           fontFamily="title"
-          fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
+          fontSize={{ base: "2xl", md: "3xl" }}
           color={titleColor}
           fontWeight="bold"
           lineHeight="1.2"
           mb={0}
-          px="20px"
+          px={{ base: 0, md: "20px" }}
         >
           {title}
         </Heading>

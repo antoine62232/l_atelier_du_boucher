@@ -12,7 +12,7 @@ export const getImageUrl = (path) => {
     baseUrl = baseUrl.replace('/api', '');
   }
 
-  if (!path) return "https://via.placeholder.com/400x200?text=Image+Indisponible";
+  if (!path) return null;
   
   // On génère le bon lien propre
   return `${baseUrl}/uploads/${path}`;

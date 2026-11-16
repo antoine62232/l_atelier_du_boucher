@@ -145,7 +145,7 @@ const Dashboard = () => {
                     </Box>
 
                     {/* COLONNE DROITE : LES 4 ONGLETS */}
-                    <Box as="main" flex="1">
+                    <Box flex="1">
                         <Tabs.Root defaultValue="calculs">
                             <Tabs.List bg="white" borderRadius="md" borderWidth="1px" borderColor="brand.acier" p={1} mb={6} display="flex" flexWrap="wrap">
                                 <Tabs.Trigger value="calculs" flex="1" fontFamily="title" _selected={{ color: "brand.rouge", bg: "brand.beige" }}>

@@ -60,7 +60,7 @@ const ResetPassword = () => {
       <Container maxW="md">
         <Box bg="white" p={8} borderRadius="2xl" boxShadow="xl" textAlign="center">
           
-          <Heading fontFamily="title" color="brand.rouge" fontSize="28px" mb={2}>
+          <Heading as="h1" fontFamily="title" color="brand.rouge" fontSize="28px" mb={2}>
             Nouveau mot de passe
           </Heading>
           
@@ -82,6 +82,10 @@ const ResetPassword = () => {
               <Input 
                 type="password" 
                 placeholder="Nouveau mot de passe" 
+                aria-label="Nouveau mot de passe"
+                autoComplete="new-password"
+                h="44px"
+                fontSize="16px"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 bg="gray.50" borderRadius="md" required
@@ -89,6 +93,10 @@ const ResetPassword = () => {
               <Input 
                 type="password" 
                 placeholder="Confirmer le mot de passe" 
+                aria-label="Confirmer le mot de passe"
+                autoComplete="new-password"
+                h="44px"
+                fontSize="16px"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 bg="gray.50" borderRadius="md" required

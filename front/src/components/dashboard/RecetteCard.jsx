@@ -1,4 +1,5 @@
 import React from "react";
+import ImageAvecSecours from "../ImageAvecSecours";
 import { Box, Image, Text, Flex, Heading, IconButton } from "@chakra-ui/react";
 import { FiClock, FiTrash2 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -45,16 +46,15 @@ const RecetteCard = ({ recette, onToggleFavori }) => {
       </IconButton>
 
       <Box h="150px" w="100%" overflow="hidden">
-        <Image
+        <ImageAvecSecours
           src={nomImage ? getImageUrl(`recettes/${nomImage}`) : undefined}
-          fallbackSrc="https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=800&auto=format&fit=crop"
           alt={recette.titre}
           w="100%" h="100%" objectFit="cover"
         />
       </Box>
 
       <Flex direction="column" p={4} gap={2}>
-        <Heading fontFamily="title" fontSize="lg" color="brand.gris" noOfLines={1} lineHeight="1.2">
+        <Heading fontFamily="title" fontSize="lg" color="brand.gris" lineClamp={1} lineHeight="1.2">
           {recette.titre}
         </Heading>
         

@@ -1,29 +1,30 @@
 import React from "react";
-import { Box, Image, Text, Badge, Flex, Heading } from "@chakra-ui/react";
+import { Box, Text, Badge, Flex, Heading } from "@chakra-ui/react";
 import { FiPlayCircle } from "react-icons/fi";
-import FavoriteButton from "../common/FavoriteButton"; 
+import FavoriteButton from "../common/FavoriteButton";
+import ImageAvecSecours from "../ImageAvecSecours";
+import { getYoutubeMiniature } from "../../utils/videos";
 
 const VideoCard = ({ video, onClick }) => {
-  const getYoutubeThumbnail = (url) => {
-    if (!url) return "https://via.placeholder.com/640x360?text=Vidéo+Non+Disponible";
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      return `https://img.youtube.com/vi/${match[2]}/hqdefault.jpg`;
-    }
-    return "https://via.placeholder.com/640x360?text=Vidéo";
-  };
-
   return (
     <Box 
       w="100%" 
       bg="white" 
       borderRadius="xl" 
       overflow="hidden" 
-      boxShadow="md" 
+      boxShadow="carte"
       cursor="pointer"
       transition="all 0.3s ease"
+      role="button"
+      tabIndex={0}
+      aria-label={`Lire la vidéo : ${video.titre}`}
       onClick={() => onClick(video)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(video);
+        }
+      }}
       css={{
         "&:hover": {
             transform: "translateY(-5px)",
@@ -42,10 +43,10 @@ const VideoCard = ({ video, onClick }) => {
           isInitiallyFavorite={video.isFavori || false} 
         />
 
-        <Image 
+        <ImageAvecSecours
           className="video-image"
-          src={getYoutubeThumbnail(video.urlVideo)} 
-          alt={video.titre} 
+          src={getYoutubeMiniature(video.urlVideo)}
+          alt=""
           w="100%" h="100%" objectFit="cover" transition="transform 0.4s ease"
         />
         
@@ -56,7 +57,7 @@ const VideoCard = ({ video, onClick }) => {
             opacity={0} transition="opacity 0.3s ease"
             pointerEvents="none"
         >
-            <FiPlayCircle size={60} color="white" />
+            <FiPlayCircle size={60} color="white" aria-hidden="true" />
         </Flex>
       </Box>
 
@@ -68,7 +69,7 @@ const VideoCard = ({ video, onClick }) => {
             {video.typeTechnique?.toUpperCase() || "TECHNIQUE"}
         </Badge>
         
-        <Heading fontFamily="title" fontSize="xl" color="brand.gris" lineHeight="1.2" mt={2} mb={1}>
+        <Heading as="h2" fontFamily="title" fontSize="xl" color="brand.gris" lineHeight="1.2" mt={2} mb={1}>
             {video.titre}
         </Heading>
 

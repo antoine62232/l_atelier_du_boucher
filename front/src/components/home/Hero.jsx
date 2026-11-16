@@ -26,7 +26,7 @@ const Hero = () => {
             setIsSearching(true);
             try {
                 // On interroge maintenant la route globale "search"
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/search?q=${query}`);
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/search?q=${encodeURIComponent(query)}`);
                 if (response.ok) {
                     const data = await response.json();
                     
@@ -54,6 +54,11 @@ const Hero = () => {
         if (e.target.value === "") {
             setShowDropdown(false);
         }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (results.length > 0) handleResultClick(results[0]);
     };
 
     // Fonction pour gérer le clic sur un résultat
@@ -92,7 +97,7 @@ const Hero = () => {
                 <Container maxW="1360px">
                     <VStack gap={0} align="center" textAlign="center" w="100%" mt="100px">
                         <Heading
-                            as="h1" color="white" fontSize="48px" fontWeight="bold" fontFamily="title"
+                            as="h1" color="white" fontSize={{ base: "34px", md: "48px" }} fontWeight="bold" fontFamily="title"
                             lineHeight="1.2" textTransform="uppercase" textShadow="0px 4px 20px rgba(0, 0, 0, 0.5)" mb="12px"
                         >
                             L'ATLAS DE L'ARTISAN BOUCHER
@@ -104,19 +109,21 @@ const Hero = () => {
                             Plongez dans l'anatomie, maîtrisez la découpe et perfectionnez votre savoir-faire avec l'Atlas Numérique du Boucher.
                         </Text>
 
-                        <Box position="relative" w="660px" maxW="100%">
+                        <Box as="form" role="search" onSubmit={handleSubmit} position="relative" w="660px" maxW="100%">
                             <Group attached w="100%">
                                 <Input 
-                                    flex="1" placeholder="Rechercher une pièce, une technique, un outil..."
-                                    _placeholder={{ color: "#AAAAAA" }} bg="white" color="brand.gris"
+                                    type="search" enterKeyHint="search" aria-label="Rechercher dans l'atlas"
+                                    flex="1" placeholder="Rechercher une pièce, un terme..."
+                                    _placeholder={{ color: "gray.500" }} bg="white" color="brand.gris"
                                     height="60px" border="none" borderLeftRadius="8px" borderRightRadius="0px"
                                     fontSize="16px" pl={6} value={query} onChange={handleInputChange} autoComplete="off"
                                 />
                                 <Button
+                                    type="submit" aria-label="Lancer la recherche"
                                     bg="brand.brun" variant="outline" height="60px" width="60px"
                                     border="none" borderRightRadius="8px" borderLeftRadius="0px" _hover={{ bg: "brand.rouge" }}
                                 >
-                                    {isSearching ? <Spinner color="white" size="sm" /> : <Icon as={PiMagnifyingGlassThin} color="white" boxSize="30px" />}
+                                    {isSearching ? <Spinner color="white" size="sm" /> : <Icon as={PiMagnifyingGlassThin} color="white" boxSize="30px" aria-hidden="true" />}
                                 </Button>
                             </Group>
 
@@ -130,11 +137,17 @@ const Hero = () => {
                                         <Box w="100%">
                                             {results.map((item, index) => (
                                                 <Box 
-                                                    key={`${item.type}-${item.id}`} // Clé unique combinée
+                                                    as="button"
+                                                    type="button"
+                                                    display="block"
+                                                    w="100%"
+                                                    textAlign="left"
+                                                    key={`${item.type}-${item.id}`}
                                                     p={4} 
                                                     borderBottom={index !== results.length - 1 ? "1px solid" : "none"} 
                                                     borderColor="gray.100"
                                                     _hover={{ bg: "gray.50", cursor: "pointer" }}
+                                                    _focusVisible={{ bg: "gray.50" }}
                                                     transition="background 0.2s"
                                                     onClick={() => handleResultClick(item)}
                                                 >
@@ -144,9 +157,9 @@ const Hero = () => {
                                                         </Text>
                                                         {/* Affichage dynamique du badge selon le type */}
                                                         {item.type === 'piece' ? (
-                                                            <Badge colorScheme="red" variant="solid">Pièce de viande</Badge>
+                                                            <Badge colorPalette="red" variant="solid">Pièce de viande</Badge>
                                                         ) : (
-                                                            <Badge colorScheme="orange" variant="subtle">Lexique</Badge>
+                                                            <Badge colorPalette="orange" variant="subtle">Lexique</Badge>
                                                         )}
                                                     </Flex>
                                                     

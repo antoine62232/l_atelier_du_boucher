@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Container, Heading, Text, Flex, VStack, SimpleGrid, Button, Spinner, Center, Dialog } from "@chakra-ui/react";
-import { Link as RouterLink } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { FiX } from "react-icons/fi";
 import { getAllRessources } from "../services/RessourcesService";
 import VideoCard from "../components/videos/VideoCard";
@@ -10,13 +10,7 @@ import FavoriteButton from "../components/common/FavoriteButton";
 import LiteYouTubeEmbed from 'react-lite-youtube-embed';
 import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
 
-// Fonction pour extraire l'ID de la vidéo
-const getYoutubeId = (url) => {
-    if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-};
+import { getYoutubeId, enregistrerDerniereVideo } from "../utils/videos";
 
 const AtelierVideo = () => {
   const [videos, setVideos] = useState([]);
@@ -24,7 +18,20 @@ const AtelierVideo = () => {
   const [activeTab, setActiveTab] = useState("Tout");
   const [loading, setLoading] = useState(true);
   
-  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const idVideoDemandee = Number(searchParams.get("video"));
+  const [videoChoisie, setVideoChoisie] = useState(null);
+  const selectedVideo = videoChoisie || (idVideoDemandee ? videos.find((v) => v.idRessource === idVideoDemandee) || null : null);
+
+  const ouvrirVideo = (video) => {
+    enregistrerDerniereVideo(video);
+    setVideoChoisie(video);
+  };
+
+  const fermerVideo = () => {
+    setVideoChoisie(null);
+    if (searchParams.has("video")) setSearchParams({}, { replace: true });
+  };
 
   const categories = ["Tout", "Désossage", "Parage", "Ficelage", "Coupe"];
 
@@ -53,12 +60,12 @@ const AtelierVideo = () => {
   };
 
   return (
-    <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="84px">
-      <Container maxW="1360px" px={6}>
+    <Box bg="brand.beige" minH="calc(100vh - 100px)" pt={{ base: "120px", md: "140px" }} pb="84px">
+      <Container maxW="1360px" px={{ base: 4, md: 6 }}>
 
         {/* EN-TÊTE */}
         <Box textAlign="center" mb={10}>
-            <Heading fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
+            <Heading as="h1" fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
                 Atelier Vidéo
             </Heading>
             <Text color="brand.gris" fontSize="md" maxW="600px" mx="auto">
@@ -71,6 +78,7 @@ const AtelierVideo = () => {
             {categories.map((cat) => (
                 <Button
                     key={cat}
+                    aria-pressed={activeTab === cat}
                     onClick={() => handleFilter(cat)}
                     bg={activeTab === cat ? "brand.rouge" : "transparent"}
                     color={activeTab === cat ? "white" : "brand.brun"}
@@ -97,7 +105,7 @@ const AtelierVideo = () => {
                     <VideoCard 
                         key={video.idRessource} 
                         video={video} 
-                        onClick={(v) => setSelectedVideo(v)} 
+                        onClick={ouvrirVideo}
                     />
                 ))}
             </SimpleGrid>
@@ -112,7 +120,7 @@ const AtelierVideo = () => {
       {/* MODALE DE LECTURE VIDÉO */}
       <Dialog.Root 
         open={!!selectedVideo} 
-        onOpenChange={(e) => !e.open && setSelectedVideo(null)}
+        onOpenChange={(e) => !e.open && fermerVideo()}
         placement="center"
       >
         <Dialog.Backdrop backdropFilter="blur(5px)" bg="blackAlpha.700" zIndex="1400" />
@@ -126,11 +134,12 @@ const AtelierVideo = () => {
                             
                             <Box position="absolute" top="10px" right="10px" zIndex="10">
                                 <Button
-                                    bg="brand.rouge" color="white" borderRadius="full" size="sm"
-                                    w="36px" h="36px" p={0} _hover={{ bg: "brand.brun" }}
-                                    onClick={() => setSelectedVideo(null)}
+                                    aria-label="Fermer la vidéo"
+                                    bg="brand.rouge" color="white" borderRadius="full"
+                                    w="44px" h="44px" minW="44px" p={0} _hover={{ bg: "brand.brun" }}
+                                    onClick={fermerVideo}
                                 >
-                                    <FiX size={20} />
+                                    <FiX size={20} aria-hidden="true" />
                                 </Button>
                             </Box>
 
@@ -153,9 +162,11 @@ const AtelierVideo = () => {
                             <Flex justify="space-between" align="center" mb={2} wrap="wrap" gap={2}>
                                 {/* On groupe le titre et le coeur */}
                                 <Flex align="center" gap={4}>
-                                    <Heading fontFamily="title" color="brand.rouge" size="lg">
+                                    <Dialog.Title asChild>
+                                    <Heading as="h2" fontFamily="title" color="brand.rouge" size="lg">
                                         {selectedVideo.titre}
                                     </Heading>
+                                    </Dialog.Title>
                                     
                                     {/* LE COEUR */}
                                     <Box position="relative" display="inline-block" w="40px" h="40px">

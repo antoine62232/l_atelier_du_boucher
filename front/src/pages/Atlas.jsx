@@ -1,7 +1,6 @@
 import React from "react";
-import { Box, Container, Heading, Text, Button, Flex, VStack, Breadcrumb } from "@chakra-ui/react";
-import { Link as RouterLink } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import FilAriane from "../components/atlas/FilAriane";
+import { Box, Container, Heading, Text, Flex } from "@chakra-ui/react";
 import AnimalCard from "../components/atlas/AnimalCard";
 import boeufImg from "../assets/cardAtlasBoeuf.jpg"; 
 
@@ -11,46 +10,13 @@ const Atlas = () => {
       <Container maxW="1360px" px={6}>
         
         {/* Fil d'ariane + Bouton (Alignés à gauche) */}
-        <VStack align="start" spacing="12px" mb={10}>
-             {/* Fil d'ariane */}
-             <Breadcrumb.Root color="gray.500" fontSize="sm">
-                <Breadcrumb.List>
-                    <Breadcrumb.Item>
-                        <Breadcrumb.Link as={RouterLink} to="/">
-                            Accueil
-                        </Breadcrumb.Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item>
-                        <Breadcrumb.CurrentLink color="brand.rouge" fontWeight="medium">
-                            Atlas Anatomique
-                        </Breadcrumb.CurrentLink>
-                    </Breadcrumb.Item>
-                </Breadcrumb.List>
-             </Breadcrumb.Root>
-
-            {/* Bouton Retour */}
-            <Button 
-                as={RouterLink} 
-                to="/"
-                variant="outline" 
-                borderColor="brand.brun" 
-                color="brand.brun" 
-                borderRadius="full"
-                bg="white"
-                _hover={{ bg: "brand.brun", color: "white" }}
-                size="md"
-                px={8}
-                fontSize="sm"
-                fontWeight="normal"
-            >
-                Retour à l'accueil
-            </Button>
-        </VStack>
+        <FilAriane
+            etapes={[{ label: "Atlas", to: "#" }]}
+        />
 
         {/* En-têtes */}
         <Box textAlign="center" mb="60px">
-            <Heading 
+            <Heading as="h1"
                 fontFamily="title" 
                 color="brand.rouge" 
                 fontSize={{ base: "3xl", md: "5xl" }} 
