@@ -1,10 +1,6 @@
 import * as tagModel from "../models/tagModel.js";
 
 export const createTag = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(401).json({ error: "Vous n'avez pas accès à cette fonctionnalité" });
-    }
-
     const { nomTag } = req.body;
 
     if (!nomTag) {
@@ -45,10 +41,6 @@ export const getTagById = async (req, res) => {
 };
 
 export const updateTag = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(401).json({ error: "Vous n'avez pas accès à cette fonctionnalité" });
-    }
-
     const { nomTag } = req.body;
     const idTag = req.params.id;
 
@@ -69,10 +61,6 @@ export const updateTag = async (req, res) => {
 };
 
 export const deleteTag = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(401).json({ error: "Vous n'avez pas accès à cette fonctionnalité" });
-    }
-
     const idTag = req.params.id;
     
     try {

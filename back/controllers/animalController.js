@@ -1,9 +1,6 @@
 import * as animalModel from '../models/animalModel.js';
 
 export const createAnimal = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès réservé aux admins." });
-    }
     const { nomAnimal } = req.body;
     if (!nomAnimal) {
         return res.status(400).json({ error: "Veuillez remplir tous les champs." });
@@ -43,9 +40,6 @@ export const getAnimalById = async (req, res) => {
 };
 
 export const updateAnimal = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès réservé aux admins." });
-    }
     const id = req.params.id;
     const { nomAnimal } = req.body;
     if (!nomAnimal) {
@@ -65,9 +59,6 @@ export const updateAnimal = async (req, res) => {
 };
 
 export const deleteAnimal = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès réservé aux admins." });
-    }
     const id = req.params.id;
     try {
         const result = await animalModel.deleteAnimal(id);

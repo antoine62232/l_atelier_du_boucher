@@ -1,9 +1,6 @@
 import * as partieModel from '../models/partieModel.js';
 
 export const createPartie = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès réservé aux admins." });
-    }
     const { nomPartie, descriptionPartie, imagePartie, animalId } = req.body;
     if (!nomPartie || !descriptionPartie || !imagePartie || !animalId) {
         return res.status(400).json({ error: "Veuillez remplir tous les champs." });
@@ -57,9 +54,6 @@ export const getPartieByAnimal = async (req, res) => {
 };
 
 export const updatePartie = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès réservé aux admins." });
-    }
     const id = req.params.id;
     const { nomPartie, descriptionPartie, imagePartie, animalId } = req.body;
     if (!nomPartie || !descriptionPartie || !imagePartie || !animalId) {
@@ -79,9 +73,6 @@ export const updatePartie = async (req, res) => {
 };
 
 export const deletePartie = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès réservé aux admins." });
-    }
     const id = req.params.id;
     try {
         const result = await partieModel.deletePartie(id);

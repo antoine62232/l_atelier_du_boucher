@@ -1,10 +1,6 @@
 import * as termeModel from "../models/termeModel.js";
 
 export const createTerme = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé. Seuls les admins peuvent ajouter des termes." });
-    }
-
     const {nomTerme, definition, exemple} = req.body;
 
     if (!nomTerme || !definition || !exemple) {
@@ -60,10 +56,6 @@ export const searchTerme = async (req, res) => {
 };
 
 export const updateTerme = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé. Seuls les admins peuvent modifier des termes." });
-    }
-
     const {nomTerme, definition, exemple} = req.body;
     const idTerme = req.params.id;
 
@@ -80,10 +72,6 @@ export const updateTerme = async (req, res) => {
 };
 
 export const deleteTerme = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé. Seuls les admins peuvent supprimer des termes." });
-    }
-
     const idTerme = req.params.id;
     try {
         const result = await termeModel.deleteTerme(idTerme);

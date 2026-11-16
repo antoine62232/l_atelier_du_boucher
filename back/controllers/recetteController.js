@@ -1,10 +1,6 @@
 import * as recetteModel from "../models/recetteModel.js";
 
 export const createRecette = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé" });
-    }
-
     const { titre, tempsPreparation, tempsCuisson, difficulte, cout, nbPersonnes, pieceId } = req.body;
 
     if (!titre || !tempsPreparation || !tempsCuisson || !difficulte || !cout || !nbPersonnes || !pieceId) {
@@ -45,10 +41,6 @@ export const getRecetteById = async (req, res) => {
 };
 
 export const updateRecette = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé" });
-    }
-
     const id = req.params.id;
     const { titre, tempsPreparation, tempsCuisson, difficulte, cout, nbPersonnes, pieceId } = req.body;
 
@@ -65,10 +57,6 @@ export const updateRecette = async (req, res) => {
 };
 
 export const deleteRecette = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé" });
-    }
-
     const id = req.params.id;
 
     try {

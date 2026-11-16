@@ -1,10 +1,6 @@
 import * as pieceModel from "../models/pieceModel.js";
 
 export const createPiece = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé. Seuls les admins peuvent ajouter des pièces." });
-    }
-
     const {nomPiece, descriptionPiece, utilisation, cuisson, imagePiece, partieId} = req.body;
 
     if (!nomPiece || !partieId) {
@@ -62,9 +58,6 @@ export const getPiecesByPartie = async (req, res) => {
 };
 
 export const updatePiece = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé. Seuls les admins peuvent modifier des pièces." });
-    }
     const idPiece = req.params.id;
     const {nomPiece, descriptionPiece, utilisation, cuisson, imagePiece, partieId} = req.body;
     try {
@@ -80,9 +73,6 @@ export const updatePiece = async (req, res) => {
 };
 
 export const deletePiece = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé. Seuls les admins peuvent supprimer des pièces." });
-    }
     const idPiece = req.params.id;
     try {
         const result = await pieceModel.deletePiece(idPiece);

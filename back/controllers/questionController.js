@@ -1,10 +1,6 @@
 import *as questionModel from "../models/questionModel.js";
 
 export const createQuestion = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
-
     const { texteQuestion, typeQuestion, explication, pieceId, partieId, animalId, raceId } = req.body;
 
     if (!pieceId && !partieId && !animalId && !raceId) {
@@ -41,9 +37,6 @@ export const getQuestionById = async (req, res) => {
 };
 
 export const updateQuestion = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     const id = req.params.id;
     const { texteQuestion, typeQuestion, explication, pieceId, partieId, animalId, raceId } = req.body;
     try {
@@ -59,9 +52,6 @@ export const updateQuestion = async (req, res) => {
 };
 
 export const deleteQuestion = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     const id = req.params.id;
     try {
         const result = await questionModel.deleteQuestion(id);

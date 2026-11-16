@@ -1,10 +1,6 @@
 import * as ingredientModel from "../models/ingredientModel.js";
 
 export const createIngredient = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé" });
-    }
-
     const { nomIngredient } = req.body;
 
     if (!nomIngredient) {
@@ -45,10 +41,6 @@ export const getIngredientById = async (req, res) => {
 };
 
 export const updateIngredient = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé" });
-    }
-
     const id = req.params.id;
     const { nomIngredient } = req.body;
 
@@ -65,10 +57,6 @@ export const updateIngredient = async (req, res) => {
 };
 
 export const deleteIngredient = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès refusé" });
-    }
-
     const id = req.params.id;
 
     try {

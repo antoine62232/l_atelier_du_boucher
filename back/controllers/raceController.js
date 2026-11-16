@@ -1,9 +1,6 @@
 import * as raceModel from "../models/raceModel.js";
 
 export const createRace = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     const { nomRace, classification, animalId } = req.body;
 
     if (!nomRace || !classification || !animalId) {
@@ -54,9 +51,6 @@ export const getRaceByAnimal = async (req, res) => {
 };
 
 export const updateRace = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     const id = req.params.id;
     const { nomRace, classification, animalId } = req.body;
 
@@ -76,9 +70,6 @@ export const updateRace = async (req, res) => {
 };
 
 export const deleteRace = async (req, res) => {
-    if (req.user.role !== 1) {
-        return res.status(403).json({ error: "Accès non autorisé" });
-    }
     const id = req.params.id;
     try {
         const result = await raceModel.deleteRace(id);
