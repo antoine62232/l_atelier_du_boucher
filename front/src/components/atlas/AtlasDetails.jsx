@@ -1,16 +1,24 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Box, Heading, Text, Button, VStack, Flex, Image, Badge } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { FiInfo, FiExternalLink } from "react-icons/fi"; 
 
 const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
+    const refFiche = useRef(null);
+
+    useEffect(() => {
+        if (!selectedPiece || !refFiche.current) return;
+        if (window.matchMedia("(max-width: 991px)").matches) {
+            refFiche.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [selectedPiece]);
+
     return (
-        // Détails de la pièce sélectionnée
-        <Box w="100%" bg="white" p={6} borderRadius="xl" shadow="lg" minH="400px">
+        <Box ref={refFiche} w="100%" bg="white" p={{ base: 5, md: 6 }} borderRadius="xl" boxShadow="carte" minH={{ base: "auto", lg: "400px" }} scrollMarginTop="110px" aria-live="polite">
             {selectedPiece ? (
                 <VStack align="start" gap={4} animation="fadeIn 0.5s">
-                    <Flex justify="space-between" w="100%" align="center">
-                        <Heading size="lg" color="brand.rouge" fontFamily="title" lineHeight="1.2">
+                    <Flex justify="space-between" w="100%" align="center" gap={3} wrap="wrap">
+                        <Heading as="h2" size="lg" color="brand.rouge" fontFamily="title" lineHeight="1.2">
                             {selectedPiece.nomPiece}
                         </Heading>
                         <Badge colorPalette="orange" variant="subtle" fontSize="0.8em" px={2} py={1} borderRadius="md">
@@ -37,20 +45,21 @@ const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
                     <Box w="100%" h="1px" bg="gray.200" my={2} />
     
                     <Button 
-                        as={RouterLink} 
-                        to={`/recettes?pieceId=${selectedPiece.idPiece}`} 
+                        asChild
                         colorPalette="red" variant="solid" bg="brand.rouge" w="full"
-                        _hover={{ bg: "brand.brun" }}
+                        _hover={{ bg: "brand.rougeFonce" }}
                     >
-                        <FiExternalLink style={{ marginRight: "8px" }} /> Voir les recettes
+                        <RouterLink to={`/recettes?pieceId=${selectedPiece.idPiece}`}>
+                            <FiExternalLink aria-hidden="true" /> Voir les recettes
+                        </RouterLink>
                     </Button>
 
                 </VStack>
             ) : (
-                <VStack justify="center" h="100%" gap={4} textAlign="center" color="gray.400">
-                    <Box p={4} borderRadius="full" bg="gray.50"><FiInfo size={40} /></Box>
-                    <Heading size="md" color="gray.500">Sélectionnez une pièce</Heading>
-                    <Text fontSize="sm">Cliquez sur les pastilles rouges pour voir les détails.</Text>
+                <VStack justify="center" h="100%" minH={{ base: "160px", lg: "350px" }} gap={3} textAlign="center" color="gray.500">
+                    <Box p={4} borderRadius="full" bg="brand.beige" color="brand.brun"><FiInfo size={32} aria-hidden="true" /></Box>
+                    <Heading as="h2" size="md" color="brand.gris">Sélectionnez une pièce</Heading>
+                    <Text fontSize="sm" color="gray.600">Touchez une pastille rouge sur le schéma pour voir sa fiche.</Text>
                 </VStack>
             )}
         </Box>

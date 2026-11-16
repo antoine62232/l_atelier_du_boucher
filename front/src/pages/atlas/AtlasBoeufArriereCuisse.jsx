@@ -1,7 +1,7 @@
 import React from "react";
-import { Box, Container, Heading, Text, Button, VStack, Flex, Image, Tooltip, Breadcrumb } from "@chakra-ui/react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import FilAriane from "../../components/atlas/FilAriane";
+import { Box, Container, Heading, Text, Flex, Image, Tooltip } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
 
 const AtlasBoeufArriereCuisse = () => {
   const navigate = useNavigate();
@@ -51,27 +51,12 @@ const AtlasBoeufArriereCuisse = () => {
       <Container maxW="1360px" px={6}>
         
         {/* HEADER & FIL D'ARIANE */}
-        <VStack align="start" gap="12px" mb={10}>
-             <Breadcrumb.Root color="gray.500" fontSize="sm">
-                <Breadcrumb.List>
-                    <Breadcrumb.Item><Breadcrumb.Link as={RouterLink} to="/atlas/boeuf">Le Bœuf</Breadcrumb.Link></Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item><Breadcrumb.Link as={RouterLink} to="/atlas/boeuf/arriere">L'Arrière</Breadcrumb.Link></Breadcrumb.Item>
-                    <Breadcrumb.Separator />
-                    <Breadcrumb.Item><Breadcrumb.CurrentLink color="brand.rouge" fontWeight="medium">Cuisse & Hanche</Breadcrumb.CurrentLink></Breadcrumb.Item>
-                </Breadcrumb.List>
-            </Breadcrumb.Root>
-            <Button 
-                as={RouterLink} to="/atlas/boeuf/arriere" variant="outline" borderColor="brand.brun" 
-                color="brand.brun" borderRadius="full" bg="white" leftIcon={<FiArrowLeft />}
-                _hover={{ bg: "brand.brun", color: "white" }} size="md" px={8} fontSize="sm"
-            >
-                Retour à l'Arrière
-            </Button>
-        </VStack>
+        <FilAriane
+            etapes={[{ label: "Atlas", to: "/atlas" }, { label: "Le Bœuf", to: "/atlas/boeuf" }, { label: "L'Arrière", to: "/atlas/boeuf/arriere" }, { label: "Cuisse et hanche", to: "#" }]}
+        />
 
         <Box textAlign="center" mb="40px">
-            <Heading fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
+            <Heading as="h1" fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
                 La Cuisse & Hanche
             </Heading>
             <Text color="brand.gris" fontSize="md">

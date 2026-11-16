@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Box, Container, Button, VStack, Spinner, Flex } from "@chakra-ui/react";
-import { useSearchParams, Link as RouterLink } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi"; 
+import FilAriane from "../../components/atlas/FilAriane";
+import { Box, Container, Spinner, Flex } from "@chakra-ui/react";
+import { useSearchParams } from "react-router-dom";
+ 
 
 import InteractiveDiagram from "../../components/atlas/InteractiveDiagram"; 
 import AtlasDetails from "../../components/atlas/AtlasDetails";
@@ -92,16 +93,13 @@ const AtlasBoeufAvantEpaule = () => {
     <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="40px">
       <Container maxW="1360px" px={6}>
         
-        <VStack align="start" gap="12px" mb={10}>
-            <Button 
-                as={RouterLink} to="/atlas/boeuf/avant"
-                variant="outline" borderColor="brand.brun" 
-                color="brand.brun" borderRadius="full" bg="white"
-                _hover={{ bg: "brand.brun", color: "white" }} size="md" px={8} fontSize="sm"
-            >
-                <FiArrowLeft style={{ marginRight: "8px" }} /> Retour
-            </Button>
-        </VStack>
+        <FilAriane
+        
+            etapes={[{ label: "Atlas", to: "/atlas" }, { label: "Le Bœuf", to: "/atlas/boeuf" }, { label: "L'Avant", to: "/atlas/boeuf/avant" }, { label: "L'Épaule", to: "#" }]}
+        
+            titre="L'Épaule"
+        
+        />
 
         {loading ? (
              <Flex justify="center" align="center" h="400px"><Spinner size="xl" color="brand.rouge" /></Flex>
