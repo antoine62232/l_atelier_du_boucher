@@ -27,6 +27,11 @@ import Quiz from './pages/Quiz';
 import Actualites from './pages/Actualites';
 import ActualiteDetail from './pages/ActualiteDetail';
 import Dashboard from './pages/Dashboard';
+import RequireAdmin from './components/admin/RequireAdmin';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminAccueil from './pages/admin/AdminAccueil';
+import AdminActualites from './pages/admin/AdminActualites';
+import AdminActualiteForm from './pages/admin/AdminActualiteForm';
 
 
 
@@ -59,6 +64,12 @@ function App() {
         <Route path="/actualites/" element={<Actualites />} />
         <Route path="/actualites/:id" element={<ActualiteDetail />} />
         <Route path="/profil" element={<Dashboard />} />
+        <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
+          <Route index element={<AdminAccueil />} />
+          <Route path="actualites" element={<AdminActualites />} />
+          <Route path="actualites/nouvelle" element={<AdminActualiteForm />} />
+          <Route path="actualites/:id" element={<AdminActualiteForm />} />
+        </Route>
 
 
       </Routes>
