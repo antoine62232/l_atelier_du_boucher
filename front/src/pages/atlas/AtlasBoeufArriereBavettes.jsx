@@ -7,6 +7,22 @@ import InteractiveDiagram from "../../components/atlas/InteractiveDiagram";
 import AtlasDetails from "../../components/atlas/AtlasDetails";
 import { getAllPieces } from "../../services/PiecesService"; 
 
+// en fonction de ton image exacte pour que les pastilles tombent parfaitement sur les viandes.
+const piecesConfig = [
+  { 
+    nomBdd: "Bavette d'aloyau", 
+    face: "unique", 
+    top: "40%", 
+    left: "50%"
+  },
+  { 
+    nomBdd: "Bavette de flanchet", 
+    face: "unique", 
+    top: "50%", 
+    left: "55%"
+  }
+];
+
 const AtlasBoeufArriereBavettes = () => {
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [visiblePieces, setVisiblePieces] = useState([]); 
@@ -18,21 +34,6 @@ const AtlasBoeufArriereBavettes = () => {
 
   // --- CONFIGURATION VISUELLE DES BAVETTES ---
   // J'ai mis des pourcentages par défaut. Tu pourras ajuster `top` et `left` 
-  // en fonction de ton image exacte pour que les pastilles tombent parfaitement sur les viandes.
-  const piecesConfig = [
-    { 
-      nomBdd: "Bavette d'aloyau", 
-      face: "unique", 
-      top: "40%", 
-      left: "50%"
-    },
-    { 
-      nomBdd: "Bavette de flanchet", 
-      face: "unique", 
-      top: "50%", 
-      left: "55%"
-    }
-  ];
 
   useEffect(() => {
     const fetchPiecesData = async () => {

@@ -6,7 +6,7 @@ import FavoriteButton from "../common/FavoriteButton";
 const VideoCard = ({ video, onClick }) => {
   const getYoutubeThumbnail = (url) => {
     if (!url) return "https://via.placeholder.com/640x360?text=Vidéo+Non+Disponible";
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     if (match && match[2].length === 11) {
       return `https://img.youtube.com/vi/${match[2]}/hqdefault.jpg`;

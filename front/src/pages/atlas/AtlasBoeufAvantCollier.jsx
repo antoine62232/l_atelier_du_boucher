@@ -8,6 +8,24 @@ import AtlasDetails from "../../components/atlas/AtlasDetails";
 // 👇 1. On importe notre service
 import { getAllPieces } from "../../services/PiecesService"; 
 
+// --- CONFIGURATION VISUELLE (Top, Left, Nom) ---
+const piecesConfig = [
+  { 
+    nomBdd: "Collier", 
+    face: "unique", 
+    top: "60%", 
+    left: "40%", 
+    recetteUrl: "/recettes/collier" 
+  },
+  { 
+    nomBdd: "Basses Côtes", 
+    face: "unique", 
+    top: "30%", 
+    left: "70%", 
+    recetteUrl: "/recettes/basses-cotes" 
+  }
+];
+
 const AtlasBoeufAvantCollier = () => {
   const [selectedPiece, setSelectedPiece] = useState(null);
   // On remplace piecesData par visiblePieces pour stocker les données fusionnées
@@ -18,23 +36,6 @@ const AtlasBoeufAvantCollier = () => {
   const currentFace = "unique"; 
   const setCurrentFace = () => {}; 
 
-  // --- CONFIGURATION VISUELLE (Top, Left, Nom) ---
-  const piecesConfig = [
-    { 
-      nomBdd: "Collier", 
-      face: "unique", 
-      top: "60%", 
-      left: "40%", 
-      recetteUrl: "/recettes/collier" 
-    },
-    { 
-      nomBdd: "Basses Côtes", 
-      face: "unique", 
-      top: "30%", 
-      left: "70%", 
-      recetteUrl: "/recettes/basses-cotes" 
-    }
-  ];
 
   // 👇 2. Le useEffect pour appeler l'API et fusionner les données
   useEffect(() => {

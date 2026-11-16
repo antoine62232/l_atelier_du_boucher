@@ -7,6 +7,24 @@ import InteractiveDiagram from "../../components/atlas/InteractiveDiagram";
 import AtlasDetails from "../../components/atlas/AtlasDetails";
 import { getAllPieces } from "../../services/PiecesService"; 
 
+// --- CONFIGURATION VISUELLE ---
+const piecesConfig = [
+  { 
+    nomBdd: "Gros Bout de Poitrine", 
+    face: "unique", 
+    top: "50%",  
+    left: "35%", 
+    recetteUrl: "/recettes/gros-bout-poitrine" 
+  },
+  { 
+    nomBdd: "Milieu de Poitrine", 
+    face: "unique", 
+    top: "50%", 
+    left: "65%", 
+    recetteUrl: "/recettes/milieu-poitrine" 
+  }
+];
+
 const AtlasBoeufAvantCaparacon = () => {
   const [selectedPiece, setSelectedPiece] = useState(null);
   // On stockera nos pièces fusionnées (Config Visuelle + Données BDD)
@@ -16,23 +34,6 @@ const AtlasBoeufAvantCaparacon = () => {
   const currentFace = "unique"; 
   const setCurrentFace = () => {}; 
 
-  // --- CONFIGURATION VISUELLE ---
-  const piecesConfig = [
-    { 
-      nomBdd: "Gros Bout de Poitrine", 
-      face: "unique", 
-      top: "50%",  
-      left: "35%", 
-      recetteUrl: "/recettes/gros-bout-poitrine" 
-    },
-    { 
-      nomBdd: "Milieu de Poitrine", 
-      face: "unique", 
-      top: "50%", 
-      left: "65%", 
-      recetteUrl: "/recettes/milieu-poitrine" 
-    }
-  ];
 
   useEffect(() => {
     const fetchPiecesData = async () => {
