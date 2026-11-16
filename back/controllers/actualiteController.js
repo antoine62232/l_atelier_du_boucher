@@ -65,10 +65,31 @@ export const updateActualite = async (req, res) => {
         return res.status(403).json({ message: "Accès non autorisé" });
     }
     const id = req.params.id;
-    const { titre, contenu, imageActualite, categorie, lienSource } = req.body;
+    const { titre, contenu, categorie, lienSource } = req.body;
 
     try {
-        const result = await actualiteModel.updateActualite(id, {titre, contenu, imageActualite, categorie, lienSource});
+        const actualite = await actualiteModel.getActualiteById(id);
+        if (!actualite) {
+            return res.status(404).json({ error: "Actualité non trouvée" });
+        }
+
+        let imagePath = actualite.imageActualite;
+        if (req.file) {
+            imagePath = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
+            if (actualite.imageActualite && actualite.imageActualite.includes('/uploads/')) {
+                const ancienFichier = actualite.imageActualite.split('/uploads/')[1];
+                fs.unlink(`uploads/${ancienFichier}`, (err) => {
+                    if (err) {
+                        console.log("Erreur suppression ancienne image : ", err);
+                    }
+                });
+            }
+        } else if (req.body.imageActualite !== undefined) {
+            imagePath = req.body.imageActualite;
+        }
+
+        const result = await actualiteModel.updateActualite(id, {titre, contenu, imageActualite: imagePath, categorie, lienSource});
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Actualité non trouvée" });
         }
