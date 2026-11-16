@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { FiUser } from "react-icons/fi";
 import logoImg from "../assets/logoNavBar.png";
+import { estAdmin } from "../utils/auth";
 import SignUpModal from "./auth/SignUpModal";
 import LoginModal from "./auth/LoginModal";
 
@@ -222,6 +223,17 @@ const RightActions = ({ openSignUpClick, openLoginClick }) => {
               >
                 Mon Profil
               </Menu.Item>
+
+              {estAdmin(user) && (
+                <Menu.Item
+                  value="admin"
+                  cursor="pointer"
+                  _hover={{ bg: "gray.100" }}
+                  onClick={() => navigate('/admin')}
+                >
+                  Administration
+                </Menu.Item>
+              )}
              
             <Menu.Item 
                 value="logout" 
@@ -320,7 +332,7 @@ const MobileMenu = ({ isOpen, openSignUpClick, openLoginClick }) => {
             <MenuItemLink to="/outils">Outils</MenuItemLink>
             <MenuItemLink to="/recettes">Recettes</MenuItemLink>
             <MenuItemLink to="/quiz">Quiz</MenuItemLink>
-            <MenuItemLink to="/actu">Actualités</MenuItemLink>
+            <MenuItemLink to="/actualites">Actualités</MenuItemLink>
             <Box pt={4}>
               <RightActions openSignUpClick={openSignUpClick} openLoginClick={openLoginClick} />
             </Box>

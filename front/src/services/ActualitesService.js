@@ -9,3 +9,18 @@ export const getAllActualites = () => {
 export const getActualiteById = (id) => {
   return api.get(`/actualites/${id}`);
 };
+
+// Créer une actualité (FormData : titre, contenu, categorie, lienSource, image)
+export const createActualite = (formData) => {
+  return api.post("/actualites/create", formData);
+};
+
+// Modifier une actualité
+export const updateActualite = (id, formData) => {
+  return api.put(`/actualites/update/${id}`, formData);
+};
+
+// Supprimer une actualité et son image
+export const deleteActualite = (id) => {
+  return api.delete(`/actualites/delete/${id}`);
+};

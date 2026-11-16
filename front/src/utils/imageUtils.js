@@ -17,3 +17,7 @@ export const getImageUrl = (path) => {
   // On génère le bon lien propre
   return `${baseUrl}/uploads/${path}`;
 };
+export const getImageActualite = (image) => {
+  if (!image) return null;
+  return image.startsWith("http") ? image : getImageUrl(`actualites/${image}`);
+};
