@@ -30,7 +30,7 @@ const Actualites = () => {
         
         {/* EN-TÊTE (Harmonisé avec Quiz et Recettes) */}
         <Box textAlign="center" mb={12}>
-            <Heading fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
+            <Heading as="h1" fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
                 Le Coin des Actualités
             </Heading>
             <Text color="gray.600" fontSize="md" maxW="600px" mx="auto">

@@ -1,4 +1,5 @@
 import React from "react";
+import ImageAvecSecours from "../ImageAvecSecours";
 import { 
   Box, Image, Badge, Heading, Text, Flex, Icon, Button 
 } from "@chakra-ui/react";
@@ -35,12 +36,8 @@ const ActualiteCard = ({ actualite }) => {
       height="100%"
     >
       <Box h="200px" flexShrink={0} bg="gray.100">
-        <Image 
+        <ImageAvecSecours 
           src={imagePath} 
-          onError={(e) => {
-            e.target.onerror = null; // Empêche une boucle infinie
-            e.target.src = "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800&auto=format&fit=crop";
-          }}
           alt={actualite.titre}
           w="100%"
           h="100%"
@@ -83,16 +80,17 @@ const ActualiteCard = ({ actualite }) => {
         </Text>
 
         <Button 
-          as={RouterLink} 
-          to={`/actualites/${actualite.idActualite}`}
-          variant="link" 
+          asChild
+          variant="plain"
+          px={0}
           color="brand.rouge" 
-          rightIcon={<FiArrowRight />}
           alignSelf="flex-start"
           mt="auto" 
-          _hover={{ textDecoration: "none", color: "brand.brun" }}
+          _hover={{ color: "brand.brun" }}
         >
-          Lire la suite
+          <RouterLink to={`/actualites/${actualite.idActualite}`}>
+            Lire la suite <FiArrowRight aria-hidden="true" />
+          </RouterLink>
         </Button>
 
       </Box>

@@ -78,8 +78,8 @@ const TicketResultat = ({ formData, onSave, isLoading }) => {
 
         <Box mt={6} pt={6} borderTop="1px solid" borderColor="gray.300">
             <Button 
-                w="100%" bg="brand.rouge" color="white" _hover={{ bg: "brand.brun" }} size="lg" 
-                onClick={onSave} isLoading={isLoading}
+                w="100%" bg="brand.rouge" color="white" _hover={{ bg: "brand.rougeFonce" }} size="lg" 
+                onClick={onSave} loading={isLoading} loadingText="Enregistrement..."
             >
                 Enregistrer dans mon Établi
             </Button>

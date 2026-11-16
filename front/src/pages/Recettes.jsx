@@ -65,7 +65,7 @@ const Recettes = () => {
         
         {/* EN-TÊTE */}
         <Box textAlign="center" mb={10}>
-            <Heading fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
+            <Heading as="h1" fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
                 Le Carnet de Recettes
             </Heading>
             <Text color="brand.gris" fontSize="md" maxW="600px" mx="auto">

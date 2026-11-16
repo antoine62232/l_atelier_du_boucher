@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ImageAvecSecours from "../../components/ImageAvecSecours";
 import FilAriane from "../../components/atlas/FilAriane";
 import { useParams, Link as RouterLink } from "react-router-dom";
 import { Box, Container, Heading, Text, Button, VStack, Flex, Spinner, Center, Image, Badge, SimpleGrid } from "@chakra-ui/react";
@@ -87,10 +88,9 @@ const AtlasBoeufArriereCuisseDetail = () => {
                 Vue d'ensemble
              </Heading>
              <Box bg="white" borderRadius="2xl" overflow="hidden" shadow="2xl" border="4px solid white">
-                <Image 
+                <ImageAvecSecours 
                     src={getImageUrl(`parties/${partie.imagePartie}`)} 
                     alt={partie.nomPartie}
-                    fallbackSrc="https://via.placeholder.com/600x400?text=Image+en+cours"
                 />
              </Box>
           </Box>

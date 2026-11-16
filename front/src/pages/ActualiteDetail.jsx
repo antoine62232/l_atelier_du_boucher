@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ImageAvecSecours from "../components/ImageAvecSecours";
 import { useParams, Link as RouterLink } from "react-router-dom";
 import { 
   Box, Container, Heading, Text, Flex, Image, 
@@ -33,7 +34,7 @@ const ActualiteDetail = () => {
     <Center h="70vh">
         <VStack>
             <Text fontSize="xl">Article introuvable.</Text>
-            <Button as={RouterLink} to="/actualites" colorPalette="red" variant="link">Retour aux actualités</Button>
+            <Button asChild variant="outline" borderColor="brand.brun" color="brand.brun" rounded="full"><RouterLink to="/actualites">Retour aux actualités</RouterLink></Button>
         </VStack>
     </Center>
   );
@@ -52,7 +53,7 @@ const ActualiteDetail = () => {
     <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="84px">
       <Container maxW="900px" px={6}>
         
-        <Flex as={RouterLink} to="/actualites" align="center" gap={2} color="brand.brun" fontWeight="bold" mb={8} _hover={{ color: "brand.rouge" }}>
+        <Flex as={RouterLink} to="/actualites" w="fit-content" minH="44px" align="center" gap={2} color="brand.brun" fontWeight="bold" mb={8} _hover={{ color: "brand.rouge" }}>
             <FiArrowLeft /> Retour aux actualités
         </Flex>
 
@@ -68,17 +69,13 @@ const ActualiteDetail = () => {
                 </Flex>
             </Flex>
 
-            <Heading fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={8} lineHeight="1.2">
+            <Heading as="h1" fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={8} lineHeight="1.2">
                 {actualite.titre}
             </Heading>
 
             <Box borderRadius="xl" overflow="hidden" mb={10} boxShadow="sm">
-                <Image 
+                <ImageAvecSecours 
                     src={imagePath}
-                    onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200";
-                    }}
                     alt={actualite.titre}
                     w="100%"
                     maxH="500px"
@@ -102,16 +99,16 @@ const ActualiteDetail = () => {
                     <VStack align="flex-start" gap={4}>
                         <Text fontWeight="bold" color="brand.brun">Pour aller plus loin :</Text>
                         <Button 
-                            as="a" 
-                            href={actualite.lienSource} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            rightIcon={<FiExternalLink />}
-                            colorPalette="blue"
+                            asChild
                             variant="outline"
-                            _hover={{ bg: "blue.50" }}
+                            borderColor="brand.brun"
+                            color="brand.brun"
+                            rounded="full"
+                            _hover={{ bg: "brand.brun", color: "white" }}
                         >
-                            Lire la source officielle
+                            <a href={actualite.lienSource} target="_blank" rel="noopener noreferrer">
+                                Lire la source officielle <FiExternalLink aria-hidden="true" />
+                            </a>
                         </Button>
                     </VStack>
                 </>

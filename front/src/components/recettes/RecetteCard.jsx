@@ -1,4 +1,5 @@
 import React from "react";
+import ImageAvecSecours from "../ImageAvecSecours";
 import { Box, Image, Text, Badge, Flex, Heading } from "@chakra-ui/react";
 import { FiClock, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -34,7 +35,7 @@ const RecetteCard = ({ recette }) => {
           isInitiallyFavorite={recette.isFavori || false} 
         />
 
-        <Image 
+        <ImageAvecSecours 
           src={getImageUrl(`recettes/${recette.imageRecette}`)} 
           alt={recette.titre} 
           w="100%" 
