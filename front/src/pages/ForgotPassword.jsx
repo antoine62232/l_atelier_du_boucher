@@ -1,3 +1,4 @@
+import { Link as RouterLink } from "react-router-dom";
 import React, { useState } from "react";
 import { 
   Box, 
@@ -49,7 +50,7 @@ const ForgotPassword = () => {
             boxShadow="xl"
             textAlign="center"
         >
-          <Heading 
+          <Heading as="h1"
             fontFamily="title" 
             color="brand.rouge" 
             fontSize="28px" 
@@ -58,7 +59,7 @@ const ForgotPassword = () => {
             Mot de passe oublié ?
           </Heading>
           
-          <Text color="gray.500" mb={6} fontSize="sm">
+          <Text color="gray.600" mb={6} fontSize="sm">
             Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.
           </Text>
 
@@ -75,6 +76,11 @@ const ForgotPassword = () => {
             <VStack gap={4}>
               <Input 
                 type="email" 
+                aria-label="Adresse e-mail"
+                autoComplete="email"
+                inputMode="email"
+                h="44px"
+                fontSize="16px"
                 placeholder="Votre adresse e-mail" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -101,13 +107,12 @@ const ForgotPassword = () => {
 
           <Center mt={6}>
             <Button 
+                asChild
                 variant="ghost" 
-                size="sm" 
-                color="gray.500" 
+                color="gray.600" 
                 _hover={{ color: "brand.rouge" }}
-                onClick={() => window.history.back()}
             >
-                Retour à la connexion
+                <RouterLink to="/">Retour à l'accueil</RouterLink>
             </Button>
           </Center>
 
