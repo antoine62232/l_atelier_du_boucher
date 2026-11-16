@@ -14,7 +14,7 @@ const connexion = mysql.createPool({
 });
 
 // Test de connexion (optionnel mais recommandé au début)
-(async () => {
+if (process.env.NODE_ENV !== 'test') (async () => {
     try {
         const conn = await connexion.getConnection();
         console.log("Connecté à la base de données 'atelier_boucher'");
