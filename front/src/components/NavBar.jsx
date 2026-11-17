@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link as RouterLink, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -10,7 +10,6 @@ import {
   HStack,
   IconButton,
   Menu,
-  Collapsible,
   Portal
 } from "@chakra-ui/react";
 import { FiUser } from "react-icons/fi";
@@ -25,6 +24,17 @@ const NavBar = (props) => {
   const [cheminMenuOuvert, setCheminMenuOuvert] = useState(null);
   const isOpen = cheminMenuOuvert === location.pathname;
   const toggle = () => setCheminMenuOuvert(isOpen ? null : location.pathname);
+  const fermer = () => setCheminMenuOuvert(null);
+
+  // Échap ferme le menu mobile.
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const surTouche = (e) => {
+      if (e.key === "Escape") setCheminMenuOuvert(null);
+    };
+    document.addEventListener("keydown", surTouche);
+    return () => document.removeEventListener("keydown", surTouche);
+  }, [isOpen]);
 
   // --- GESTION DES MODALES ---
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
@@ -43,6 +53,19 @@ const NavBar = (props) => {
   };
 
   return (
+    <>
+    {/* Toucher en dehors du menu ouvert le referme. */}
+    {isOpen && (
+      <Box
+        position="fixed"
+        inset="0"
+        zIndex="999"
+        bg="rgba(44, 62, 80, 0.25)"
+        display={{ base: "block", lg: "none" }}
+        onClick={fermer}
+        aria-hidden="true"
+      />
+    )}
     <NavBarContainer isOpen={isOpen} {...props}>
 
       {/* 1. ZONE GAUCHE (Logo) */}
@@ -68,7 +91,12 @@ const NavBar = (props) => {
       </Flex>
 
       {/* 4. MENU DÉROULANT MOBILE */}
-      <MobileMenu isOpen={isOpen} openSignUpClick={openSignUp} openLoginClick={openLogin} />
+      <MobileMenu
+        isOpen={isOpen}
+        fermer={fermer}
+        openSignUpClick={() => { fermer(); openSignUp(); }}
+        openLoginClick={() => { fermer(); openLogin(); }}
+      />
 
       {/* 5. MODALES DANS LE PORTAL */}
       <Portal>
@@ -85,6 +113,7 @@ const NavBar = (props) => {
       </Portal>
 
     </NavBarContainer>
+    </>
   );
 };
 
@@ -320,33 +349,47 @@ const MenuToggle = ({ toggle, isOpen }) => {
     );
   };
 
-const MobileMenu = ({ isOpen, openSignUpClick, openLoginClick }) => {
+// Affichage simple plutôt que Collapsible : l'animation de fermeture de Chakra
+// restait bloquée et le menu ne se refermait plus.
+const MobileMenu = ({ isOpen, fermer, openSignUpClick, openLoginClick }) => {
   return (
-    <Collapsible.Root open={isOpen} w="100%" flexBasis="100%" display={{ lg: "none" }}>
-      <Collapsible.Content id="menu-mobile">
-        <Box pb={3}>
-          <Stack gap={0} mt={2} borderTop="1px solid" borderColor="brand.acier" pt={2}>
-            {LIENS.map((lien) => (
-              <MenuItemLink
-                key={lien.to}
-                to={lien.to}
-                fontSize="17px"
-                py="12px"
-                px={3}
-                _hover={{ bg: "brand.beige", color: "brand.rouge" }}
-              >
-                {lien.label}
-              </MenuItemLink>
-            ))}
-            <Flex justify="flex-end" borderTop="1px solid" borderColor="brand.acier" mt={2} pt={3}>
-              <RightActions openSignUpClick={openSignUpClick} openLoginClick={openLoginClick} />
-            </Flex>
-          </Stack>
-        </Box>
-      </Collapsible.Content>
-    </Collapsible.Root>
-  )
-}
+    <Box
+      id="menu-mobile"
+      w="100%"
+      flexBasis="100%"
+      display={{ base: isOpen ? "block" : "none", lg: "none" }}
+      css={{
+        animation: "ouvertureMenu 0.18s ease-out",
+        "@keyframes ouvertureMenu": {
+          from: { opacity: 0, transform: "translateY(-6px)" },
+          to: { opacity: 1, transform: "translateY(0)" },
+        },
+        "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+      }}
+    >
+      <Box pb={3}>
+        <Stack gap={0} mt={2} borderTop="1px solid" borderColor="brand.acier" pt={2}>
+          {LIENS.map((lien) => (
+            <MenuItemLink
+              key={lien.to}
+              to={lien.to}
+              onClick={fermer}
+              fontSize="17px"
+              py="12px"
+              px={3}
+              _hover={{ bg: "brand.beige", color: "brand.rouge" }}
+            >
+              {lien.label}
+            </MenuItemLink>
+          ))}
+          <Flex justify="flex-end" borderTop="1px solid" borderColor="brand.acier" mt={2} pt={3}>
+            <RightActions openSignUpClick={openSignUpClick} openLoginClick={openLoginClick} />
+          </Flex>
+        </Stack>
+      </Box>
+    </Box>
+  );
+};
 
 // ... (SVG Icons et NavBarContainer identiques) ...
 const CloseIcon = () => (
