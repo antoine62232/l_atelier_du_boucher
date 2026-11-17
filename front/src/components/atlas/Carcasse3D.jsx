@@ -151,12 +151,9 @@ if (uMode > 0) {
   float coeur = 1.0 - smoothstep(0.006, 0.009, trait);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1), bord);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), coeur);
-}
-// Faces intérieures visibles une fois l'autre quartier effacé : teinte de viande à la coupe.
-if (!gl_FrontFacing) diffuseColor.rgb = vec3(0.42, 0.1, 0.11);`
+}`
       );
   };
-  matiere.side = THREE.DoubleSide;
   matiere.customProgramCacheKey = () => "coupe-carcasse";
   matiere.needsUpdate = true;
 };
