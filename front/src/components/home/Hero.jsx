@@ -3,7 +3,7 @@ import {
     Box, Flex, Heading, Text, Button, VStack, Container, 
     Group, Input, Icon, Spinner, Badge 
 } from "@chakra-ui/react";
-import heroImage from "../../assets/imageHero.png";
+import heroImage from "../../assets/imageHero.webp";
 import { PiMagnifyingGlassThin } from "react-icons/pi";
 import { useNavigate } from 'react-router-dom';
 

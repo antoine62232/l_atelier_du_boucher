@@ -92,9 +92,13 @@ const AtlasBoeuf = () => {
 
             <Suspense
                 fallback={
-                    <Flex h={{ base: "68vh", md: "620px" }} minH="420px" align="center" justify="center" bg="brand.creme" borderRadius="2xl">
-                        <Spinner size="lg" color="brand.rouge" aria-label="Chargement du modèle 3D" />
-                    </Flex>
+                    <Box position="relative" h={{ base: "68vh", md: "620px" }} minH="440px" bg="brand.creme" borderRadius="2xl" boxShadow="carte" overflow="hidden">
+                        <Box as="img" src="/models/demi_carcasse_boeuf_apercu.webp" alt="" aria-hidden="true" position="absolute" top="0" left="50%" h="100%" w="auto" maxW="none" transform="translateX(-50%)" />
+                        <Flex position="absolute" bottom={4} left="50%" transform="translateX(-50%)" align="center" gap={2} bg="white" rounded="full" boxShadow="carte" px={4} py={2} role="status">
+                            <Spinner size="sm" color="brand.rouge" />
+                            <Text color="brand.gris" fontSize="sm" whiteSpace="nowrap">Préparation de la 3D…</Text>
+                        </Flex>
+                    </Box>
                 }
             >
                 <Carcasse3D

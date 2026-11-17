@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { COULEUR_ARRIERE, COULEUR_AVANT, COUPES_BOEUF } from "../../data/coupesBoeuf";
 
 const CENTRE = new THREE.Vector3(0, 1.25, 0);
@@ -156,7 +157,11 @@ const easing = (t) => 1 - Math.pow(1 - t, 3);
  * parties : { avant: { titre, description }, arriere: { titre, description } }
  * onExplorer(partie) : appelé quand l'utilisateur veut ouvrir la partie choisie.
  */
-const Carcasse3D = ({ ref, modele = "/models/demi_carcasse_boeuf.glb", coupe = null, parties, onExplorer, onSelection }) => {
+const Carcasse3D = ({
+  ref,
+  modele = "/models/demi_carcasse_boeuf_v2.glb",
+  apercu = "/models/demi_carcasse_boeuf_apercu.webp",
+  coupe = null, parties, onExplorer, onSelection }) => {
   const conteneurRef = useRef(null);
   const actionsRef = useRef(null);
   const uniformesRef = useRef(creerUniformes());
@@ -165,6 +170,7 @@ const Carcasse3D = ({ ref, modele = "/models/demi_carcasse_boeuf.glb", coupe = n
   const [etat, setEtat] = useState("chargement");
   const [vueActive, setVueActive] = useState("fente");
   const [selection, setSelection] = useState(null);
+  const [progression, setProgression] = useState(0);
 
   useEffect(() => {
     const conteneur = conteneurRef.current;
@@ -318,7 +324,7 @@ const Carcasse3D = ({ ref, modele = "/models/demi_carcasse_boeuf.glb", coupe = n
     });
 
     let annule = false;
-    new GLTFLoader().load(
+    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load(
       modele,
       (gltf) => {
         if (annule) return;
@@ -337,7 +343,9 @@ const Carcasse3D = ({ ref, modele = "/models/demi_carcasse_boeuf.glb", coupe = n
         scene.add(gltf.scene);
         setEtat("pret");
       },
-      undefined,
+      (event) => {
+        if (!annule && event.total) setProgression(Math.round((event.loaded / event.total) * 100));
+      },
       () => {
         if (!annule) setEtat("erreur");
       }
@@ -481,19 +489,57 @@ const Carcasse3D = ({ ref, modele = "/models/demi_carcasse_boeuf.glb", coupe = n
       boxShadow="carte"
       overflow="hidden"
     >
+      {/* Aperçu fixe affiché tout de suite, cadré comme la vue de départ, en attendant la 3D. */}
+      {etat !== "erreur" && (
+        <Box
+          as="img"
+          src={apercu}
+          alt=""
+          aria-hidden="true"
+          position="absolute"
+          top="0"
+          left="50%"
+          h="100%"
+          w="auto"
+          maxW="none"
+          transform="translateX(-50%)"
+          pointerEvents="none"
+          opacity={etat === "pret" ? 0 : 1}
+          transition="opacity 0.5s ease"
+        />
+      )}
+
       <Box
         ref={conteneurRef}
         position="absolute"
         inset="0"
+        opacity={etat === "pret" ? 1 : 0}
+        transition="opacity 0.5s ease"
         cursor="grab"
         role="img"
         aria-label="Demi-carcasse de bœuf en 3D. Touchez l'avant ou l'arrière pour zoomer dessus, glissez pour la faire pivoter."
       />
 
       {etat === "chargement" && (
-        <Flex position="absolute" inset="0" align="center" justify="center" direction="column" gap={3} pointerEvents="none">
-          <Spinner size="lg" color="brand.rouge" />
-          <Text color="gray.600" fontSize="sm">Chargement du modèle 3D…</Text>
+        <Flex
+          position="absolute"
+          bottom={4}
+          left="50%"
+          transform="translateX(-50%)"
+          align="center"
+          gap={2}
+          bg="white"
+          rounded="full"
+          boxShadow="carte"
+          px={4}
+          py={2}
+          pointerEvents="none"
+          role="status"
+        >
+          <Spinner size="sm" color="brand.rouge" />
+          <Text color="brand.gris" fontSize="sm" whiteSpace="nowrap">
+            Préparation de la 3D{progression > 0 ? ` ${progression} %` : "…"}
+          </Text>
         </Flex>
       )}
 

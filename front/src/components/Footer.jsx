@@ -2,7 +2,7 @@ import React from "react";
 import { Box, SimpleGrid, Text, Link, Stack, Image, Separator } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 
-import logoFooter from "../assets/logoFooter.png";
+import logoFooter from "../assets/logoFooter.webp";
 
 const LIENS_AIDE = [
   { to: "/contact", label: "Contacter l'Atelier" },

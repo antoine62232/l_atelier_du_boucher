@@ -14,7 +14,7 @@ import {
   Portal
 } from "@chakra-ui/react";
 import { FiUser } from "react-icons/fi";
-import logoImg from "../assets/logoNavBar.png";
+import logoImg from "../assets/logoNavBar.webp";
 import { estAdmin } from "../utils/auth";
 import SignUpModal from "./auth/SignUpModal";
 import LoginModal from "./auth/LoginModal";
