@@ -22,10 +22,10 @@ const Atlas = () => {
                 fontSize={{ base: "3xl", md: "5xl" }} 
                 mb={4}
             >
-                Choisissez votre animal
+                L'Atlas des découpes
             </Heading>
             <Text color="brand.gris" fontSize="md">
-                Sélectionnez une espèce pour explorer ses découpes, ses pièces et nos spécificités bouchères
+                De la demi-carcasse aux pièces de détail : repérez chaque morceau, apprenez à le travailler et à le conseiller. L'Atlas couvre le bœuf.
             </Text>
         </Box>
 
