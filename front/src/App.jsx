@@ -22,6 +22,7 @@ const AtlasBoeufArriereCuisse = lazy(() => import('./pages/atlas/AtlasBoeufArrie
 const AtlasBoeufArriereCuisseDetail = lazy(() => import('./pages/atlas/AtlasBoeufArriereCuisseDetail'));
 const AtlasBoeufArriereBavettes = lazy(() => import('./pages/atlas/AtlasBoeufArriereBavettes'));
 const AtlasBoeufArriereDehanche = lazy(() => import('./pages/atlas/AtlasBoeufArriereDehanche'));
+const FichePiece = lazy(() => import('./pages/FichePiece'));
 const AtelierVideo = lazy(() => import('./pages/AtelierVideo'));
 const LaboCalcul = lazy(() => import('./pages/LaboCalcul'));
 const Recettes = lazy(() => import('./pages/Recettes'));
@@ -67,6 +68,7 @@ function App() {
         <Route path="/atlas/boeuf/arriere/cuisse/:id" element={<AtlasBoeufArriereCuisseDetail />} />
         <Route path="/atlas/boeuf/arriere/bavettes" element={<AtlasBoeufArriereBavettes />} />
         <Route path="/atlas/boeuf/arriere/dehanche" element={<AtlasBoeufArriereDehanche />} />
+        <Route path="/pieces/:id" element={<FichePiece />} />
         <Route path="/videos" element={<AtelierVideo />} />
         <Route path="/outils" element={<LaboCalcul />} />
         <Route path="/recettes" element={<Recettes />} />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Container, Heading, Text, VStack, Button, Flex, Center, Spinner, Icon } from "@chakra-ui/react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import { FiCheckCircle, FiXCircle, FiInfo, FiRotateCcw } from "react-icons/fi";
 import { getAllQuestions, getAllReponses, saveQuizScore } from "../services/QuizService";
 import QuizCard from "../components/quiz/QuizCard";
@@ -15,6 +15,10 @@ const Quiz = () => {
   const [erreurChargement, setErreurChargement] = useState(false);
   const [scoreEnregistre, setScoreEnregistre] = useState(null);
   const estConnecte = Boolean(localStorage.getItem("authToken"));
+  // Quiz limité à une pièce quand on vient de sa fiche (?pieceId=5).
+  const [searchParams] = useSearchParams();
+  const pieceId = Number(searchParams.get("pieceId")) || null;
+  const [nomPiece, setNomPiece] = useState(null);
 
   useEffect(() => {
     const fetchQuizData = async () => {
@@ -30,9 +34,14 @@ const Quiz = () => {
         const quizData = allQuestions.map(q => ({
           ...q,
           reponses: allReponses.filter(r => r.questionId === q.idQuestion)
-        })).filter(q => q.reponses.length > 0); 
+        })).filter(q => q.reponses.length > 0)
+          .filter(q => !pieceId || q.pieceId === pieceId);
 
+        setNomPiece(pieceId ? allQuestions.find(q => q.pieceId === pieceId)?.nomPiece || null : null);
         setQuestions(quizData);
+        setCurrentIndex(0);
+        setUserAnswers([]);
+        setIsFinished(false);
       } catch (error) {
         console.error("Erreur lors du chargement du Quiz :", error);
         setErreurChargement(true);
@@ -41,8 +50,9 @@ const Quiz = () => {
       }
     };
 
+    setLoading(true);
     fetchQuizData();
-  }, []);
+  }, [pieceId]);
 
   const handleAnswer = async (reponse) => {
     const currentQuestion = questions[currentIndex];
@@ -96,8 +106,15 @@ const Quiz = () => {
       <Text color="gray.700" fontSize="md" maxW="600px" mx="auto">
         {isFinished
           ? "Voici vos résultats, avec la correction de chaque question."
-          : "Pièces, cuissons et culture bouchère : une seule bonne réponse par question."}
+          : pieceId
+            ? `Questions sur ${nomPiece || "cette pièce"} : une seule bonne réponse par question.`
+            : "Pièces, cuissons et culture bouchère : une seule bonne réponse par question."}
       </Text>
+      {pieceId && (
+        <Button asChild variant="ghost" color="brand.rouge" mt={2}>
+          <RouterLink to="/quiz">Faire le quiz complet</RouterLink>
+        </Button>
+      )}
     </Box>
   );
 
@@ -118,7 +135,11 @@ const Quiz = () => {
     return cadre(
       <Box bg="white" p={{ base: 6, md: 10 }} borderRadius="2xl" boxShadow="carte" textAlign="center">
         <Heading as="h2" size="md" fontFamily="title" color="brand.gris" mb={3}>
-          {erreurChargement ? "Le quiz n'a pas pu être chargé" : "Le quiz est en cours de préparation"}
+          {erreurChargement
+            ? "Le quiz n'a pas pu être chargé"
+            : pieceId
+              ? "Pas encore de question sur cette pièce"
+              : "Le quiz est en cours de préparation"}
         </Heading>
         <Text color="gray.600" mb={6}>
           {erreurChargement

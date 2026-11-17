@@ -161,7 +161,7 @@ const Carcasse3D = ({
   ref,
   modele = "/models/demi_carcasse_boeuf_v2.glb",
   apercu = "/models/demi_carcasse_boeuf_apercu.webp",
-  coupe = null, parties, onExplorer, onSelection }) => {
+  coupe = null, parties, onExplorer, onSelection, partieInitiale = null }) => {
   const conteneurRef = useRef(null);
   const actionsRef = useRef(null);
   const uniformesRef = useRef(creerUniformes());
@@ -433,6 +433,15 @@ const Carcasse3D = ({
     setVueActive("fente");
     actionsRef.current?.allerVers("fente");
   };
+
+  // Arrivée depuis une fiche pièce (?partie=avant) : on zoome sur ce quartier dès que la 3D est prête.
+  const partieInitialeAppliquee = useRef(false);
+  useEffect(() => {
+    if (etat !== "pret" || partieInitialeAppliquee.current || !partieInitiale) return;
+    partieInitialeAppliquee.current = true;
+    const minuteur = setTimeout(() => actionsRef.current?.choisir(partieInitiale), 350);
+    return () => clearTimeout(minuteur);
+  }, [etat, partieInitiale]);
 
   useImperativeHandle(ref, () => ({ choisir: (partie) => choisir(partie), toutVoir: () => toutVoir() }));
 

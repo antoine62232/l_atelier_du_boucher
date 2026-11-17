@@ -5,6 +5,7 @@ import { Box, Container, Spinner, Flex } from "@chakra-ui/react";
 
 import InteractiveDiagram from "../../components/atlas/InteractiveDiagram"; 
 import AtlasDetails from "../../components/atlas/AtlasDetails";
+import usePieceDemandee from "../../hooks/usePieceDemandee";
 import { getAllPieces } from "../../services/PiecesService"; 
 
 // en fonction de ton image exacte pour que les pastilles tombent parfaitement sur les viandes.
@@ -31,6 +32,7 @@ const AtlasBoeufArriereBavettes = () => {
   // Vue fixe (pas de switch intérieur/extérieur)
   const currentFace = "unique"; 
   const setCurrentFace = () => {}; 
+  usePieceDemandee(visiblePieces, setSelectedPiece);
 
   // --- CONFIGURATION VISUELLE DES BAVETTES ---
   // J'ai mis des pourcentages par défaut. Tu pourras ajuster `top` et `left` 

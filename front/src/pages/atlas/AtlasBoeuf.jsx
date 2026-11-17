@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useRef, useState } from "react";
 import FilAriane from "../../components/atlas/FilAriane";
 import { Box, Container, Heading, Text, Flex, Spinner, Button, SimpleGrid } from "@chakra-ui/react";
 import { COUPES_BOEUF, COULEUR_AVANT, COULEUR_ARRIERE } from "../../data/coupesBoeuf";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 
 const Carcasse3D = lazy(() => import("../../components/atlas/Carcasse3D"));
@@ -35,6 +35,8 @@ const AtlasBoeuf = () => {
   const coupe = COUPES_BOEUF.find((c) => c.id === coupeId) || null;
 
   const carcasseRef = useRef(null);
+  const [searchParams] = useSearchParams();
+  const partieDemandee = ["avant", "arriere"].includes(searchParams.get("partie")) ? searchParams.get("partie") : null;
   const [partie, setPartie] = useState(null);
 
   return (
@@ -106,6 +108,7 @@ const AtlasBoeuf = () => {
                     coupe={coupe}
                     parties={PARTIES}
                     onSelection={setPartie}
+                    partieInitiale={partieDemandee}
                     onExplorer={(p) => navigate(`/atlas/boeuf/${p}`)}
                 />
             </Suspense>
