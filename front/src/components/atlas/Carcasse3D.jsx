@@ -1,6 +1,6 @@
 import React, { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Box, Button, Flex, Heading, Spinner, Text } from "@chakra-ui/react";
-import { FiArrowRight, FiMaximize2, FiMinus, FiPlus, FiRotateCcw } from "react-icons/fi";
+import { FiArrowRight, FiEye, FiMinus, FiPlus, FiRotateCcw, FiX, FiZoomIn } from "react-icons/fi";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -26,6 +26,7 @@ const creerUniformes = () => ({
   uCouleurArriere: { value: new THREE.Color(COULEUR_ARRIERE) },
   uFocus: { value: 0 },
   uFocusMix: { value: 0 },
+  uMasque: { value: 0 },
 });
 
 // Largeur de la carcasse (côté rachis en z négatif, côté ventre en z positif) par tranche de hauteur.
@@ -106,6 +107,7 @@ uniform vec3 uCouleurAvant;
 uniform vec3 uCouleurArriere;
 uniform int uFocus;
 uniform float uFocusMix;
+uniform float uMasque;
 float distanceSegment(vec2 p, vec2 a, vec2 b) {
   vec2 ab = b - a;
   float t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0);
@@ -133,6 +135,11 @@ if (uMode > 0) {
   vec3 colore = mix(base, teinte, 0.38);
   if (uFocus > 0) {
     bool choisi = (uFocus == 1) == avant;
+    // Partie écartée : elle s'efface en fondu par tramage (pas de transparence à trier).
+    if (!choisi && uMasque > 0.0) {
+      float bruit = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+      if (bruit < uMasque) discard;
+    }
     float gris = dot(base, vec3(0.299, 0.587, 0.114));
     vec3 eteint = mix(colore, vec3(gris) * 0.45, 0.85);
     vec3 eclaire = mix(base, teinte, 0.12);
@@ -144,9 +151,12 @@ if (uMode > 0) {
   float coeur = 1.0 - smoothstep(0.006, 0.009, trait);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1), bord);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), coeur);
-}`
+}
+// Faces intérieures visibles une fois l'autre quartier effacé : teinte de viande à la coupe.
+if (!gl_FrontFacing) diffuseColor.rgb = vec3(0.42, 0.1, 0.11);`
       );
   };
+  matiere.side = THREE.DoubleSide;
   matiere.customProgramCacheKey = () => "coupe-carcasse";
   matiere.needsUpdate = true;
 };
@@ -170,6 +180,7 @@ const Carcasse3D = ({
   const [etat, setEtat] = useState("chargement");
   const [vueActive, setVueActive] = useState("fente");
   const [selection, setSelection] = useState(null);
+  const [isole, setIsole] = useState(false);
   const [progression, setProgression] = useState(0);
 
   useEffect(() => {
@@ -229,22 +240,28 @@ const Carcasse3D = ({
     };
 
     let boites = null;
+    let masqueCible = 0;
+    let dernierInstant = performance.now();
     let pointsPistolet = null;
 
     const allerVers = (cle) => {
+      masqueCible = 0;
       animer({ cible: CENTRE, angle: VUES[cle].angle, distance: distanceIdeale(), focus: 0 });
     };
 
     // Le bas du cadre est occupé par la fiche de la partie : on cadre la partie dans l'espace libre au-dessus.
-    const zoomerSur = (partie) => {
+    const zoomerSur = (partie, isole = false) => {
       if (!boites) return;
+      masqueCible = isole ? 1 : 0;
       const boite = boites[partie];
       const centre = boite.getCenter(new THREE.Vector3());
       const taille = boite.getSize(new THREE.Vector3());
       const hauteurCadre = conteneur.clientHeight || 600;
-      const reserve = conteneur.clientWidth < 600 ? 230 : 180;
-      const libre = THREE.MathUtils.clamp(1 - reserve / hauteurCadre, 0.45, 0.8);
-      const distance = distancePour((taille.y * 1.1) / libre, Math.max(taille.z, taille.x) * 1.3);
+      // Isolée, la fiche est plus courte et la partie remplit davantage l'écran.
+      const reserve = isole ? (conteneur.clientWidth < 600 ? 165 : 150) : conteneur.clientWidth < 600 ? 255 : 205;
+      const libre = THREE.MathUtils.clamp(1 - reserve / hauteurCadre, 0.45, 0.85);
+      const marge = isole ? 1.02 : 1.1;
+      const distance = distancePour((taille.y * marge) / libre, Math.max(taille.z, taille.x) * (isole ? 1.1 : 1.3));
       const hauteurVisible = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
       animer({
         cible: new THREE.Vector3(0, centre.y - (hauteurVisible * (1 - libre)) / 2, 0),
@@ -276,6 +293,7 @@ const Carcasse3D = ({
     const raycaster = new THREE.Raycaster();
     const pointeur = new THREE.Vector2();
     let appui = null;
+    let dernierToucher = null;
     let modeleCharge = null;
 
     const partieSousLePointeur = (event) => {
@@ -283,9 +301,14 @@ const Carcasse3D = ({
       const r = rendu.domElement.getBoundingClientRect();
       pointeur.set(((event.clientX - r.left) / r.width) * 2 - 1, -((event.clientY - r.top) / r.height) * 2 + 1);
       raycaster.setFromCamera(pointeur, camera);
-      const impact = raycaster.intersectObject(modeleCharge, true)[0];
-      if (!impact) return null;
-      return estAvantPistolet(pointsPistolet, impact.point.y, impact.point.z) ? "avant" : "arriere";
+      // Quand une partie est isolée, l'autre est invisible : on traverse ses faces.
+      const focus = uniformesRef.current.uFocus.value;
+      const partieIsolee = masqueCible > 0.5 && focus > 0 ? (focus === 1 ? "avant" : "arriere") : null;
+      for (const impact of raycaster.intersectObject(modeleCharge, true)) {
+        const partie = estAvantPistolet(pointsPistolet, impact.point.y, impact.point.z) ? "avant" : "arriere";
+        if (!partieIsolee || partie === partieIsolee) return partie;
+      }
+      return null;
     };
 
     const surAppui = (event) => {
@@ -298,7 +321,17 @@ const Carcasse3D = ({
       appui = null;
       if (deplacement > 10 || duree > 500) return;
       const partie = partieSousLePointeur(event);
-      if (partie) actionsRef.current?.choisir(partie);
+      if (!partie) return;
+      // Deux appuis rapprochés sur la même partie : on l'isole.
+      const maintenant = performance.now();
+      const double =
+        dernierToucher &&
+        dernierToucher.partie === partie &&
+        maintenant - dernierToucher.t < 380 &&
+        Math.hypot(event.clientX - dernierToucher.x, event.clientY - dernierToucher.y) < 40;
+      dernierToucher = double ? null : { partie, t: maintenant, x: event.clientX, y: event.clientY };
+      if (double) actionsRef.current?.isoler(partie);
+      else actionsRef.current?.choisir(partie);
     };
     const surSurvol = (event) => {
       if (event.pointerType !== "mouse" || appui) return;
@@ -313,6 +346,7 @@ const Carcasse3D = ({
       zoomer,
       zoomerSur,
       choisir: () => {},
+      isoler: () => {},
     };
     controles.addEventListener("start", () => {
       if (animation) {
@@ -352,6 +386,16 @@ const Carcasse3D = ({
     );
 
     rendu.setAnimationLoop(() => {
+      const instant = performance.now();
+      const ecoule = instant - dernierInstant;
+      dernierInstant = instant;
+      const u = uniformesRef.current;
+      if (Math.abs(u.uMasque.value - masqueCible) > 0.001) {
+        // Fondu d'environ 0,6 s, indépendant du mouvement de caméra.
+        u.uMasque.value += (masqueCible - u.uMasque.value) * (1 - Math.exp(-ecoule / 160));
+      } else {
+        u.uMasque.value = masqueCible;
+      }
       if (animation) {
         const t = Math.min((performance.now() - animation.debut) / DUREE_ZOOM, 1);
         const k = easing(t);
@@ -419,16 +463,20 @@ const Carcasse3D = ({
     }
   };
 
-  const choisir = (partie) => {
+  const choisir = (partie, isoler = false) => {
     setSelection(partie);
+    setIsole(isoler);
     onSelection?.(partie);
     uniformesRef.current.uFocus.value = partie === "avant" ? 1 : 2;
     appliquerAffichage(coupeRef.current, partie);
-    actionsRef.current?.zoomerSur(partie);
+    actionsRef.current?.zoomerSur(partie, isoler);
   };
+
+  const isoler = (partie) => choisir(partie, true);
 
   const toutVoir = () => {
     setSelection(null);
+    setIsole(false);
     onSelection?.(null);
     setVueActive("fente");
     actionsRef.current?.allerVers("fente");
@@ -443,7 +491,11 @@ const Carcasse3D = ({
     return () => clearTimeout(minuteur);
   }, [etat, partieInitiale]);
 
-  useImperativeHandle(ref, () => ({ choisir: (partie) => choisir(partie), toutVoir: () => toutVoir() }));
+  useImperativeHandle(ref, () => ({
+    choisir: (partie) => choisir(partie),
+    isoler: (partie) => isoler(partie),
+    toutVoir: () => toutVoir(),
+  }));
 
   // Choisir une autre coupe dans la liste fait sortir du zoom sur une partie.
   const coupeIdPrecedente = useRef(coupe?.id ?? null);
@@ -461,13 +513,17 @@ const Carcasse3D = ({
   });
 
   useEffect(() => {
-    if (actionsRef.current) actionsRef.current.choisir = choisir;
+    if (actionsRef.current) {
+      actionsRef.current.choisir = choisir;
+      actionsRef.current.isoler = isoler;
+    }
   });
 
   const changerVue = (cle) => {
     setVueActive(cle);
     if (selection) {
       setSelection(null);
+      setIsole(false);
       onSelection?.(null);
     }
     actionsRef.current?.allerVers(cle);
@@ -607,25 +663,63 @@ const Carcasse3D = ({
                 },
               }}
             >
-              <Heading as="h2" fontFamily="title" fontSize="xl" color="brand.rouge" mb={1}>
-                {infoPartie.titre}
-              </Heading>
-              <Text fontSize="sm" color="gray.700" mb={3}>{infoPartie.description}</Text>
-              <Flex gap={2} wrap="wrap">
+              <Flex justify="space-between" align="start" gap={2} mb={isole ? 3 : 1}>
+                <Heading as="h2" fontFamily="title" fontSize="xl" color="brand.rouge" lineHeight="1.2" pt={1}>
+                  {infoPartie.titre}
+                </Heading>
+                <Button
+                  onClick={toutVoir}
+                  aria-label="Revenir à la carcasse entière"
+                  variant="ghost"
+                  rounded="full"
+                  w="44px"
+                  h="44px"
+                  minW="44px"
+                  p={0}
+                  mt={-2}
+                  mr={-2}
+                  color="brand.gris"
+                >
+                  <FiX aria-hidden="true" />
+                </Button>
+              </Flex>
+              {!isole && (
+                <Text fontSize="sm" color="gray.700" mb={3}>
+                  {infoPartie.description}
+                </Text>
+              )}
+              <Flex gap={2}>
                 <Button
                   onClick={() => onExplorer?.(selection)}
                   bg="brand.rouge"
                   color="white"
                   rounded="full"
-                  px={5}
+                  flex={{ base: 1, md: "none" }}
+                  minW={0}
+                  px={{ base: 3, md: 5 }}
                   _hover={{ bg: "brand.rougeFonce" }}
                 >
                   Voir les pièces <FiArrowRight aria-hidden="true" />
                 </Button>
-                <Button onClick={toutVoir} variant="outline" rounded="full" px={5} borderColor="gray.300" color="brand.gris">
-                  <FiMaximize2 aria-hidden="true" /> Carcasse entière
+                <Button
+                  onClick={() => (isole ? choisir(selection) : isoler(selection))}
+                  variant="outline"
+                  rounded="full"
+                  flex={{ base: 1, md: "none" }}
+                  minW={0}
+                  px={{ base: 3, md: 5 }}
+                  borderColor="gray.300"
+                  color="brand.gris"
+                >
+                  {isole ? <FiEye aria-hidden="true" /> : <FiZoomIn aria-hidden="true" />}
+                  {isole ? "Tout afficher" : "Isoler"}
                 </Button>
               </Flex>
+              {!isole && (
+                <Text fontSize="xs" color="gray.600" mt={2}>
+                  Astuce : touchez deux fois la carcasse pour isoler une partie.
+                </Text>
+              )}
             </Box>
           ) : (
             <Flex
