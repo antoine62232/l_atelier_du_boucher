@@ -45,7 +45,7 @@ const AtlasBoeuf = () => {
                 Le Bœuf : Anatomie & Découpe
             </Heading>
             <Text color="brand.gris" fontSize="md" maxW="640px" mx="auto">
-                Faites tourner la demi-carcasse dans tous les sens pour observer la face de fente et l'extérieur.
+                Faites pivoter la demi-carcasse sur elle-même pour observer la face de fente et l'extérieur.
             </Text>
         </Box>
 
