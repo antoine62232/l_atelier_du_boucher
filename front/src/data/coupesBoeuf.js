@@ -4,10 +4,14 @@
 //
 // Repères sur le modèle 3D : hauteur en mètres (0 = collier en bas, 2,5 = jarret arrière en haut).
 // La largeur est donnée en fraction : 0 = côté rachis, 1 = côté ventre.
-// Positions relevées sur le poster Interbev n° 1, à faire valider par un professionnel.
+// Hauteur de chaque côte, comptée de la 1re (vers le collier, en bas) à la 13e,
+// relevée en comptant les côtes le long du rachis sur la face de fente du modèle.
+export const COTES = [0.345, 0.405, 0.47, 0.535, 0.59, 0.65, 0.71, 0.775, 0.835, 0.89, 0.955, 1.01, 1.06];
 
-const COUPE_5_6 = 0.63; // entre la 5e et la 6e côte, côté rachis
-const ECART_COTES = 0.071; // écart moyen entre deux côtes sur le modèle
+// Hauteur du trait de coupe entre la côte n et la côte n + 1
+export const entreCotes = (n) => (COTES[n - 1] + COTES[n]) / 2;
+
+const COUPE_5_6 = entreCotes(5);
 
 export const COUPES_BOEUF = [
   {
@@ -59,7 +63,7 @@ export const COUPES_BOEUF = [
     nom: "Coupe droite à 10 côtes : avant 10 côtes, arrière 3 côtes",
     resume: "Le milieu de train de côtes passe à l'avant.",
     type: "droite",
-    hauteur: COUPE_5_6 + 5 * ECART_COTES,
+    hauteur: entreCotes(10),
     avant: {
       titre: "AV10 (avant 10 côtes)",
       pieces: "Collier basses côtes, épaule, milieu de train de côtes (5 côtes) et la partie ventrale correspondante.",
