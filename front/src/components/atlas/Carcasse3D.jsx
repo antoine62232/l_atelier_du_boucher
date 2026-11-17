@@ -13,11 +13,38 @@ const CENTRE = new THREE.Vector3(0, 1.25, 0);
 const creerUniformes = () => ({
   uMode: { value: 0 },
   uCoupeY: { value: 0 },
-  uLigneA: { value: new THREE.Vector2() },
-  uLigneB: { value: new THREE.Vector2() },
+  uPts: { value: [new THREE.Vector2(), new THREE.Vector2(), new THREE.Vector2(), new THREE.Vector2()] },
   uCouleurAvant: { value: new THREE.Color(COULEUR_AVANT) },
   uCouleurArriere: { value: new THREE.Color(COULEUR_ARRIERE) },
 });
+
+// Largeur de la carcasse (côté rachis en z négatif, côté ventre en z positif) par tranche de hauteur.
+const TRANCHES = 125;
+const mesurerLargeurs = (racine) => {
+  racine.updateMatrixWorld(true);
+  const zMin = new Array(TRANCHES).fill(Infinity);
+  const zMax = new Array(TRANCHES).fill(-Infinity);
+  const v = new THREE.Vector3();
+  racine.traverse((objet) => {
+    if (!objet.isMesh) return;
+    const positions = objet.geometry.attributes.position;
+    for (let i = 0; i < positions.count; i += 1) {
+      v.fromBufferAttribute(positions, i).applyMatrix4(objet.matrixWorld);
+      const t = Math.min(TRANCHES - 1, Math.max(0, Math.floor((v.y / 2.5) * TRANCHES)));
+      zMin[t] = Math.min(zMin[t], v.z);
+      zMax[t] = Math.max(zMax[t], v.z);
+    }
+  });
+  return { zMin, zMax };
+};
+
+const versPositionZ = (largeurs, hauteur, fraction) => {
+  const t = Math.min(TRANCHES - 1, Math.max(0, Math.floor((hauteur / 2.5) * TRANCHES)));
+  const zMin = largeurs.zMin[t];
+  const zMax = largeurs.zMax[t];
+  if (!Number.isFinite(zMin)) return 0;
+  return zMin + fraction * (zMax - zMin);
+};
 
 const brancherCoupe = (matiere, uniformes) => {
   matiere.onBeforeCompile = (shader) => {
@@ -35,8 +62,7 @@ const brancherCoupe = (matiere, uniformes) => {
 varying vec3 vPosMonde;
 uniform int uMode;
 uniform float uCoupeY;
-uniform vec2 uLigneA;
-uniform vec2 uLigneB;
+uniform vec2 uPts[4];
 uniform vec3 uCouleurAvant;
 uniform vec3 uCouleurArriere;
 float distanceSegment(vec2 p, vec2 a, vec2 b) {
@@ -54,14 +80,12 @@ if (uMode > 0) {
   bool avant = y < uCoupeY;
   float trait = abs(y - uCoupeY);
   if (uMode == 2) {
-    float k = clamp((y - uLigneA.x) / (uLigneB.x - uLigneA.x), 0.0, 1.0);
-    float zLigne = mix(uLigneA.y, uLigneB.y, k);
-    bool ventre = y >= uCoupeY && y <= uLigneB.x && z > zLigne;
-    avant = avant || ventre;
-    float traitHaut = (z <= uLigneA.y) ? abs(y - uCoupeY) : 1.0;
-    float traitVentre = distanceSegment(vec2(y, z), uLigneA, uLigneB);
-    float traitCuisse = (z >= uLigneB.y) ? abs(y - uLigneB.x) : 1.0;
-    trait = min(traitHaut, min(traitVentre, traitCuisse));
+    vec2 p = vec2(y, z);
+    float zLigne = y <= uPts[2].x
+      ? mix(uPts[1].y, uPts[2].y, clamp((y - uPts[1].x) / (uPts[2].x - uPts[1].x), 0.0, 1.0))
+      : mix(uPts[2].y, uPts[3].y, clamp((y - uPts[2].x) / (uPts[3].x - uPts[2].x), 0.0, 1.0));
+    avant = y < uPts[1].x || (y <= uPts[3].x && z > zLigne);
+    trait = min(distanceSegment(p, uPts[0], uPts[1]), min(distanceSegment(p, uPts[1], uPts[2]), distanceSegment(p, uPts[2], uPts[3])));
   }
   vec3 teinte = avant ? uCouleurAvant : uCouleurArriere;
   diffuseColor.rgb = mix(diffuseColor.rgb, teinte, 0.38);
@@ -87,6 +111,7 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
   const conteneurRef = useRef(null);
   const actionsRef = useRef(null);
   const uniformesRef = useRef(creerUniformes());
+  const largeursRef = useRef(null);
   const [etat, setEtat] = useState("chargement");
   const [vueActive, setVueActive] = useState("fente");
 
@@ -165,6 +190,7 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
       modele,
       (gltf) => {
         if (annule) return;
+        largeursRef.current = mesurerLargeurs(gltf.scene);
         gltf.scene.traverse((objet) => {
           if (objet.isMesh) {
             const matieres = Array.isArray(objet.material) ? objet.material : [objet.material];
@@ -218,17 +244,20 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
 
   useEffect(() => {
     const u = uniformesRef.current;
-    if (!coupe) {
+    if (!coupe || etat !== "pret") {
       u.uMode.value = 0;
       return;
     }
-    u.uMode.value = coupe.type === "traitee" ? 2 : 1;
-    u.uCoupeY.value = coupe.hauteur;
-    if (coupe.ligneVentrale) {
-      u.uLigneA.value.set(...coupe.ligneVentrale.depart);
-      u.uLigneB.value.set(...coupe.ligneVentrale.arrivee);
+    if (coupe.type === "pistolet") {
+      u.uMode.value = 2;
+      coupe.trace.forEach((point, i) => {
+        u.uPts.value[i].set(point.hauteur, versPositionZ(largeursRef.current, point.hauteur, point.largeur));
+      });
+    } else {
+      u.uMode.value = 1;
+      u.uCoupeY.value = coupe.hauteur;
     }
-  }, [coupe]);
+  }, [coupe, etat]);
 
   const changerVue = (cle) => {
     setVueActive(cle);

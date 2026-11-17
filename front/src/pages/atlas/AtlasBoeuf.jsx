@@ -68,7 +68,7 @@ const AtlasBoeuf = () => {
                     Afficher une coupe de gros
                 </Text>
                 <Flex role="radiogroup" aria-labelledby="titre-coupes" gap={2} wrap="wrap" justify={{ base: "flex-start", md: "center" }}>
-                    {[{ id: null, sigle: "Aucune" }, ...COUPES_BOEUF].map((c) => {
+                    {[{ id: null, sigle: "Aucune", nom: "Aucune coupe" }, ...COUPES_BOEUF].map((c) => {
                         const actif = coupeId === c.id;
                         return (
                             <Button
@@ -86,6 +86,11 @@ const AtlasBoeuf = () => {
                                 _hover={{ bg: actif ? "brand.rougeFonce" : "brand.beige" }}
                             >
                                 {c.sigle}
+                                {c.sousTitre && (
+                                    <Text as="span" fontSize="xs" fontWeight="normal" opacity={0.85}>
+                                        {c.sousTitre}
+                                    </Text>
+                                )}
                             </Button>
                         );
                     })}
@@ -104,15 +109,16 @@ const AtlasBoeuf = () => {
 
             {coupe && (
                 <Box mt={5} aria-live="polite">
-                    <Text fontWeight="bold" color="brand.rouge" fontFamily="title" fontSize="xl" mb={3}>
-                        {coupe.sigle} : {coupe.nom}
+                    <Text fontWeight="bold" color="brand.rouge" fontFamily="title" fontSize="xl" mb={1}>
+                        {coupe.nom}
                     </Text>
+                    <Text color="gray.700" fontSize="sm" mb={3}>{coupe.resume}</Text>
                     <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                         <CarteQuartier couleur={COULEUR_AVANT} titre={coupe.avant.titre} pieces={coupe.avant.pieces} />
                         <CarteQuartier couleur={COULEUR_ARRIERE} titre={coupe.arriere.titre} pieces={coupe.arriere.pieces} />
                     </SimpleGrid>
                     <Text fontSize="xs" color="gray.600" mt={3}>
-                        Le trait blanc marque la séparation entre les deux quartiers. Positions indicatives sur le modèle 3D.
+                        Le trait blanc marque la séparation entre les deux quartiers, d'après les supports de découpe Interbev et Idele. Tracé indicatif sur le modèle 3D.
                     </Text>
                 </Box>
             )}
