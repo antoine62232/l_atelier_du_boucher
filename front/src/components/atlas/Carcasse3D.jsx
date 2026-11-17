@@ -5,8 +5,76 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { COULEUR_ARRIERE, COULEUR_AVANT } from "../../data/coupesBoeuf";
 
 const CENTRE = new THREE.Vector3(0, 1.25, 0);
+
+// Uniformes partagés par toutes les matières du modèle : ils pilotent la mise en évidence d'une coupe.
+const creerUniformes = () => ({
+  uMode: { value: 0 },
+  uCoupeY: { value: 0 },
+  uLigneA: { value: new THREE.Vector2() },
+  uLigneB: { value: new THREE.Vector2() },
+  uCouleurAvant: { value: new THREE.Color(COULEUR_AVANT) },
+  uCouleurArriere: { value: new THREE.Color(COULEUR_ARRIERE) },
+});
+
+const brancherCoupe = (matiere, uniformes) => {
+  matiere.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, uniformes);
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vPosMonde;")
+      .replace(
+        "#include <begin_vertex>",
+        "#include <begin_vertex>\nvPosMonde = (modelMatrix * vec4(transformed, 1.0)).xyz;"
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+varying vec3 vPosMonde;
+uniform int uMode;
+uniform float uCoupeY;
+uniform vec2 uLigneA;
+uniform vec2 uLigneB;
+uniform vec3 uCouleurAvant;
+uniform vec3 uCouleurArriere;
+float distanceSegment(vec2 p, vec2 a, vec2 b) {
+  vec2 ab = b - a;
+  float t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0);
+  return length(p - (a + ab * t));
+}`
+      )
+      .replace(
+        "#include <map_fragment>",
+        `#include <map_fragment>
+if (uMode > 0) {
+  float y = vPosMonde.y;
+  float z = vPosMonde.z;
+  bool avant = y < uCoupeY;
+  float trait = abs(y - uCoupeY);
+  if (uMode == 2) {
+    float k = clamp((y - uLigneA.x) / (uLigneB.x - uLigneA.x), 0.0, 1.0);
+    float zLigne = mix(uLigneA.y, uLigneB.y, k);
+    bool ventre = y >= uCoupeY && y <= uLigneB.x && z > zLigne;
+    avant = avant || ventre;
+    float traitHaut = (z <= uLigneA.y) ? abs(y - uCoupeY) : 1.0;
+    float traitVentre = distanceSegment(vec2(y, z), uLigneA, uLigneB);
+    float traitCuisse = (z >= uLigneB.y) ? abs(y - uLigneB.x) : 1.0;
+    trait = min(traitHaut, min(traitVentre, traitCuisse));
+  }
+  vec3 teinte = avant ? uCouleurAvant : uCouleurArriere;
+  diffuseColor.rgb = mix(diffuseColor.rgb, teinte, 0.38);
+  float bord = 1.0 - smoothstep(0.012, 0.018, trait);
+  float coeur = 1.0 - smoothstep(0.006, 0.009, trait);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1), bord);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), coeur);
+}`
+      );
+  };
+  matiere.customProgramCacheKey = () => "coupe-carcasse";
+  matiere.needsUpdate = true;
+};
 
 // Angle autour de l'axe vertical : la carcasse ne tourne qu'à l'horizontale.
 const VUES = {
@@ -15,9 +83,10 @@ const VUES = {
   profil: { label: "Profil", angle: 0 },
 };
 
-const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb" }) => {
+const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }) => {
   const conteneurRef = useRef(null);
   const actionsRef = useRef(null);
+  const uniformesRef = useRef(creerUniformes());
   const [etat, setEtat] = useState("chargement");
   const [vueActive, setVueActive] = useState("fente");
 
@@ -96,6 +165,12 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb" }) => {
       modele,
       (gltf) => {
         if (annule) return;
+        gltf.scene.traverse((objet) => {
+          if (objet.isMesh) {
+            const matieres = Array.isArray(objet.material) ? objet.material : [objet.material];
+            matieres.forEach((m) => brancherCoupe(m, uniformesRef.current));
+          }
+        });
         scene.add(gltf.scene);
         setEtat("pret");
       },
@@ -140,6 +215,20 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb" }) => {
       conteneur.removeChild(rendu.domElement);
     };
   }, [modele]);
+
+  useEffect(() => {
+    const u = uniformesRef.current;
+    if (!coupe) {
+      u.uMode.value = 0;
+      return;
+    }
+    u.uMode.value = coupe.type === "traitee" ? 2 : 1;
+    u.uCoupeY.value = coupe.hauteur;
+    if (coupe.ligneVentrale) {
+      u.uLigneA.value.set(...coupe.ligneVentrale.depart);
+      u.uLigneB.value.set(...coupe.ligneVentrale.arrivee);
+    }
+  }, [coupe]);
 
   const changerVue = (cle) => {
     setVueActive(cle);

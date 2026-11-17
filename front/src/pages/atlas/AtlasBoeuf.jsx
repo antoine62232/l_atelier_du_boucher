@@ -1,6 +1,7 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import FilAriane from "../../components/atlas/FilAriane";
-import { Box, Container, Heading, Text, Flex, Image, Tooltip, Spinner } from "@chakra-ui/react";
+import { Box, Container, Heading, Text, Flex, Image, Tooltip, Spinner, Button, SimpleGrid } from "@chakra-ui/react";
+import { COUPES_BOEUF, COULEUR_AVANT, COULEUR_ARRIERE } from "../../data/coupesBoeuf";
 import { useNavigate } from "react-router-dom";
 
 import boeufAvantCut from "../../assets/boeuf_avant_cut.png";
@@ -9,8 +10,20 @@ import boeufArriereCut from "../../assets/boeuf_arriere_cut.png";
 const Carcasse3D = lazy(() => import("../../components/atlas/Carcasse3D"));
 
 
+const CarteQuartier = ({ couleur, titre, pieces }) => (
+  <Box bg="white" borderRadius="xl" boxShadow="carte" p={{ base: 4, md: 5 }} borderLeft="6px solid" borderColor={couleur}>
+    <Flex align="center" gap={2} mb={2}>
+      <Box w="14px" h="14px" borderRadius="sm" bg={couleur} flexShrink={0} aria-hidden="true" />
+      <Heading as="h3" fontFamily="title" fontSize="lg" color="brand.gris">{titre}</Heading>
+    </Flex>
+    <Text color="gray.700" fontSize="sm" lineHeight="1.6">{pieces}</Text>
+  </Box>
+);
+
 const AtlasBoeuf = () => {
   const navigate = useNavigate();
+  const [coupeId, setCoupeId] = useState(null);
+  const coupe = COUPES_BOEUF.find((c) => c.id === coupeId) || null;
 
   const handleZoneClick = (zone) => {
     navigate(`/atlas/boeuf/${zone}`);
@@ -50,6 +63,35 @@ const AtlasBoeuf = () => {
         </Box>
 
         <Box maxW="900px" mx="auto" mb={{ base: 12, md: 16 }}>
+            <Box mb={4}>
+                <Text id="titre-coupes" fontWeight="bold" color="brand.gris" mb={2} textAlign={{ base: "left", md: "center" }}>
+                    Afficher une coupe de gros
+                </Text>
+                <Flex role="radiogroup" aria-labelledby="titre-coupes" gap={2} wrap="wrap" justify={{ base: "flex-start", md: "center" }}>
+                    {[{ id: null, sigle: "Aucune" }, ...COUPES_BOEUF].map((c) => {
+                        const actif = coupeId === c.id;
+                        return (
+                            <Button
+                                key={c.sigle}
+                                role="radio"
+                                aria-checked={actif}
+                                title={c.nom}
+                                onClick={() => setCoupeId(c.id)}
+                                rounded="full"
+                                px={4}
+                                variant="outline"
+                                bg={actif ? "brand.rouge" : "white"}
+                                color={actif ? "white" : "brand.gris"}
+                                borderColor={actif ? "brand.rouge" : "gray.300"}
+                                _hover={{ bg: actif ? "brand.rougeFonce" : "brand.beige" }}
+                            >
+                                {c.sigle}
+                            </Button>
+                        );
+                    })}
+                </Flex>
+            </Box>
+
             <Suspense
                 fallback={
                     <Flex h={{ base: "68vh", md: "620px" }} minH="420px" align="center" justify="center" bg="brand.creme" borderRadius="2xl">
@@ -57,8 +99,23 @@ const AtlasBoeuf = () => {
                     </Flex>
                 }
             >
-                <Carcasse3D />
+                <Carcasse3D coupe={coupe} />
             </Suspense>
+
+            {coupe && (
+                <Box mt={5} aria-live="polite">
+                    <Text fontWeight="bold" color="brand.rouge" fontFamily="title" fontSize="xl" mb={3}>
+                        {coupe.sigle} : {coupe.nom}
+                    </Text>
+                    <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+                        <CarteQuartier couleur={COULEUR_AVANT} titre={coupe.avant.titre} pieces={coupe.avant.pieces} />
+                        <CarteQuartier couleur={COULEUR_ARRIERE} titre={coupe.arriere.titre} pieces={coupe.arriere.pieces} />
+                    </SimpleGrid>
+                    <Text fontSize="xs" color="gray.600" mt={3}>
+                        Le trait blanc marque la séparation entre les deux quartiers. Positions indicatives sur le modèle 3D.
+                    </Text>
+                </Box>
+            )}
         </Box>
 
         <Box textAlign="center" mb={{ base: 6, md: 10 }}>
