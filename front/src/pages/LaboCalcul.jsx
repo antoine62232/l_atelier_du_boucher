@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Container, Heading, Text, SimpleGrid } from "@chakra-ui/react";
 import { getAllPieces } from "../services/PiecesService";
 import { createCalcul } from "../services/CalculsService";
-import { toaster } from "../components/ui/toaster";
+import { toaster } from "../components/ui/notifications";
 
 import CalculForm from "../components/labo/CalculForm";
 import TicketResultat from "../components/labo/TicketResultat";
