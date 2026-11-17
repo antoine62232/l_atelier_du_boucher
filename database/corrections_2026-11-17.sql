@@ -32,6 +32,30 @@ INSERT IGNORE INTO sauvegarde_20261117_faq SELECT * FROM faq;
 CREATE TABLE IF NOT EXISTS sauvegarde_20261117_termes LIKE termes;
 INSERT IGNORE INTO sauvegarde_20261117_termes SELECT * FROM termes WHERE idTerme = 1;
 
+CREATE TABLE IF NOT EXISTS sauvegarde_20261117_utilisateurs LIKE utilisateurs;
+INSERT IGNORE INTO sauvegarde_20261117_utilisateurs SELECT * FROM utilisateurs WHERE idUtilisateur IN (7, 8, 10, 11, 13, 14, 15, 17);
+
+CREATE TABLE IF NOT EXISTS sauvegarde_20261117_avis LIKE avis;
+INSERT IGNORE INTO sauvegarde_20261117_avis SELECT * FROM avis;
+
+CREATE TABLE IF NOT EXISTS sauvegarde_20261117_contacts LIKE contacts;
+INSERT IGNORE INTO sauvegarde_20261117_contacts SELECT * FROM contacts;
+
+CREATE TABLE IF NOT EXISTS sauvegarde_20261117_calculsRendement LIKE calculsRendement;
+INSERT IGNORE INTO sauvegarde_20261117_calculsRendement SELECT * FROM calculsRendement;
+
+CREATE TABLE IF NOT EXISTS sauvegarde_20261117_resultatsQuiz LIKE resultatsQuiz;
+INSERT IGNORE INTO sauvegarde_20261117_resultatsQuiz SELECT * FROM resultatsQuiz;
+
+CREATE TABLE IF NOT EXISTS sauvegarde_20261117_animaux LIKE animaux;
+INSERT IGNORE INTO sauvegarde_20261117_animaux SELECT * FROM animaux;
+
+CREATE TABLE IF NOT EXISTS sauvegarde_20261117_races LIKE races;
+INSERT IGNORE INTO sauvegarde_20261117_races SELECT * FROM races;
+
+CREATE TABLE IF NOT EXISTS sauvegarde_20261117_ingredients LIKE ingredients;
+INSERT IGNORE INTO sauvegarde_20261117_ingredients SELECT * FROM ingredients WHERE idIngredient = 24;
+
 START TRANSACTION;
 
 -- ---------------------------------------------------------------------
@@ -152,7 +176,53 @@ SET nomTerme = 'Bardage',
     exemple = 'On barde un rôti de filet de bœuf avant de le ficeler.'
 WHERE idTerme = 1;
 
+-- ---------------------------------------------------------------------
+-- 8. Espèces : l'application ne traite que le bœuf.
+-- (Après la section 3 : la question 4 ne pointe plus vers l'agneau,
+-- sinon la suppression de l'animal l'emporterait en cascade.)
+-- Les races Mérinos et Porc Gascon partent en cascade avec leur animal.
+-- ---------------------------------------------------------------------
+DELETE FROM animaux WHERE idAnimal IN (2, 3, 4, 5);
+DELETE FROM ingredients WHERE idIngredient = 24; -- « Blanquette de veau »
+
+-- ---------------------------------------------------------------------
+-- 9. Données de test
+-- ---------------------------------------------------------------------
+-- Comptes de test (dont test3, administrateur). Leurs scores, calculs,
+-- favoris et avis partent en cascade.
+DELETE FROM utilisateurs WHERE idUtilisateur IN (7, 8, 10, 11, 13, 14, 15, 17);
+
+-- Avis générés le même jour à la même seconde, signés par tes propres
+-- comptes : de faux témoignages, à ne jamais montrer à la filière.
+DELETE FROM avis;
+
+-- Messages de contact fictifs écrits comme à une boutique (traiteur,
+-- agneau de pré-salé, éleveur de porcs).
+DELETE FROM contacts;
+
+-- Calculs nommés « test ».
+DELETE FROM calculsRendement WHERE LOWER(titreCalcul) = 'test';
+
+-- Scores fictifs sur 10 alors que le quiz compte 6 questions.
+DELETE FROM resultatsQuiz WHERE total = 10 AND datePassage = '2026-07-15 12:23:56';
+
 COMMIT;
+
+-- ---------------------------------------------------------------------
+-- 10. Table en double : « resultatsquiz » (minuscules) date d'une
+-- ancienne version du code, qui écrit aujourd'hui dans « resultatsQuiz ».
+-- Les deux noms ne diffèrent que par la casse : la migration vers un
+-- serveur qui ignore la casse échouerait. On la renomme (rien n'est perdu).
+-- Uniquement si le serveur distingue la casse, sinon on viserait la bonne table.
+-- ---------------------------------------------------------------------
+SET @ancienne = (SELECT COUNT(*) FROM information_schema.TABLES
+                 WHERE TABLE_SCHEMA = DATABASE() AND BINARY TABLE_NAME = 'resultatsquiz');
+SET @renommer = IF(@ancienne = 1 AND @@lower_case_table_names = 0,
+                   'RENAME TABLE `resultatsquiz` TO `sauvegarde_20261117_ancien_resultats_quiz`',
+                   'SELECT 1');
+PREPARE renommage FROM @renommer;
+EXECUTE renommage;
+DEALLOCATE PREPARE renommage;
 
 -- ---------------------------------------------------------------------
 -- Vérifications après exécution (doivent renvoyer 0 ligne)
@@ -160,3 +230,5 @@ COMMIT;
 -- SELECT * FROM recettes WHERE titre LIKE '%veau%';
 -- SELECT * FROM questions q WHERE NOT EXISTS (SELECT 1 FROM reponsesQcm r WHERE r.questionId = q.idQuestion);
 -- SELECT * FROM actualites WHERE contenu LIKE '%agneau%';
+-- SELECT * FROM animaux WHERE idAnimal <> 1;
+-- SELECT * FROM utilisateurs WHERE email LIKE '%test%' OR email NOT LIKE '%@%.%';

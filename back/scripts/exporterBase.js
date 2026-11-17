@@ -36,6 +36,16 @@ try {
   process.exit(1);
 }
 
+// Aiven active ANSI_QUOTES : SHOW CREATE TABLE sortirait alors des "guillemets" que les autres
+// serveurs MySQL lisent comme du texte. On force les accents graves, lisibles partout.
+const [[{ modeServeur }]] = await connexion.query("SELECT @@SESSION.sql_mode AS modeServeur");
+const modeSansAnsi = modeServeur
+  .split(",")
+  .filter((m) => m && m !== "ANSI" && m !== "ANSI_QUOTES")
+  .join(",");
+await connexion.query("SET SESSION sql_mode = ?", [modeSansAnsi]);
+const [[{ mode }]] = await connexion.query("SELECT @@SESSION.sql_mode AS mode");
+
 fs.mkdirSync(dossier, { recursive: true });
 const sortie = fs.createWriteStream(fichier, { encoding: "utf8" });
 const ecrire = (texte) => new Promise((ok) => (sortie.write(texte) ? ok() : sortie.once("drain", ok)));
@@ -48,7 +58,7 @@ try {
   await ecrire(
     `-- Export de la base ${process.env.DB_NAME}, ${new Date().toLocaleString("fr-FR")}\n` +
       `-- ${tables.length} tables. Restauration : node scripts/executerSql.js <ce fichier>\n\n` +
-      "SET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS = 0;\n\n"
+      "SET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS = 0;\nSET SESSION sql_mode = 'NO_AUTO_VALUE_ON_ZERO';\n\n"
   );
 
   const bilan = [];
@@ -74,6 +84,9 @@ try {
   await new Promise((ok) => sortie.end(ok));
 
   console.table(bilan);
+  const doublons = bilan.filter((a, i) => bilan.some((b, j) => j < i && b.table.toLowerCase() === a.table.toLowerCase()));
+  if (doublons.length) console.warn("Attention, tables dont le nom ne diffère que par la casse :", doublons.map((d) => d.table).join(", "));
+  if (mode.includes("ANSI")) console.warn("Mode ANSI encore actif, vérifiez les guillemets du fichier.");
   const taille = (fs.statSync(fichier).size / 1024).toFixed(1);
   console.log(`Export terminé : ${fichier} (${taille} Ko)`);
 } catch (erreur) {
