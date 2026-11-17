@@ -3,7 +3,8 @@ import {
     Box, Flex, Heading, Text, Button, VStack, Container, 
     Group, Input, Icon, Spinner, Badge 
 } from "@chakra-ui/react";
-import heroImage from "../../assets/imageHero.png";
+import { cheminFichePiece } from "../../data/atlasBoeuf";
+import heroImage from "../../assets/imageHero.webp";
 import { PiMagnifyingGlassThin } from "react-icons/pi";
 import { useNavigate } from 'react-router-dom';
 
@@ -64,17 +65,8 @@ const Hero = () => {
     // Fonction pour gérer le clic sur un résultat
     const handleResultClick = (item) => {
         if (item.type === 'piece') {
-
-            let cheminCible = '/atlas'; 
-            
-            if (item.partieId === 1) cheminCible = '/atlas/boeuf/avant/epaule';
-            else if (item.partieId === 2) cheminCible = '/atlas/boeuf/avant/collier';
-            else if (item.partieId === 3) cheminCible = '/atlas/boeuf/arriere/cuisse';
-
-            // On navigue vers la bonne page ET on ajoute l'ID de la pièce à l'URL !
-            // Le résultat donnera par exemple : /atlas/boeuf/avant/epaule?pieceId=14
-            navigate(`${cheminCible}?pieceId=${item.id}`);
-            
+            // Chaque pièce a sa fiche complète : emplacement, vidéos, recettes, quiz et calcul.
+            navigate(cheminFichePiece(item.id));
         } else {
             setQuery(item.titre);
             setShowDropdown(false);

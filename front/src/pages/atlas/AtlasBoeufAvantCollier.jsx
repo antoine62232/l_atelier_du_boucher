@@ -5,6 +5,7 @@ import { Box, Container, Spinner, Flex } from "@chakra-ui/react";
 
 import InteractiveDiagram from "../../components/atlas/InteractiveDiagram"; 
 import AtlasDetails from "../../components/atlas/AtlasDetails";
+import usePieceDemandee from "../../hooks/usePieceDemandee";
 // 👇 1. On importe notre service
 import { getAllPieces } from "../../services/PiecesService"; 
 
@@ -35,6 +36,7 @@ const AtlasBoeufAvantCollier = () => {
   // Ici, on utilise une seule face fixe
   const currentFace = "unique"; 
   const setCurrentFace = () => {}; 
+  usePieceDemandee(visiblePieces, setSelectedPiece);
 
 
   // 👇 2. Le useEffect pour appeler l'API et fusionner les données

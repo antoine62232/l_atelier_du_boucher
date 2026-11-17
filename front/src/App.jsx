@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Box, Flex } from '@chakra-ui/react';
+import { Box, Flex, Spinner } from '@chakra-ui/react';
 
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
@@ -9,32 +9,33 @@ import RemonterEnHaut from './components/RemonterEnHaut';
 import PageIntrouvable from './pages/PageIntrouvable';
 
 import Home from './pages/Home';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import Atlas from './pages/Atlas';
-import AtlasBoeuf from './pages/atlas/AtlasBoeuf';
-import AtlasBoeufAvant from './pages/atlas/AtlasBoeufAvant';
-import AtlasBoeufAvantEpaule from './pages/atlas/AtlasBoeufAvantEpaule';
-import AtlasBoeufAvantCollier from './pages/atlas/AtlasBoeufAvantCollier';
-import AtlasBoeufAvantCaparacon from './pages/atlas/AtlasBoeufAvantCaparacon';
-import AtlasBoeufArriere from './pages/atlas/AtlasBoeufArriere';
-import AtlasBoeufArriereCuisse from './pages/atlas/AtlasBoeufArriereCuisse';
-import AtlasBoeufArriereCuisseDetail from './pages/atlas/AtlasBoeufArriereCuisseDetail';
-import AtlasBoeufArriereBavettes from './pages/atlas/AtlasBoeufArriereBavettes';
-import AtlasBoeufArriereDehanche from './pages/atlas/AtlasBoeufArriereDehanche';
-import AtelierVideo from './pages/AtelierVideo';
-import LaboCalcul from './pages/LaboCalcul';
-import Recettes from './pages/Recettes';
-import RecetteDetail from './pages/RecetteDetail';
-import Quiz from './pages/Quiz';
-import Actualites from './pages/Actualites';
-import ActualiteDetail from './pages/ActualiteDetail';
-import Dashboard from './pages/Dashboard';
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Atlas = lazy(() => import('./pages/Atlas'));
+const AtlasBoeuf = lazy(() => import('./pages/atlas/AtlasBoeuf'));
+const AtlasBoeufAvant = lazy(() => import('./pages/atlas/AtlasBoeufAvant'));
+const AtlasBoeufAvantEpaule = lazy(() => import('./pages/atlas/AtlasBoeufAvantEpaule'));
+const AtlasBoeufAvantCollier = lazy(() => import('./pages/atlas/AtlasBoeufAvantCollier'));
+const AtlasBoeufAvantCaparacon = lazy(() => import('./pages/atlas/AtlasBoeufAvantCaparacon'));
+const AtlasBoeufArriere = lazy(() => import('./pages/atlas/AtlasBoeufArriere'));
+const AtlasBoeufArriereCuisse = lazy(() => import('./pages/atlas/AtlasBoeufArriereCuisse'));
+const AtlasBoeufArriereCuisseDetail = lazy(() => import('./pages/atlas/AtlasBoeufArriereCuisseDetail'));
+const AtlasBoeufArriereBavettes = lazy(() => import('./pages/atlas/AtlasBoeufArriereBavettes'));
+const AtlasBoeufArriereDehanche = lazy(() => import('./pages/atlas/AtlasBoeufArriereDehanche'));
+const FichePiece = lazy(() => import('./pages/FichePiece'));
+const AtelierVideo = lazy(() => import('./pages/AtelierVideo'));
+const LaboCalcul = lazy(() => import('./pages/LaboCalcul'));
+const Recettes = lazy(() => import('./pages/Recettes'));
+const RecetteDetail = lazy(() => import('./pages/RecetteDetail'));
+const Quiz = lazy(() => import('./pages/Quiz'));
+const Actualites = lazy(() => import('./pages/Actualites'));
+const ActualiteDetail = lazy(() => import('./pages/ActualiteDetail'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
 import RequireAdmin from './components/admin/RequireAdmin';
-import AdminLayout from './components/admin/AdminLayout';
-import AdminAccueil from './pages/admin/AdminAccueil';
-import AdminActualites from './pages/admin/AdminActualites';
-import AdminActualiteForm from './pages/admin/AdminActualiteForm';
+const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
+const AdminAccueil = lazy(() => import('./pages/admin/AdminAccueil'));
+const AdminActualites = lazy(() => import('./pages/admin/AdminActualites'));
+const AdminActualiteForm = lazy(() => import('./pages/admin/AdminActualiteForm'));
 
 
 
@@ -45,6 +46,13 @@ function App() {
       <RemonterEnHaut />
       <NavBar />
     <Box as="main" flex="1">
+      <Suspense
+        fallback={
+          <Flex minH="60vh" align="center" justify="center" role="status" aria-label="Chargement de la page">
+            <Spinner size="lg" color="brand.rouge" />
+          </Flex>
+        }
+      >
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -60,6 +68,7 @@ function App() {
         <Route path="/atlas/boeuf/arriere/cuisse/:id" element={<AtlasBoeufArriereCuisseDetail />} />
         <Route path="/atlas/boeuf/arriere/bavettes" element={<AtlasBoeufArriereBavettes />} />
         <Route path="/atlas/boeuf/arriere/dehanche" element={<AtlasBoeufArriereDehanche />} />
+        <Route path="/pieces/:id" element={<FichePiece />} />
         <Route path="/videos" element={<AtelierVideo />} />
         <Route path="/outils" element={<LaboCalcul />} />
         <Route path="/recettes" element={<Recettes />} />
@@ -76,6 +85,7 @@ function App() {
         </Route>
         <Route path="*" element={<PageIntrouvable />} />
       </Routes>
+      </Suspense>
     </Box>
     <Footer />
     <Toaster />

@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import { Box, Heading, Text, Button, VStack, Flex, Image, Badge } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
-import { FiInfo, FiExternalLink } from "react-icons/fi"; 
+import { FiInfo, FiArrowRight } from "react-icons/fi";
+import { cheminFichePiece } from "../../data/atlasBoeuf";
 
 const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
     const refFiche = useRef(null);
@@ -44,15 +45,17 @@ const AtlasDetails = ({ selectedPiece, getImageUrl }) => {
 
                     <Box w="100%" h="1px" bg="gray.200" my={2} />
     
+                    {selectedPiece.idPiece && (
                     <Button 
                         asChild
                         colorPalette="red" variant="solid" bg="brand.rouge" w="full"
                         _hover={{ bg: "brand.rougeFonce" }}
                     >
-                        <RouterLink to={`/recettes?pieceId=${selectedPiece.idPiece}`}>
-                            <FiExternalLink aria-hidden="true" /> Voir les recettes
+                        <RouterLink to={cheminFichePiece(selectedPiece.idPiece)}>
+                            Ouvrir la fiche complète <FiArrowRight aria-hidden="true" />
                         </RouterLink>
                     </Button>
+                    )}
 
                 </VStack>
             ) : (

@@ -7,3 +7,6 @@ back/uploads/
 .$*
 *.bkp
 *.dtmp
+# Exports de la base : données personnelles, jamais dans Git
+back/sauvegardes/
+*.sql.gz

@@ -5,6 +5,7 @@ import { Box, Container, Spinner, Flex } from "@chakra-ui/react";
 
 import InteractiveDiagram from "../../components/atlas/InteractiveDiagram"; 
 import AtlasDetails from "../../components/atlas/AtlasDetails";
+import usePieceDemandee from "../../hooks/usePieceDemandee";
 import { getAllPieces } from "../../services/PiecesService"; 
 
 // --- CONFIGURATION VISUELLE DU DÉHANCHÉ ---
@@ -36,6 +37,7 @@ const AtlasBoeufArriereDehanche = () => {
   
   const currentFace = "unique"; 
   const setCurrentFace = () => {}; 
+  usePieceDemandee(visiblePieces, setSelectedPiece);
 
 
   useEffect(() => {

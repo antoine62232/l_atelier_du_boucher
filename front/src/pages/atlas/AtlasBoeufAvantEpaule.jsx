@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import FilAriane from "../../components/atlas/FilAriane";
 import { Box, Container, Spinner, Flex } from "@chakra-ui/react";
-import { useSearchParams } from "react-router-dom";
  
 
 import InteractiveDiagram from "../../components/atlas/InteractiveDiagram"; 
 import AtlasDetails from "../../components/atlas/AtlasDetails";
+import usePieceDemandee from "../../hooks/usePieceDemandee";
 import { getAllPieces } from "../../services/PiecesService";
 
 // --- CONFIGURATION DE TOUTES LES PASTILLES ---
@@ -31,19 +31,7 @@ const AtlasBoeufAvantEpaule = () => {
   const [currentFace, setCurrentFace] = useState("interne"); 
 
 
-  // LOGIQUE DE SÉLECTION VIA PARAMÈTRE URL
-  const [searchParams] = useSearchParams();
-  const pieceIdCible = searchParams.get('pieceId');
-
-  useEffect(() => {
-    if (pieceIdCible && allMergedPieces.length > 0) {
-      const targetPiece = allMergedPieces.find(p => p.idPiece === Number(pieceIdCible));
-      if (targetPiece) {
-        setSelectedPiece(targetPiece);
-        if (targetPiece.face) setCurrentFace(targetPiece.face);
-      }
-    }
-  }, [pieceIdCible, allMergedPieces]);
+  usePieceDemandee(allMergedPieces, setSelectedPiece, setCurrentFace);
 
   useEffect(() => {
     const fetchPiecesData = async () => {

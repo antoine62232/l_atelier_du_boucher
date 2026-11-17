@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Container, Heading, Text, SimpleGrid } from "@chakra-ui/react";
+import { useSearchParams } from "react-router-dom";
 import { getAllPieces } from "../services/PiecesService";
 import { createCalcul } from "../services/CalculsService";
 import { toaster } from "../components/ui/notifications";
@@ -10,10 +11,12 @@ import TicketResultat from "../components/labo/TicketResultat";
 const LaboCalcul = () => {
   const [pieces, setPieces] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const pieceDemandee = searchParams.get("pieceId") || "";
 
   const [formData, setFormData] = useState({
     titreCalcul: "",
-    pieceId: "",
+    pieceId: pieceDemandee,
     poidsBrut: "",
     poidsNet: "",
     prixAchatKg: "",
@@ -27,12 +30,15 @@ const LaboCalcul = () => {
       try {
         const res = await getAllPieces();
         setPieces(res.data);
+        // Venue d'une fiche pièce : on propose un titre de calcul tout prêt.
+        const piece = res.data.find((p) => String(p.idPiece) === pieceDemandee);
+        if (piece) setFormData((f) => (f.titreCalcul ? f : { ...f, titreCalcul: `${piece.nomPiece} du ${new Date().toLocaleDateString("fr-FR")}` }));
       } catch (error) {
         console.error("Erreur lors de la récupération des pièces:", error);
       }
     };
     fetchPieces();
-  }, []);
+  }, [pieceDemandee]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Flex, Image } from "@chakra-ui/react";
-import logoImg from "../assets/logoNavBar.png";
+import logoImg from "../assets/logoNavBar.webp";
 
 const ImageAvecSecours = ({ src, alt = "", ...props }) => {
   const [srcEnErreur, setSrcEnErreur] = useState(null);

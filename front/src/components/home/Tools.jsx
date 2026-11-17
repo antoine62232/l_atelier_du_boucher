@@ -2,10 +2,10 @@ import React from "react";
 import { Box, Container, Heading, SimpleGrid, Text } from "@chakra-ui/react";
 import ToolsCard from "./ToolsCard";
 
-import atlasImg from "../../assets/atlasCard.png";
-import gestesImg from "../../assets/gestesCard.png";
-import laboImg from "../../assets/laboCard.png";
-import recettesImg from "../../assets/recettesCard.png";
+import atlasImg from "../../assets/atlasCard.webp";
+import gestesImg from "../../assets/gestesCard.webp";
+import laboImg from "../../assets/laboCard.webp";
+import recettesImg from "../../assets/recettesCard.webp";
 
 const toolsData = [
   {
