@@ -1,14 +1,23 @@
-import React, { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy, useRef, useState } from "react";
 import FilAriane from "../../components/atlas/FilAriane";
-import { Box, Container, Heading, Text, Flex, Image, Tooltip, Spinner, Button, SimpleGrid } from "@chakra-ui/react";
+import { Box, Container, Heading, Text, Flex, Spinner, Button, SimpleGrid } from "@chakra-ui/react";
 import { COUPES_BOEUF, COULEUR_AVANT, COULEUR_ARRIERE } from "../../data/coupesBoeuf";
 import { useNavigate } from "react-router-dom";
 
-import boeufAvantCut from "../../assets/boeuf_avant_cut.png";
-import boeufArriereCut from "../../assets/boeuf_arriere_cut.png";
 
 const Carcasse3D = lazy(() => import("../../components/atlas/Carcasse3D"));
 
+
+const PARTIES = {
+  avant: {
+    titre: "L'Avant (CAPA)",
+    description: "Morceaux savoureux à mijoter : collier, épaule, plat de côtes, poitrine…",
+  },
+  arriere: {
+    titre: "L'Arrière (ART 8)",
+    description: "Morceaux nobles à rôtir ou griller : entrecôte, faux-filet, rumsteck, tende de tranche…",
+  },
+};
 
 const CarteQuartier = ({ couleur, titre, pieces }) => (
   <Box bg="white" borderRadius="xl" boxShadow="carte" p={{ base: 4, md: 5 }} borderLeft="6px solid" borderColor={couleur}>
@@ -25,24 +34,8 @@ const AtlasBoeuf = () => {
   const [coupeId, setCoupeId] = useState(null);
   const coupe = COUPES_BOEUF.find((c) => c.id === coupeId) || null;
 
-  const handleZoneClick = (zone) => {
-    navigate(`/atlas/boeuf/${zone}`);
-  };
-
-  const commonStyle = {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    w: "100%",
-    h: "auto",
-    transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-    cursor: "pointer",
-    _hover: {
-        transform: "scale(1.08)",
-        zIndex: 10,
-        filter: "drop-shadow(0px 15px 25px rgba(0,0,0,0.3)) brightness(1.05)"
-    }
-  };
+  const carcasseRef = useRef(null);
+  const [partie, setPartie] = useState(null);
 
   return (
     <Box bg="brand.beige" minH="calc(100vh - 100px)" pt={{ base: "120px", md: "140px" }} pb="40px">
@@ -58,7 +51,7 @@ const AtlasBoeuf = () => {
                 Le Bœuf : Anatomie & Découpe
             </Heading>
             <Text color="brand.gris" fontSize="md" maxW="640px" mx="auto">
-                Faites pivoter la demi-carcasse sur elle-même pour observer la face de fente et l'extérieur.
+                Touchez l'avant ou l'arrière de la demi-carcasse pour zoomer dessus et découvrir ses pièces. Faites-la pivoter pour observer la face de fente et l'extérieur.
             </Text>
         </Box>
 
@@ -104,8 +97,41 @@ const AtlasBoeuf = () => {
                     </Flex>
                 }
             >
-                <Carcasse3D coupe={coupe} />
+                <Carcasse3D
+                    ref={carcasseRef}
+                    coupe={coupe}
+                    parties={PARTIES}
+                    onSelection={setPartie}
+                    onExplorer={(p) => navigate(`/atlas/boeuf/${p}`)}
+                />
             </Suspense>
+
+            <Flex mt={4} gap={3} justify="center" wrap="wrap" role="group" aria-label="Choisir une partie de la carcasse">
+                {[
+                    { id: "avant", couleur: COULEUR_AVANT },
+                    { id: "arriere", couleur: COULEUR_ARRIERE },
+                ].map(({ id, couleur }) => {
+                    const actif = partie === id;
+                    return (
+                        <Button
+                            key={id}
+                            onClick={() => carcasseRef.current?.choisir(id)}
+                            aria-pressed={actif}
+                            rounded="full"
+                            px={5}
+                            variant="outline"
+                            bg={actif ? couleur : "white"}
+                            color={actif ? "white" : "brand.gris"}
+                            borderColor={couleur}
+                            borderWidth="2px"
+                            _hover={{ bg: actif ? couleur : "brand.beige" }}
+                        >
+                            <Box w="12px" h="12px" borderRadius="sm" bg={actif ? "white" : couleur} aria-hidden="true" />
+                            {PARTIES[id].titre}
+                        </Button>
+                    );
+                })}
+            </Flex>
 
             {coupe && (
                 <Box mt={5} aria-live="polite">
@@ -123,75 +149,6 @@ const AtlasBoeuf = () => {
                 </Box>
             )}
         </Box>
-
-        <Box textAlign="center" mb={{ base: 6, md: 10 }}>
-            <Heading as="h2" fontFamily="title" color="brand.rouge" fontSize={{ base: "2xl", md: "3xl" }} mb={3}>
-                Choisissez une partie
-            </Heading>
-            <Text color="brand.gris" fontSize="md">
-                Touchez l'<strong>Arrière</strong> ou l'<strong>Avant</strong> de la carcasse pour explorer ses pièces.
-            </Text>
-        </Box>
-
-        {/* 🥩 ZONE INTERACTIVE 🥩 */}
-        <Flex justify="center" mb={10}>
-            
-            <Box position="relative" w="350px" h="600px">
-                
-                {/* 1. ARRIÈRE (Le HAUT) -> Tooltip à DROITE */}
-                <Tooltip.Root 
-                    positioning={{ placement: "right-start", flip: false, offset: { mainAxis: 10, crossAxis: 120 } }} 
-                    openDelay={0} 
-                    closeDelay={0}
-                >
-                    <Tooltip.Trigger asChild>
-                        <Image 
-                            src={boeufArriereCut}
-                            alt="Arrière Boeuf"
-                            onClick={() => handleZoneClick("arriere")}
-                            {...commonStyle}
-                            clipPath="inset(0 0 20% 0)" 
-                        />
-                    </Tooltip.Trigger>
-                    
-                    <Tooltip.Positioner>
-                        <Tooltip.Content bg="brand.rouge" color="white" px={4} py={3} borderRadius="md" fontSize="sm">
-                            <Tooltip.Arrow css={{ "--arrow-background": "var(--chakra-colors-brand-rouge)" }} />
-                            <Text fontWeight="bold" fontSize="md" mb={1}>L'Arrière (ART 8)</Text>
-                            <Text>Morceaux nobles à rôtir ou griller<br/>(Entrecôte, Rumsteck...)</Text>
-                        </Tooltip.Content>
-                    </Tooltip.Positioner>
-                </Tooltip.Root>
-
-
-                 {/* 2. AVANT (Le BAS) */}
-                 <Tooltip.Root 
-
-                    positioning={{ placement: "left-end", flip: false, offset: { mainAxis: 10, crossAxis: -100 } }} 
-                    openDelay={0} 
-                    closeDelay={0}
-                >
-                    <Tooltip.Trigger asChild>
-                        <Image 
-                            src={boeufAvantCut}
-                            alt="Avant Boeuf"
-                            onClick={() => handleZoneClick("avant")}
-                            {...commonStyle}
-                            clipPath="inset(40% 0 0 0)"
-                        />
-                    </Tooltip.Trigger>
-
-                    <Tooltip.Positioner>
-                        <Tooltip.Content bg="brand.brun" color="white" px={4} py={3} borderRadius="md" fontSize="sm">
-                            <Tooltip.Arrow css={{ "--arrow-background": "var(--chakra-colors-brand-brun)" }} />
-                            <Text fontWeight="bold" fontSize="md" mb={1}>L'Avant (CAPA)</Text>
-                            <Text>Morceaux savoureux à mijoter<br/>(Collier, Épaule...)</Text>
-                        </Tooltip.Content>
-                    </Tooltip.Positioner>
-                </Tooltip.Root>
-
-            </Box>
-        </Flex>
 
       </Container>
     </Box>

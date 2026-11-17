@@ -1,25 +1,36 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Box, Button, Flex, Spinner, Text } from "@chakra-ui/react";
-import { FiMinus, FiPlus, FiRotateCcw } from "react-icons/fi";
+import React, { useEffect, useImperativeHandle, useRef, useState } from "react";
+import { Box, Button, Flex, Heading, Spinner, Text } from "@chakra-ui/react";
+import { FiArrowRight, FiMaximize2, FiMinus, FiPlus, FiRotateCcw } from "react-icons/fi";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { COULEUR_ARRIERE, COULEUR_AVANT } from "../../data/coupesBoeuf";
+import { COULEUR_ARRIERE, COULEUR_AVANT, COUPES_BOEUF } from "../../data/coupesBoeuf";
 
 const CENTRE = new THREE.Vector3(0, 1.25, 0);
+const PISTOLET = COUPES_BOEUF.find((c) => c.type === "pistolet");
+const DUREE_ZOOM = 900;
 
-// Uniformes partagés par toutes les matières du modèle : ils pilotent la mise en évidence d'une coupe.
+const VUES = {
+  fente: { label: "Face de fente", angle: Math.PI / 2 },
+  exterieur: { label: "Extérieur", angle: -Math.PI / 2 },
+  profil: { label: "Profil", angle: 0 },
+};
+
 const creerUniformes = () => ({
   uMode: { value: 0 },
   uCoupeY: { value: 0 },
   uPts: { value: [new THREE.Vector2(), new THREE.Vector2(), new THREE.Vector2(), new THREE.Vector2()] },
   uCouleurAvant: { value: new THREE.Color(COULEUR_AVANT) },
   uCouleurArriere: { value: new THREE.Color(COULEUR_ARRIERE) },
+  uFocus: { value: 0 },
+  uFocusMix: { value: 0 },
 });
 
 // Largeur de la carcasse (côté rachis en z négatif, côté ventre en z positif) par tranche de hauteur.
 const TRANCHES = 125;
+const tranche = (y) => Math.min(TRANCHES - 1, Math.max(0, Math.floor((y / 2.5) * TRANCHES)));
+
 const mesurerLargeurs = (racine) => {
   racine.updateMatrixWorld(true);
   const zMin = new Array(TRANCHES).fill(Infinity);
@@ -30,7 +41,7 @@ const mesurerLargeurs = (racine) => {
     const positions = objet.geometry.attributes.position;
     for (let i = 0; i < positions.count; i += 1) {
       v.fromBufferAttribute(positions, i).applyMatrix4(objet.matrixWorld);
-      const t = Math.min(TRANCHES - 1, Math.max(0, Math.floor((v.y / 2.5) * TRANCHES)));
+      const t = tranche(v.y);
       zMin[t] = Math.min(zMin[t], v.z);
       zMax[t] = Math.max(zMax[t], v.z);
     }
@@ -39,11 +50,38 @@ const mesurerLargeurs = (racine) => {
 };
 
 const versPositionZ = (largeurs, hauteur, fraction) => {
-  const t = Math.min(TRANCHES - 1, Math.max(0, Math.floor((hauteur / 2.5) * TRANCHES)));
+  const t = tranche(hauteur);
   const zMin = largeurs.zMin[t];
   const zMax = largeurs.zMax[t];
   if (!Number.isFinite(zMin)) return 0;
   return zMin + fraction * (zMax - zMin);
+};
+
+// Même règle que dans le shader : ce point appartient-il à l'avant de la coupe pistolet ?
+const estAvantPistolet = (pts, y, z) => {
+  const [, p1, p2, p3] = pts;
+  if (y < p1.x) return true;
+  if (y > p3.x) return false;
+  const zLigne =
+    y <= p2.x
+      ? THREE.MathUtils.lerp(p1.y, p2.y, THREE.MathUtils.clamp((y - p1.x) / (p2.x - p1.x), 0, 1))
+      : THREE.MathUtils.lerp(p2.y, p3.y, THREE.MathUtils.clamp((y - p2.x) / (p3.x - p2.x), 0, 1));
+  return z > zLigne;
+};
+
+// Boîte englobante de l'avant et de l'arrière, pour cadrer le zoom.
+const mesurerParties = (racine, pts) => {
+  const boites = { avant: new THREE.Box3(), arriere: new THREE.Box3() };
+  const v = new THREE.Vector3();
+  racine.traverse((objet) => {
+    if (!objet.isMesh) return;
+    const positions = objet.geometry.attributes.position;
+    for (let i = 0; i < positions.count; i += 3) {
+      v.fromBufferAttribute(positions, i).applyMatrix4(objet.matrixWorld);
+      boites[estAvantPistolet(pts, v.y, v.z) ? "avant" : "arriere"].expandByPoint(v);
+    }
+  });
+  return boites;
 };
 
 const brancherCoupe = (matiere, uniformes) => {
@@ -65,6 +103,8 @@ uniform float uCoupeY;
 uniform vec2 uPts[4];
 uniform vec3 uCouleurAvant;
 uniform vec3 uCouleurArriere;
+uniform int uFocus;
+uniform float uFocusMix;
 float distanceSegment(vec2 p, vec2 a, vec2 b) {
   vec2 ab = b - a;
   float t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0);
@@ -87,8 +127,18 @@ if (uMode > 0) {
     avant = y < uPts[1].x || (y <= uPts[3].x && z > zLigne);
     trait = min(distanceSegment(p, uPts[0], uPts[1]), min(distanceSegment(p, uPts[1], uPts[2]), distanceSegment(p, uPts[2], uPts[3])));
   }
+  vec3 base = diffuseColor.rgb;
   vec3 teinte = avant ? uCouleurAvant : uCouleurArriere;
-  diffuseColor.rgb = mix(diffuseColor.rgb, teinte, 0.38);
+  vec3 colore = mix(base, teinte, 0.38);
+  if (uFocus > 0) {
+    bool choisi = (uFocus == 1) == avant;
+    float gris = dot(base, vec3(0.299, 0.587, 0.114));
+    vec3 eteint = mix(colore, vec3(gris) * 0.45, 0.85);
+    vec3 eclaire = mix(base, teinte, 0.12);
+    diffuseColor.rgb = choisi ? mix(colore, eclaire, uFocusMix) : mix(colore, eteint, uFocusMix);
+  } else {
+    diffuseColor.rgb = colore;
+  }
   float bord = 1.0 - smoothstep(0.012, 0.018, trait);
   float coeur = 1.0 - smoothstep(0.006, 0.009, trait);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1), bord);
@@ -100,20 +150,21 @@ if (uMode > 0) {
   matiere.needsUpdate = true;
 };
 
-// Angle autour de l'axe vertical : la carcasse ne tourne qu'à l'horizontale.
-const VUES = {
-  fente: { label: "Face de fente", angle: Math.PI / 2 },
-  exterieur: { label: "Extérieur", angle: -Math.PI / 2 },
-  profil: { label: "Profil", angle: 0 },
-};
+const easing = (t) => 1 - Math.pow(1 - t, 3);
 
-const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }) => {
+/**
+ * parties : { avant: { titre, description }, arriere: { titre, description } }
+ * onExplorer(partie) : appelé quand l'utilisateur veut ouvrir la partie choisie.
+ */
+const Carcasse3D = ({ ref, modele = "/models/demi_carcasse_boeuf.glb", coupe = null, parties, onExplorer, onSelection }) => {
   const conteneurRef = useRef(null);
   const actionsRef = useRef(null);
   const uniformesRef = useRef(creerUniformes());
   const largeursRef = useRef(null);
+  const coupeRef = useRef(coupe);
   const [etat, setEtat] = useState("chargement");
   const [vueActive, setVueActive] = useState("fente");
+  const [selection, setSelection] = useState(null);
 
   useEffect(() => {
     const conteneur = conteneurRef.current;
@@ -145,19 +196,55 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
     controles.rotateSpeed = 0.9;
     controles.minPolarAngle = Math.PI / 2;
     controles.maxPolarAngle = Math.PI / 2;
-    controles.minDistance = 1.5;
+    controles.minDistance = 0.8;
     controles.maxDistance = 10;
 
-    const distanceIdeale = () => {
+    const distancePour = (hauteur, largeur) => {
       const vfov = THREE.MathUtils.degToRad(camera.fov);
-      const hauteur = 3.1 / (2 * Math.tan(vfov / 2));
-      const largeur = 1.3 / (2 * Math.tan(vfov / 2) * camera.aspect);
-      return Math.max(hauteur, largeur);
+      return Math.max(hauteur / (2 * Math.tan(vfov / 2)), largeur / (2 * Math.tan(vfov / 2) * camera.aspect));
+    };
+    const distanceIdeale = () => distancePour(3.1, 1.3);
+
+    // Une animation déplace à la fois le point visé, l'angle et la distance de la caméra.
+    let animation = null;
+    const animer = ({ cible = controles.target, angle, distance, focus }) => {
+      const depart = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controles.target));
+      animation = {
+        debut: performance.now(),
+        cibleDepart: controles.target.clone(),
+        cibleFin: cible.clone(),
+        angleDepart: depart.theta,
+        angleFin: angle ?? depart.theta,
+        distanceDepart: depart.radius,
+        distanceFin: distance ?? depart.radius,
+        focusDepart: uniformesRef.current.uFocusMix.value,
+        focusFin: focus,
+      };
     };
 
-    let animationVue = null;
+    let boites = null;
+    let pointsPistolet = null;
+
     const allerVers = (cle) => {
-      animationVue = { angle: VUES[cle].angle, distance: distanceIdeale() };
+      animer({ cible: CENTRE, angle: VUES[cle].angle, distance: distanceIdeale(), focus: 0 });
+    };
+
+    // Le bas du cadre est occupé par la fiche de la partie : on cadre la partie dans l'espace libre au-dessus.
+    const zoomerSur = (partie) => {
+      if (!boites) return;
+      const boite = boites[partie];
+      const centre = boite.getCenter(new THREE.Vector3());
+      const taille = boite.getSize(new THREE.Vector3());
+      const hauteurCadre = conteneur.clientHeight || 600;
+      const reserve = conteneur.clientWidth < 600 ? 230 : 180;
+      const libre = THREE.MathUtils.clamp(1 - reserve / hauteurCadre, 0.45, 0.8);
+      const distance = distancePour((taille.y * 1.1) / libre, Math.max(taille.z, taille.x) * 1.3);
+      const hauteurVisible = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+      animer({
+        cible: new THREE.Vector3(0, centre.y - (hauteurVisible * (1 - libre)) / 2, 0),
+        distance,
+        focus: 1,
+      });
     };
 
     const redimensionner = () => {
@@ -174,14 +261,59 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
     camera.lookAt(CENTRE);
 
     const zoomer = (facteur) => {
-      const v = camera.position.clone().sub(CENTRE);
+      const v = camera.position.clone().sub(controles.target);
       const d = THREE.MathUtils.clamp(v.length() * facteur, controles.minDistance, controles.maxDistance);
-      camera.position.copy(CENTRE).add(v.setLength(d));
+      camera.position.copy(controles.target).add(v.setLength(d));
     };
 
-    actionsRef.current = { allerVers, zoomer };
+    // Un appui bref sans glisser = un choix. Un glissement = une rotation.
+    const raycaster = new THREE.Raycaster();
+    const pointeur = new THREE.Vector2();
+    let appui = null;
+    let modeleCharge = null;
+
+    const partieSousLePointeur = (event) => {
+      if (!modeleCharge || !pointsPistolet) return null;
+      const r = rendu.domElement.getBoundingClientRect();
+      pointeur.set(((event.clientX - r.left) / r.width) * 2 - 1, -((event.clientY - r.top) / r.height) * 2 + 1);
+      raycaster.setFromCamera(pointeur, camera);
+      const impact = raycaster.intersectObject(modeleCharge, true)[0];
+      if (!impact) return null;
+      return estAvantPistolet(pointsPistolet, impact.point.y, impact.point.z) ? "avant" : "arriere";
+    };
+
+    const surAppui = (event) => {
+      appui = { x: event.clientX, y: event.clientY, t: performance.now() };
+    };
+    const surRelache = (event) => {
+      if (!appui) return;
+      const deplacement = Math.hypot(event.clientX - appui.x, event.clientY - appui.y);
+      const duree = performance.now() - appui.t;
+      appui = null;
+      if (deplacement > 10 || duree > 500) return;
+      const partie = partieSousLePointeur(event);
+      if (partie) actionsRef.current?.choisir(partie);
+    };
+    const surSurvol = (event) => {
+      if (event.pointerType !== "mouse" || appui) return;
+      rendu.domElement.style.cursor = partieSousLePointeur(event) ? "pointer" : "grab";
+    };
+    rendu.domElement.addEventListener("pointerdown", surAppui);
+    rendu.domElement.addEventListener("pointerup", surRelache);
+    rendu.domElement.addEventListener("pointermove", surSurvol);
+
+    actionsRef.current = {
+      allerVers,
+      zoomer,
+      zoomerSur,
+      choisir: () => {},
+    };
     controles.addEventListener("start", () => {
-      animationVue = null;
+      if (animation) {
+        uniformesRef.current.uFocusMix.value = animation.focusFin;
+        if (animation.focusFin === 0) uniformesRef.current.uFocus.value = 0;
+      }
+      animation = null;
       setVueActive(null);
     });
 
@@ -191,12 +323,17 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
       (gltf) => {
         if (annule) return;
         largeursRef.current = mesurerLargeurs(gltf.scene);
+        pointsPistolet = PISTOLET.trace.map(
+          (p) => new THREE.Vector2(p.hauteur, versPositionZ(largeursRef.current, p.hauteur, p.largeur))
+        );
+        boites = mesurerParties(gltf.scene, pointsPistolet);
         gltf.scene.traverse((objet) => {
           if (objet.isMesh) {
             const matieres = Array.isArray(objet.material) ? objet.material : [objet.material];
             matieres.forEach((m) => brancherCoupe(m, uniformesRef.current));
           }
         });
+        modeleCharge = gltf.scene;
         scene.add(gltf.scene);
         setEtat("pret");
       },
@@ -207,14 +344,23 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
     );
 
     rendu.setAnimationLoop(() => {
-      if (animationVue) {
-        const spherique = new THREE.Spherical().setFromVector3(camera.position.clone().sub(CENTRE));
-        let ecart = animationVue.angle - spherique.theta;
+      if (animation) {
+        const t = Math.min((performance.now() - animation.debut) / DUREE_ZOOM, 1);
+        const k = easing(t);
+        controles.target.lerpVectors(animation.cibleDepart, animation.cibleFin, k);
+        let ecart = animation.angleFin - animation.angleDepart;
         ecart = Math.atan2(Math.sin(ecart), Math.cos(ecart));
-        spherique.theta += ecart * 0.15;
-        spherique.radius += (animationVue.distance - spherique.radius) * 0.15;
-        camera.position.copy(CENTRE).add(new THREE.Vector3().setFromSpherical(spherique));
-        if (Math.abs(ecart) < 0.002 && Math.abs(animationVue.distance - spherique.radius) < 0.005) animationVue = null;
+        const spherique = new THREE.Spherical(
+          THREE.MathUtils.lerp(animation.distanceDepart, animation.distanceFin, k),
+          Math.PI / 2,
+          animation.angleDepart + ecart * k
+        );
+        camera.position.copy(controles.target).add(new THREE.Vector3().setFromSpherical(spherique));
+        uniformesRef.current.uFocusMix.value = THREE.MathUtils.lerp(animation.focusDepart, animation.focusFin, k);
+        if (t >= 1) {
+          if (animation.focusFin === 0) uniformesRef.current.uFocus.value = 0;
+          animation = null;
+        }
       }
       controles.update();
       rendu.render(scene, camera);
@@ -223,6 +369,9 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
     return () => {
       annule = true;
       observateur.disconnect();
+      rendu.domElement.removeEventListener("pointerdown", surAppui);
+      rendu.domElement.removeEventListener("pointerup", surRelache);
+      rendu.domElement.removeEventListener("pointermove", surSurvol);
       rendu.setAnimationLoop(null);
       controles.dispose();
       scene.traverse((objet) => {
@@ -242,25 +391,68 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
     };
   }, [modele]);
 
-  useEffect(() => {
+  // Affichage d'une coupe choisie dans la liste, ou de la coupe pistolet pendant un zoom sur une partie.
+  const appliquerAffichage = (coupeAffichee, partie) => {
     const u = uniformesRef.current;
-    if (!coupe || etat !== "pret") {
+    const largeurs = largeursRef.current;
+    const coupeEffective = partie ? PISTOLET : coupeAffichee;
+    if (!coupeEffective || !largeurs) {
       u.uMode.value = 0;
       return;
     }
-    if (coupe.type === "pistolet") {
+    if (coupeEffective.type === "pistolet") {
       u.uMode.value = 2;
-      coupe.trace.forEach((point, i) => {
-        u.uPts.value[i].set(point.hauteur, versPositionZ(largeursRef.current, point.hauteur, point.largeur));
+      coupeEffective.trace.forEach((point, i) => {
+        u.uPts.value[i].set(point.hauteur, versPositionZ(largeurs, point.hauteur, point.largeur));
       });
     } else {
       u.uMode.value = 1;
-      u.uCoupeY.value = coupe.hauteur;
+      u.uCoupeY.value = coupeEffective.hauteur;
     }
-  }, [coupe, etat]);
+  };
+
+  const choisir = (partie) => {
+    setSelection(partie);
+    onSelection?.(partie);
+    uniformesRef.current.uFocus.value = partie === "avant" ? 1 : 2;
+    appliquerAffichage(coupeRef.current, partie);
+    actionsRef.current?.zoomerSur(partie);
+  };
+
+  const toutVoir = () => {
+    setSelection(null);
+    onSelection?.(null);
+    setVueActive("fente");
+    actionsRef.current?.allerVers("fente");
+  };
+
+  useImperativeHandle(ref, () => ({ choisir: (partie) => choisir(partie), toutVoir: () => toutVoir() }));
+
+  // Choisir une autre coupe dans la liste fait sortir du zoom sur une partie.
+  const coupeIdPrecedente = useRef(coupe?.id ?? null);
+  useEffect(() => {
+    const id = coupe?.id ?? null;
+    if (id === coupeIdPrecedente.current) return;
+    coupeIdPrecedente.current = id;
+    if (selection) toutVoir();
+  });
+
+  useEffect(() => {
+    coupeRef.current = coupe;
+    if (etat !== "pret") return;
+    appliquerAffichage(coupe, selection);
+  });
+
+  useEffect(() => {
+    if (actionsRef.current) actionsRef.current.choisir = choisir;
+  });
 
   const changerVue = (cle) => {
     setVueActive(cle);
+    if (selection) {
+      setSelection(null);
+      onSelection?.(null);
+    }
     actionsRef.current?.allerVers(cle);
   };
 
@@ -276,12 +468,14 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
     _hover: { bg: "brand.beige" },
   };
 
+  const infoPartie = selection && parties ? parties[selection] : null;
+
   return (
     <Box
       position="relative"
       w="100%"
       h={{ base: "68vh", md: "620px" }}
-      minH="420px"
+      minH="440px"
       bg="brand.creme"
       borderRadius="2xl"
       boxShadow="carte"
@@ -292,9 +486,8 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
         position="absolute"
         inset="0"
         cursor="grab"
-        _active={{ cursor: "grabbing" }}
         role="img"
-        aria-label="Demi-carcasse de bœuf en 3D. Faites-la tourner sur elle-même en la touchant ou avec la souris."
+        aria-label="Demi-carcasse de bœuf en 3D. Touchez l'avant ou l'arrière pour zoomer dessus, glissez pour la faire pivoter."
       />
 
       {etat === "chargement" && (
@@ -312,62 +505,105 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb", coupe = null }
 
       {etat === "pret" && (
         <>
-          <Text
-            position="absolute"
-            top={3}
-            left={0}
-            right={0}
-            textAlign="center"
-            fontSize="sm"
-            color="gray.600"
-            pointerEvents="none"
-            px={4}
-          >
-            Touchez la carcasse et glissez vers la gauche ou la droite pour la tourner. Pincez pour zoomer.
-          </Text>
+          {!infoPartie && (
+            <Text position="absolute" top={3} left={0} right={0} textAlign="center" fontSize="sm" color="gray.600" pointerEvents="none" px={4}>
+              Touchez l'avant ou l'arrière pour zoomer dessus. Glissez pour faire pivoter.
+            </Text>
+          )}
 
-          <Flex position="absolute" right={3} top="50%" transform="translateY(-50%)" direction="column" gap={2}>
+          <Flex
+            position="absolute"
+            right={3}
+            top={infoPartie ? 3 : "50%"}
+            transform={infoPartie ? "none" : "translateY(-50%)"}
+            direction="column"
+            gap={2}
+          >
             <Button aria-label="Zoomer" onClick={() => actionsRef.current?.zoomer(0.8)} {...styleBoutonRond}>
               <FiPlus aria-hidden="true" />
             </Button>
             <Button aria-label="Dézoomer" onClick={() => actionsRef.current?.zoomer(1.25)} {...styleBoutonRond}>
               <FiMinus aria-hidden="true" />
             </Button>
-            <Button aria-label="Revenir à la vue de départ" onClick={() => changerVue(vueActive || "fente")} {...styleBoutonRond}>
+            <Button aria-label="Revenir à la carcasse entière" onClick={toutVoir} {...styleBoutonRond}>
               <FiRotateCcw aria-hidden="true" />
             </Button>
           </Flex>
 
-          <Flex
-            position="absolute"
-            bottom={4}
-            left="50%"
-            transform="translateX(-50%)"
-            bg="white"
-            p={1}
-            rounded="full"
-            boxShadow="carte"
-            gap={1}
-            role="group"
-            aria-label="Choix de la vue"
-          >
-            {Object.entries(VUES).map(([cle, vue]) => (
-              <Button
-                key={cle}
-                onClick={() => changerVue(cle)}
-                aria-pressed={vueActive === cle}
-                rounded="full"
-                px={{ base: 3, md: 5 }}
-                fontSize={{ base: "sm", md: "md" }}
-                whiteSpace="nowrap"
-                bg={vueActive === cle ? "brand.rouge" : "transparent"}
-                color={vueActive === cle ? "white" : "brand.gris"}
-                _hover={{ bg: vueActive === cle ? "brand.rougeFonce" : "brand.beige" }}
-              >
-                {vue.label}
-              </Button>
-            ))}
-          </Flex>
+          {infoPartie ? (
+            <Box
+              position="absolute"
+              left={3}
+              right={{ base: 3, md: "auto" }}
+              maxW={{ md: "480px" }}
+              bottom={3}
+              bg="white"
+              borderRadius="xl"
+              boxShadow="carteSurvol"
+              p={4}
+              borderLeft="6px solid"
+              borderColor={selection === "avant" ? COULEUR_AVANT : COULEUR_ARRIERE}
+              aria-live="polite"
+              css={{
+                animation: "apparitionPartie 0.45s ease-out",
+                "@keyframes apparitionPartie": {
+                  from: { opacity: 0, transform: "translateY(16px)" },
+                  to: { opacity: 1, transform: "translateY(0)" },
+                },
+              }}
+            >
+              <Heading as="h2" fontFamily="title" fontSize="xl" color="brand.rouge" mb={1}>
+                {infoPartie.titre}
+              </Heading>
+              <Text fontSize="sm" color="gray.700" mb={3}>{infoPartie.description}</Text>
+              <Flex gap={2} wrap="wrap">
+                <Button
+                  onClick={() => onExplorer?.(selection)}
+                  bg="brand.rouge"
+                  color="white"
+                  rounded="full"
+                  px={5}
+                  _hover={{ bg: "brand.rougeFonce" }}
+                >
+                  Voir les pièces <FiArrowRight aria-hidden="true" />
+                </Button>
+                <Button onClick={toutVoir} variant="outline" rounded="full" px={5} borderColor="gray.300" color="brand.gris">
+                  <FiMaximize2 aria-hidden="true" /> Carcasse entière
+                </Button>
+              </Flex>
+            </Box>
+          ) : (
+            <Flex
+              position="absolute"
+              bottom={4}
+              left="50%"
+              transform="translateX(-50%)"
+              bg="white"
+              p={1}
+              rounded="full"
+              boxShadow="carte"
+              gap={1}
+              role="group"
+              aria-label="Choix de la vue"
+            >
+              {Object.entries(VUES).map(([cle, vue]) => (
+                <Button
+                  key={cle}
+                  onClick={() => changerVue(cle)}
+                  aria-pressed={vueActive === cle}
+                  rounded="full"
+                  px={{ base: 3, md: 5 }}
+                  fontSize={{ base: "sm", md: "md" }}
+                  whiteSpace="nowrap"
+                  bg={vueActive === cle ? "brand.rouge" : "transparent"}
+                  color={vueActive === cle ? "white" : "brand.gris"}
+                  _hover={{ bg: vueActive === cle ? "brand.rougeFonce" : "brand.beige" }}
+                >
+                  {vue.label}
+                </Button>
+              ))}
+            </Flex>
+          )}
         </>
       )}
     </Box>
