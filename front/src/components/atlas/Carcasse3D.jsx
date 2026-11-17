@@ -3,15 +3,16 @@ import { Box, Button, Flex, Spinner, Text } from "@chakra-ui/react";
 import { FiMinus, FiPlus, FiRotateCcw } from "react-icons/fi";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { TrackballControls } from "three/examples/jsm/controls/TrackballControls.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 const CENTRE = new THREE.Vector3(0, 1.25, 0);
 
+// Angle autour de l'axe vertical : la carcasse ne tourne qu'à l'horizontale.
 const VUES = {
-  fente: { label: "Face de fente", direction: new THREE.Vector3(1, 0, 0) },
-  exterieur: { label: "Extérieur", direction: new THREE.Vector3(-1, 0, 0) },
-  profil: { label: "Profil", direction: new THREE.Vector3(0, 0, 1) },
+  fente: { label: "Face de fente", angle: Math.PI / 2 },
+  exterieur: { label: "Extérieur", angle: -Math.PI / 2 },
+  profil: { label: "Profil", angle: 0 },
 };
 
 const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb" }) => {
@@ -42,14 +43,16 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb" }) => {
     scene.add(lumiere);
 
     const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 50);
-    const controles = new TrackballControls(camera, rendu.domElement);
-    controles.rotateSpeed = 3.2;
-    controles.zoomSpeed = 1.1;
-    controles.noPan = true;
-    controles.dynamicDampingFactor = 0.12;
-    controles.minDistance = 1;
-    controles.maxDistance = 10;
+    const controles = new OrbitControls(camera, rendu.domElement);
     controles.target.copy(CENTRE);
+    controles.enablePan = false;
+    controles.enableDamping = true;
+    controles.dampingFactor = 0.08;
+    controles.rotateSpeed = 0.9;
+    controles.minPolarAngle = Math.PI / 2;
+    controles.maxPolarAngle = Math.PI / 2;
+    controles.minDistance = 1.5;
+    controles.maxDistance = 10;
 
     const distanceIdeale = () => {
       const vfov = THREE.MathUtils.degToRad(camera.fov);
@@ -60,8 +63,7 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb" }) => {
 
     let animationVue = null;
     const allerVers = (cle) => {
-      const fin = CENTRE.clone().add(VUES[cle].direction.clone().multiplyScalar(distanceIdeale()));
-      animationVue = { depart: camera.position.clone(), upDepart: camera.up.clone(), fin, t: 0 };
+      animationVue = { angle: VUES[cle].angle, distance: distanceIdeale() };
     };
 
     const redimensionner = () => {
@@ -70,12 +72,11 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb" }) => {
       rendu.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      controles.handleResize();
     };
     const observateur = new ResizeObserver(redimensionner);
     observateur.observe(conteneur);
     redimensionner();
-    camera.position.copy(CENTRE).add(VUES.fente.direction.clone().multiplyScalar(distanceIdeale()));
+    camera.position.set(CENTRE.x + distanceIdeale(), CENTRE.y, CENTRE.z);
     camera.lookAt(CENTRE);
 
     const zoomer = (facteur) => {
@@ -106,20 +107,15 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb" }) => {
 
     rendu.setAnimationLoop(() => {
       if (animationVue) {
-        animationVue.t = Math.min(animationVue.t + 0.06, 1);
-        const k = 1 - Math.pow(1 - animationVue.t, 3);
-        const depart = animationVue.depart.clone().sub(CENTRE);
-        const fin = animationVue.fin.clone().sub(CENTRE);
-        const direction = depart.clone().normalize().lerp(fin.clone().normalize(), k);
-        if (direction.lengthSq() < 1e-6) direction.set(0, 0, 1);
-        const rayon = THREE.MathUtils.lerp(depart.length(), fin.length(), k);
-        camera.position.copy(CENTRE).add(direction.setLength(rayon));
-        camera.up.copy(animationVue.upDepart).lerp(new THREE.Vector3(0, 1, 0), k).normalize();
-        camera.lookAt(CENTRE);
-        if (animationVue.t >= 1) animationVue = null;
-      } else {
-        controles.update();
+        const spherique = new THREE.Spherical().setFromVector3(camera.position.clone().sub(CENTRE));
+        let ecart = animationVue.angle - spherique.theta;
+        ecart = Math.atan2(Math.sin(ecart), Math.cos(ecart));
+        spherique.theta += ecart * 0.15;
+        spherique.radius += (animationVue.distance - spherique.radius) * 0.15;
+        camera.position.copy(CENTRE).add(new THREE.Vector3().setFromSpherical(spherique));
+        if (Math.abs(ecart) < 0.002 && Math.abs(animationVue.distance - spherique.radius) < 0.005) animationVue = null;
       }
+      controles.update();
       rendu.render(scene, camera);
     });
 
@@ -180,7 +176,7 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb" }) => {
         cursor="grab"
         _active={{ cursor: "grabbing" }}
         role="img"
-        aria-label="Demi-carcasse de bœuf en 3D. Faites-la tourner en la touchant ou avec la souris."
+        aria-label="Demi-carcasse de bœuf en 3D. Faites-la tourner sur elle-même en la touchant ou avec la souris."
       />
 
       {etat === "chargement" && (
@@ -209,7 +205,7 @@ const Carcasse3D = ({ modele = "/models/demi_carcasse_boeuf.glb" }) => {
             pointerEvents="none"
             px={4}
           >
-            Touchez la carcasse et faites glisser pour la tourner. Pincez pour zoomer.
+            Touchez la carcasse et glissez vers la gauche ou la droite pour la tourner. Pincez pour zoomer.
           </Text>
 
           <Flex position="absolute" right={3} top="50%" transform="translateY(-50%)" direction="column" gap={2}>
