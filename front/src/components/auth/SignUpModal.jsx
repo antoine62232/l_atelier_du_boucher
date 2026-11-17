@@ -3,7 +3,7 @@ import { Button, Stack, Text, Link, SimpleGrid } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import CadreModale from "./CadreModale";
 import ChampAuth from "./ChampAuth";
-import { toaster } from "../ui/toaster";
+import { toaster } from "../ui/notifications";
 import { registerUser } from "../../services/UsersService";
 
 const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }) => {

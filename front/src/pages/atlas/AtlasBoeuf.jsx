@@ -1,10 +1,12 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import FilAriane from "../../components/atlas/FilAriane";
-import { Box, Container, Heading, Text, Flex, Image, Tooltip } from "@chakra-ui/react";
+import { Box, Container, Heading, Text, Flex, Image, Tooltip, Spinner } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 
 import boeufAvantCut from "../../assets/boeuf_avant_cut.png";
 import boeufArriereCut from "../../assets/boeuf_arriere_cut.png";
+
+const Carcasse3D = lazy(() => import("../../components/atlas/Carcasse3D"));
 
 
 const AtlasBoeuf = () => {
@@ -30,20 +32,41 @@ const AtlasBoeuf = () => {
   };
 
   return (
-    <Box bg="brand.beige" minH="calc(100vh - 100px)" pt="140px" pb="40px">
-      <Container maxW="1360px" px={6}>
+    <Box bg="brand.beige" minH="calc(100vh - 100px)" pt={{ base: "120px", md: "140px" }} pb="40px">
+      <Container maxW="1360px" px={{ base: 4, md: 6 }}>
         
         {/* En-tête */}
         <FilAriane
             etapes={[{ label: "Atlas", to: "/atlas" }, { label: "Le Bœuf", to: "#" }]}
         />
 
-        <Box textAlign="center" mb="40px">
+        <Box textAlign="center" mb={{ base: 6, md: 10 }}>
             <Heading as="h1" fontFamily="title" color="brand.rouge" fontSize={{ base: "3xl", md: "5xl" }} mb={4}>
                 Le Bœuf : Anatomie & Découpe
             </Heading>
+            <Text color="brand.gris" fontSize="md" maxW="640px" mx="auto">
+                Faites tourner la demi-carcasse dans tous les sens pour observer la face de fente et l'extérieur.
+            </Text>
+        </Box>
+
+        <Box maxW="900px" mx="auto" mb={{ base: 12, md: 16 }}>
+            <Suspense
+                fallback={
+                    <Flex h={{ base: "68vh", md: "620px" }} minH="420px" align="center" justify="center" bg="brand.creme" borderRadius="2xl">
+                        <Spinner size="lg" color="brand.rouge" aria-label="Chargement du modèle 3D" />
+                    </Flex>
+                }
+            >
+                <Carcasse3D />
+            </Suspense>
+        </Box>
+
+        <Box textAlign="center" mb={{ base: 6, md: 10 }}>
+            <Heading as="h2" fontFamily="title" color="brand.rouge" fontSize={{ base: "2xl", md: "3xl" }} mb={3}>
+                Choisissez une partie
+            </Heading>
             <Text color="brand.gris" fontSize="md">
-                Cliquez sur la partie <strong>Arrière</strong> ou <strong>Avant</strong> de la carcasse pour explorer les parties.
+                Touchez l'<strong>Arrière</strong> ou l'<strong>Avant</strong> de la carcasse pour explorer ses pièces.
             </Text>
         </Box>
 

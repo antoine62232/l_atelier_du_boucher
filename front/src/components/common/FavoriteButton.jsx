@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { IconButton, Spinner } from "@chakra-ui/react";
-import { toaster } from "../ui/toaster";
+import { toaster } from "../ui/notifications";
 import { FiHeart } from "react-icons/fi"; // Coeur vide (non favori)
 import { FaHeart } from "react-icons/fa"; // Coeur plein (favori)
 
