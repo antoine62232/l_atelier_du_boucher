@@ -228,6 +228,15 @@ epaisseur = ndi.gaussian_filter(A * travers, 8)
 _c = creux + 0.05
 epaisseur = np.log(np.exp(40 * epaisseur) + np.exp(40 * _c)) / 40  # maximum doux : pas d'arête
 epaisseur = ndi.gaussian_filter(epaisseur, 6)
+# Relief musculaire de la face extérieure, vu sur les carcasses filmées : masse de l'épaule (triceps),
+# bord de l'omoplate, long dorsal le long du dos, rumsteck et rond de la cuisse. Bosses larges et basses
+# (2 à 3 cm), pour suivre les muscles sous la fine couche de gras, sans effet de boule.
+_b = lambda yc, fc, a_, sy, sf: a_ * np.exp(-0.5 * (((GY - yc) / sy) ** 2 + ((f_larg - fc) / sf) ** 2))
+relief = (_b(0.42, 0.55, 0.028, 0.14, 0.20) + _b(0.62, 0.30, 0.018, 0.12, 0.16)
+          + 0.016 * np.exp(-0.5 * ((f_larg - 0.14) / 0.08) ** 2) * _ss_p(0.55, 0.75) * (1 - _ss_p(1.6, 1.8))
+          + _b(1.80, 0.22, 0.022, 0.12, 0.16) + _b(2.02, 0.55, 0.026, 0.14, 0.22))
+epaisseur = epaisseur + ndi.gaussian_filter(relief, 4)
+
 # Du dos à la cuisse, la face extérieure monte sans creux : l'épaisseur ne redescend jamais en remontant
 # vers la cuisse (sinon un creux apparaît sous le globe, côté extérieur).
 _i0, _i1 = int(0.95 / PAS), int(1.92 / PAS)
