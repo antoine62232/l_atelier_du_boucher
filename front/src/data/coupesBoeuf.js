@@ -31,12 +31,12 @@ export const COUPES_BOEUF = [
     avant: {
       titre: "Avant CAPA (avant traité 5 côtes)",
       pieces:
-        "Collier basses côtes, épaule et caparaçon (plat de côtes couvert et découvert, poitrine, flanchet, tendron). Les bavettes partent avec l'avant.",
+        "Collier basses côtes, épaule et caparaçon (plat de côtes couvert et découvert, poitrine, flanchet, tendron).",
     },
     arriere: {
       titre: "ART8 (arrière traité 8 côtes)",
       pieces:
-        "Cuisse hanche (BCUH) et déhanché milieu de train de côtes 8 côtes, soit le déhanché à 3 côtes et le milieu de train de côtes à 5 côtes. Sans les bavettes.",
+        "Cuisse hanche (BCUH), déhanché milieu de train de côtes 8 côtes (déhanché à 3 côtes et milieu de train de côtes à 5 côtes) et jeu de bavettes (bavette d'aloyau et bavette de flanchet).",
     },
   },
   {
