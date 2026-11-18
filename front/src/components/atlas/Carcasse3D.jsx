@@ -45,6 +45,7 @@ const creerUniformes = () => ({
   uLargeurs: { value: null },
   // Couverture de gras (morceau de photo), posée sur les flancs très inclinés.
   uGrain: { value: null },
+  uVentre: { value: null },
 });
 
 // Couleur de la viande sur une face de coupe (espace linéaire).
@@ -103,6 +104,7 @@ const brancherCoupe = (matiere, uniformes, exterieur) => {
 varying vec3 vPosMonde;
 varying vec3 vNormaleMonde;
 uniform sampler2D uGrain;
+uniform sampler2D uVentre;
 uniform int uMode;
 uniform float uCoupeY;
 uniform vec2 uPts[4];
@@ -151,6 +153,12 @@ if (flanc > 0.0) {
   vec3 motif = mix(motifZ, motifY, poidsY);
   vec3 moyenneMotif = textureLod(uGrain, vec2(0.5), 12.0).rgb;
   vec3 couverture = motif * mix(vec3(1.0), teinteLisse / max(moyenneMotif, vec3(0.05)), 0.55);
+  // Côté ventre (flanc, poitrine) : peu de gras, la viande du flanchet et de la paroi apparaît.
+  // Motif tiré d'une photo de carcasse côté ventre, étiré dans le sens de la hauteur.
+  vec2 cv = vec2(vPosMonde.x * 3.2, vPosMonde.y * 1.25);
+  vec3 viande = mix(texture(uVentre, cv).rgb, texture(uVentre, cv * 0.47 + vec2(0.29, 0.61)).rgb, 0.4);
+  float cote = smoothstep(-0.15, 0.35, nMonde.z) * (1.0 - smoothstep(0.55, 0.85, abs(nMonde.y)));
+  couverture = mix(couverture, viande, cote);
   diffuseColor.rgb = mix(diffuseColor.rgb, couverture, flanc);
 }
 #endif
@@ -252,6 +260,11 @@ const Carcasse3D = ({
     grain.wrapT = THREE.RepeatWrapping;
     grain.colorSpace = THREE.SRGBColorSpace;
     uniformes.uGrain.value = grain;
+    const ventre = new THREE.TextureLoader().load("/models/flanc_ventre.webp");
+    ventre.wrapS = THREE.RepeatWrapping;
+    ventre.wrapT = THREE.RepeatWrapping;
+    ventre.colorSpace = THREE.SRGBColorSpace;
+    uniformes.uVentre.value = ventre;
 
     const rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -562,6 +575,7 @@ const Carcasse3D = ({
       });
       uniformes.uLargeurs.value?.dispose();
       grain.dispose();
+      ventre.dispose();
       environnement.dispose();
       pmrem.dispose();
       rendu.dispose();
