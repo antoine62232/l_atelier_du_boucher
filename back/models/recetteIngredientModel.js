@@ -17,6 +17,7 @@ export const getIngredientsByRecette = async (recetteId) => {
     FROM recettesIngredients
     JOIN ingredients ON recettesIngredients.ingredientId = ingredients.idIngredient
     WHERE recettesIngredients.recetteId = ?
+    ORDER BY recettesIngredients.ordre IS NULL, recettesIngredients.ordre, ingredients.nomIngredient
     `;
     const [result] = await connexion.query(query, [recetteId]);
     return result;

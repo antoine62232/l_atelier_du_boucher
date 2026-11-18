@@ -133,8 +133,9 @@ recetteId INT NOT NULL
 
 CREATE TABLE recettesIngredients (
 PRIMARY KEY (recetteId, ingredientId),
-quantiteValeur FLOAT NOT NULL,
+quantiteValeur FLOAT NULL,
 unite VARCHAR(50),
+ordre INT NULL,
 recetteId INT NOT NULL,
 ingredientId INT NOT NULL
 );
