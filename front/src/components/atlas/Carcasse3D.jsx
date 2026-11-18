@@ -43,7 +43,7 @@ const creerUniformes = () => ({
   uMasqueMorceau: { value: 0 },
   // Largeur de la carcasse par tranche de hauteur, pour classer chaque pixel dans un gros morceau.
   uLargeurs: { value: null },
-  // Grain de gras, posé sur les flancs très inclinés.
+  // Couverture de gras (morceau de photo), posée sur les flancs très inclinés.
   uGrain: { value: null },
 });
 
@@ -125,7 +125,7 @@ float distanceSegment(vec2 p, vec2 a, vec2 b) {
       )
       .replace(
         "#include <roughnessmap_fragment>",
-        "#include <roughnessmap_fragment>\nroughnessFactor = mix(0.5, 0.3, flanc);"
+        "#include <roughnessmap_fragment>\nroughnessFactor = 0.55;"
       )
       .replace(
         "#include <normal_fragment_maps>",
@@ -135,20 +135,22 @@ float distanceSegment(vec2 p, vec2 a, vec2 b) {
         "#include <map_fragment>",
         `#include <map_fragment>
 // Flancs très inclinés (dos, ventre, dessus de la cuisse) : les photos, prises de face, y sont étirées.
-// On y montre la couverture de gras telle qu'on la voit sur les carcasses : claire, lisse et luisante,
-// légèrement teintée par la photo voisine, avec un voile très discret.
+// On y pose un vrai morceau de la photo extérieure (couverture de gras rosée et marbrée), répété sans raccord
+// visible et teinté par la couleur locale de la photo.
 vec3 nMonde = normalize(vNormaleMonde) * (gl_FrontFacing ? 1.0 : -1.0);
 // Uniquement sur la face extérieure : sur la face de fente, le bord est une coupe (pas de gras de couverture).
 float flanc = uFaceExterieure ? smoothstep(0.7, 0.33, abs(nMonde.x)) : 0.0;
 #ifdef USE_MAP
 if (flanc > 0.0) {
   vec3 teinteLisse = texture(map, vMapUv, 7.0).rgb;
-  vec3 gras = vec3(0.84, 0.64, 0.59);
-  vec2 pz = vPosMonde.xy * 2.2;
-  vec2 py = vPosMonde.xz * 2.2;
   float poidsY = abs(nMonde.y) / (abs(nMonde.y) + abs(nMonde.z) + 1e-4);
-  float voile = mix(texture(uGrain, pz).r, texture(uGrain, py).r, poidsY) * 1.4;
-  vec3 couverture = mix(gras, teinteLisse, 0.3) * mix(1.0, clamp(voile, 0.8, 1.15), 0.35);
+  vec2 cz = vPosMonde.xy * 2.6;
+  vec2 cy = vPosMonde.xz * 2.6;
+  vec3 motifZ = mix(texture(uGrain, cz).rgb, texture(uGrain, cz * 0.43 + vec2(0.37, 0.11)).rgb, 0.45);
+  vec3 motifY = mix(texture(uGrain, cy).rgb, texture(uGrain, cy * 0.43 + vec2(0.19, 0.53)).rgb, 0.45);
+  vec3 motif = mix(motifZ, motifY, poidsY);
+  vec3 moyenneMotif = textureLod(uGrain, vec2(0.5), 12.0).rgb;
+  vec3 couverture = motif * mix(vec3(1.0), teinteLisse / max(moyenneMotif, vec3(0.05)), 0.55);
   diffuseColor.rgb = mix(diffuseColor.rgb, couverture, flanc);
 }
 #endif
@@ -245,10 +247,10 @@ const Carcasse3D = ({
     const conteneur = conteneurRef.current;
     if (!conteneur) return undefined;
     const uniformes = uniformesRef.current;
-    const grain = new THREE.TextureLoader().load("/models/gras_detail.webp");
+    const grain = new THREE.TextureLoader().load("/models/couverture_dos.webp");
     grain.wrapS = THREE.RepeatWrapping;
     grain.wrapT = THREE.RepeatWrapping;
-    grain.colorSpace = THREE.NoColorSpace;
+    grain.colorSpace = THREE.SRGBColorSpace;
     uniformes.uGrain.value = grain;
 
     const rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });

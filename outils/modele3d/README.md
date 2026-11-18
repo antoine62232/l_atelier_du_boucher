@@ -18,7 +18,7 @@ rangées dans le dossier « Projet ADB ».
 Les repères anatomiques (axe du rachis, creux, épaisseurs, jarrets) sont en haut des sections de
 `construire_v4.py`. Les côtes, la coupe pistolet et les limites des morceaux sont dans
 `front/src/data/coupesBoeuf.js` et `front/src/data/zonesBoeuf.js`.
-Sur les flancs très inclinés, l'application remplace la photo étirée par `gras_detail.webp` (voir Carcasse3D.jsx).
+Sur les flancs très inclinés, l application remplace la photo étirée par `couverture_dos.webp`, un morceau de la photo extérieure rendu raccordable (voir Carcasse3D.jsx).
 
 Changer de nom de fichier à chaque nouvelle version : `/models/*` est mis en cache un an (vercel.json).
 
