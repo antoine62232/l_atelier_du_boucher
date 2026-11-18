@@ -123,6 +123,13 @@ def _segment_px(p0, p1, rayon):
 
 _membre_px = ndi.gaussian_filter((_segment_px((0.30, 0.17), (0.06, 0.50), 0.11) | _segment_px((2.18, -0.14), (2.50, -0.10), 0.12)).astype(np.float32), 25)
 _w_bord = np.clip(1 - _d / 0.03, 0, 1)[..., None]
+# Bord de la photo de la face de fente : liseré clair (détourage) et pixels étirés en stries.
+# On le remplace par la couleur prise 2 cm à l'intérieur, adoucie.
+_interieur = _d > 0.02
+_coul_int = _flou(prolonger(tex_f, _interieur), 12)
+_w_bord_f = (np.clip(1 - _d / 0.022, 0, 1) ** 0.7)[..., None]
+tex_f = tex_f * (1 - _w_bord_f) + _coul_int * _w_bord_f
+_bf = _flou(tex_f, 20)
 _w_membre = (np.clip(1 - _d / 0.05, 0, 1) * np.clip(_membre_px * 1.5, 0, 1))[..., None]
 _moy = (_bf + _be) / 2
 tex_e = tex_e * (1 - _w_bord) + _bf * _w_bord
@@ -201,15 +208,15 @@ f_larg = np.clip((GZ - bord_dorsal) / np.maximum(bord_ventral_lisse - bord_dorsa
 
 EPAISSEUR_HAUTEUR = [
     (0.00, 0.21), (0.15, 0.27), (0.35, 0.34), (0.55, 0.35), (0.75, 0.31), (1.00, 0.29),
-    (1.30, 0.305), (1.55, 0.315), (1.75, 0.33), (1.95, 0.34), (2.12, 0.29), (2.28, 0.17), (2.50, 0.09),
+    (1.30, 0.31), (1.55, 0.32), (1.75, 0.332), (1.95, 0.34), (2.12, 0.29), (2.28, 0.17), (2.50, 0.09),
 ]
 A = interp(EPAISSEUR_HAUTEUR, GY)
 courbe = lambda points, x: np.interp(x, np.array(points, float)[:, 0], np.array(points, float)[:, 1])
 
 # Coupes en travers, mélangées selon la hauteur.
 coupe_avant = courbe([(0, 1.0), (0.4, 1.0), (0.75, 0.85), (1.0, 0.7)], f_larg)                 # épaule, poitrine
-coupe_cotes = courbe([(0, 1.0), (0.3, 1.0), (0.55, 0.62), (0.8, 0.42), (1.0, 0.35)], f_larg)   # côtes
-coupe_flanc = courbe([(0, 1.0), (0.25, 0.95), (0.42, 0.45), (0.6, 0.2), (1.0, 0.15)], f_larg)  # flanc
+coupe_cotes = courbe([(0, 1.0), (0.3, 0.98), (0.5, 0.86), (0.7, 0.66), (0.85, 0.5), (1.0, 0.4)], f_larg)   # côtes
+coupe_flanc = courbe([(0, 1.0), (0.3, 0.95), (0.5, 0.78), (0.7, 0.52), (0.85, 0.36), (1.0, 0.26)], f_larg)  # flanc
 coupe_cuisse = courbe([(0, 0.97), (0.35, 1.0), (0.7, 0.9), (1.0, 0.66)], f_larg)               # cuisse ronde
 poids = lambda y0, y1: np.clip((GY - y0) / (y1 - y0), 0, 1)
 _ss_p = lambda y0, y1: poids(y0, y1) ** 2 * (3 - 2 * poids(y0, y1))
@@ -221,6 +228,13 @@ epaisseur = ndi.gaussian_filter(A * travers, 8)
 _c = creux + 0.05
 epaisseur = np.log(np.exp(40 * epaisseur) + np.exp(40 * _c)) / 40  # maximum doux : pas d'arête
 epaisseur = ndi.gaussian_filter(epaisseur, 6)
+# Du dos à la cuisse, la face extérieure monte sans creux : l'épaisseur ne redescend jamais en remontant
+# vers la cuisse (sinon un creux apparaît sous le globe, côté extérieur).
+_i0, _i1 = int(0.95 / PAS), int(1.92 / PAS)
+_bloc = np.maximum.accumulate(epaisseur[_i0:_i1], axis=0)
+_ep2 = epaisseur.copy(); _ep2[_i0:_i1] = _bloc
+_w = (_ss_p(0.9, 1.05) * (1 - _ss_p(1.88, 2.0)))
+epaisseur = ndi.gaussian_filter(epaisseur * (1 - _w) + _ep2 * _w, 5)
 
 # Le globe (intérieur de la cuisse) n'est pas coupé par la fente : au-dessus du bassin scié, toute la face
 # interne de la cuisse forme une surface large et légèrement bombée, recouverte de gras (photo, y 2,0 à 2,25).
@@ -262,6 +276,11 @@ rho = np.sqrt(np.clip(1 - (1 - np.clip(dist_l / r_arrondi, 0, 1)) ** 2, 0, 1))
 
 x_fente = (1 - poids_membre) * (globe - creux) + poids_membre * (centre_membre + demi_tube)
 x_ext = (1 - poids_membre) * (-epaisseur * rho) + poids_membre * (centre_membre - demi_tube)
+_h = -x_ext
+_h2 = _h.copy(); _h2[_i0:_i1] = np.maximum.accumulate(_h[_i0:_i1], axis=0)
+_wf = np.clip(dist_l / 0.06, 0, 1) * (1 - poids_membre)
+_h = _h + (_h2 - _h) * _w * _wf
+x_ext = -ndi.gaussian_filter(_h, 3) * (dist > 0) + x_ext * (dist <= 0)
 x_ext = np.minimum(x_ext, x_fente - 0.004 * (dist > 0.003))
 
 
@@ -330,6 +349,18 @@ def nappe(x, fente, nom, normal_bord, uv):
     n = m.vertex_normals.copy()
     if normal_bord:
         n[ib] = n_bord
+    # Près du bord, la grille est recalée sur le contour : les normales y ondulent (stries fines).
+    # On les lisse par moyennes successives avec les voisins, sans toucher au bord lui-même.
+    pres = np.nonzero(champ(dist) < 0.035)[0]
+    pres = pres[~np.isin(pres, ib)]
+    import scipy.sparse as sp
+    e = m.edges_unique
+    A_ = sp.coo_matrix((np.ones(len(e) * 2), (np.r_[e[:, 0], e[:, 1]], np.r_[e[:, 1], e[:, 0]])), shape=(len(v), len(v))).tocsr()
+    deg = np.asarray(A_.sum(1)).ravel()[:, None] + 1e-9
+    for _ in range(8):
+        moy = (A_ @ n) / deg
+        n[pres] = moy[pres]
+        n /= np.linalg.norm(n, axis=1, keepdims=True) + 1e-12
     m.vertex_normals = n
     return m
 
