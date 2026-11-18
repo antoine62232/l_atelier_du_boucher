@@ -1,11 +1,12 @@
-import React, { Suspense, lazy, useRef, useState } from "react";
+import React, { Suspense, useRef, useState } from "react";
 import FilAriane from "../../components/atlas/FilAriane";
 import { Box, Container, Heading, Text, Flex, Spinner, Button, SimpleGrid } from "@chakra-ui/react";
 import { COUPES_BOEUF, COULEUR_AVANT, COULEUR_ARRIERE } from "../../data/coupesBoeuf";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { lazyAvecRechargement } from "../../utils/lazyAvecRechargement";
 
 
-const Carcasse3D = lazy(() => import("../../components/atlas/Carcasse3D"));
+const Carcasse3D = lazyAvecRechargement(() => import("../../components/atlas/Carcasse3D"));
 
 
 const PARTIES = {
