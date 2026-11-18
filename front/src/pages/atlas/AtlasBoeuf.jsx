@@ -2,6 +2,7 @@ import React, { Suspense, useRef, useState } from "react";
 import FilAriane from "../../components/atlas/FilAriane";
 import { Box, Container, Heading, Text, Flex, Spinner, Button, SimpleGrid } from "@chakra-ui/react";
 import { COUPES_BOEUF, COULEUR_AVANT, COULEUR_ARRIERE } from "../../data/coupesBoeuf";
+import { morceauxDuQuartier } from "../../data/zonesBoeuf";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { lazyAvecRechargement } from "../../utils/lazyAvecRechargement";
 
@@ -39,6 +40,7 @@ const AtlasBoeuf = () => {
   const [searchParams] = useSearchParams();
   const partieDemandee = ["avant", "arriere"].includes(searchParams.get("partie")) ? searchParams.get("partie") : null;
   const [partie, setPartie] = useState(null);
+  const [morceauActif, setMorceauActif] = useState(null);
 
   return (
     <Box bg="brand.beige" minH="calc(100vh - 100px)" pt={{ base: "120px", md: "140px" }} pb="40px">
@@ -54,7 +56,7 @@ const AtlasBoeuf = () => {
                 Le Bœuf : Anatomie & Découpe
             </Heading>
             <Text color="brand.gris" fontSize="md" maxW="640px" mx="auto">
-                Touchez l'avant ou l'arrière de la demi-carcasse pour zoomer dessus et découvrir ses pièces. Faites-la pivoter pour observer la face de fente et l'extérieur.
+                Touchez l'avant ou l'arrière de la demi-carcasse pour zoomer dessus, puis un gros morceau pour le voir seul. Faites-la pivoter pour observer la face de fente et l'extérieur.
             </Text>
         </Box>
 
@@ -109,8 +111,10 @@ const AtlasBoeuf = () => {
                     coupe={coupe}
                     parties={PARTIES}
                     onSelection={setPartie}
+                    onMorceau={setMorceauActif}
                     partieInitiale={partieDemandee}
                     onExplorer={(p) => navigate(`/atlas/boeuf/${p}`)}
+                    onExplorerMorceau={(m) => navigate(m.chemin)}
                 />
             </Suspense>
 
@@ -140,6 +144,37 @@ const AtlasBoeuf = () => {
                     );
                 })}
             </Flex>
+
+            {partie && (
+                <Flex mt={3} gap={2} justify="center" wrap="wrap" role="group" aria-label="Choisir un gros morceau">
+                    {morceauxDuQuartier(partie).map((m) => {
+                        const actif = morceauActif === m.id;
+                        const couleur = partie === "avant" ? COULEUR_AVANT : COULEUR_ARRIERE;
+                        return (
+                            <Button
+                                key={m.id}
+                                onClick={() => carcasseRef.current?.choisirMorceau(m.id)}
+                                onMouseEnter={() => carcasseRef.current?.survoler(m.id)}
+                                onMouseLeave={() => carcasseRef.current?.survoler(null)}
+                                onFocus={() => carcasseRef.current?.survoler(m.id)}
+                                onBlur={() => carcasseRef.current?.survoler(null)}
+                                aria-pressed={actif}
+                                size="sm"
+                                minH="44px"
+                                rounded="full"
+                                px={4}
+                                variant="outline"
+                                bg={actif ? couleur : "white"}
+                                color={actif ? "white" : "brand.gris"}
+                                borderColor={couleur}
+                                _hover={{ bg: actif ? couleur : "brand.beige" }}
+                            >
+                                {m.nom}
+                            </Button>
+                        );
+                    })}
+                </Flex>
+            )}
 
             {coupe && (
                 <Box mt={5} aria-live="polite">

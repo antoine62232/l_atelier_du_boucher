@@ -1,12 +1,14 @@
 import React, { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Box, Button, Flex, Heading, Spinner, Text } from "@chakra-ui/react";
-import { FiArrowRight, FiEye, FiMinus, FiPlus, FiRotateCcw, FiX, FiZoomIn } from "react-icons/fi";
+import { FiArrowLeft, FiArrowRight, FiMinus, FiPlus, FiRotateCcw, FiX } from "react-icons/fi";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { COULEUR_ARRIERE, COULEUR_AVANT, COUPES_BOEUF } from "../../data/coupesBoeuf";
+import { morceauParCode, morceauParId } from "../../data/zonesBoeuf";
+import { marquerMorceaux, mesurerCarcasse, mesurerMorceaux, versPositionZ } from "./zonesModele";
 
 const CENTRE = new THREE.Vector3(0, 1.25, 0);
 const PISTOLET = COUPES_BOEUF.find((c) => c.type === "pistolet");
@@ -27,37 +29,14 @@ const creerUniformes = () => ({
   uFocus: { value: 0 },
   uFocusMix: { value: 0 },
   uMasque: { value: 0 },
+  // Gros morceau survolé (éclairci) et gros morceau isolé (seul visible), par leur code.
+  uSurvol: { value: 0 },
+  uMorceau: { value: 0 },
+  uMasqueMorceau: { value: 0 },
 });
 
-// Largeur de la carcasse (côté rachis en z négatif, côté ventre en z positif) par tranche de hauteur.
-const TRANCHES = 125;
-const tranche = (y) => Math.min(TRANCHES - 1, Math.max(0, Math.floor((y / 2.5) * TRANCHES)));
-
-const mesurerLargeurs = (racine) => {
-  racine.updateMatrixWorld(true);
-  const zMin = new Array(TRANCHES).fill(Infinity);
-  const zMax = new Array(TRANCHES).fill(-Infinity);
-  const v = new THREE.Vector3();
-  racine.traverse((objet) => {
-    if (!objet.isMesh) return;
-    const positions = objet.geometry.attributes.position;
-    for (let i = 0; i < positions.count; i += 1) {
-      v.fromBufferAttribute(positions, i).applyMatrix4(objet.matrixWorld);
-      const t = tranche(v.y);
-      zMin[t] = Math.min(zMin[t], v.z);
-      zMax[t] = Math.max(zMax[t], v.z);
-    }
-  });
-  return { zMin, zMax };
-};
-
-const versPositionZ = (largeurs, hauteur, fraction) => {
-  const t = tranche(hauteur);
-  const zMin = largeurs.zMin[t];
-  const zMax = largeurs.zMax[t];
-  if (!Number.isFinite(zMin)) return 0;
-  return zMin + fraction * (zMax - zMin);
-};
+// Sur un écran tactile, pas de survol : un premier appui désigne le morceau, un second zoome.
+const ecranTactile = () => typeof window !== "undefined" && !window.matchMedia?.("(hover: hover)").matches;
 
 // Même règle que dans le shader : ce point appartient-il à l'avant de la coupe pistolet ?
 const estAvantPistolet = (pts, y, z) => {
@@ -90,16 +69,17 @@ const brancherCoupe = (matiere, uniformes) => {
   matiere.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniformes);
     shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vPosMonde;")
+      .replace("#include <common>", "#include <common>\nvarying vec3 vPosMonde;\nattribute float aMorceau;\nflat varying float vMorceau;")
       .replace(
         "#include <begin_vertex>",
-        "#include <begin_vertex>\nvPosMonde = (modelMatrix * vec4(transformed, 1.0)).xyz;"
+        "#include <begin_vertex>\nvPosMonde = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvMorceau = aMorceau;"
       );
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "#include <common>",
         `#include <common>
 varying vec3 vPosMonde;
+flat varying float vMorceau;
 uniform int uMode;
 uniform float uCoupeY;
 uniform vec2 uPts[4];
@@ -108,6 +88,9 @@ uniform vec3 uCouleurArriere;
 uniform int uFocus;
 uniform float uFocusMix;
 uniform float uMasque;
+uniform int uSurvol;
+uniform int uMorceau;
+uniform float uMasqueMorceau;
 float distanceSegment(vec2 p, vec2 a, vec2 b) {
   vec2 ab = b - a;
   float t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0);
@@ -133,51 +116,67 @@ if (uMode > 0) {
   vec3 base = diffuseColor.rgb;
   vec3 teinte = avant ? uCouleurAvant : uCouleurArriere;
   vec3 colore = mix(base, teinte, 0.38);
+  int code = int(vMorceau + 0.5);
   if (uFocus > 0) {
     bool choisi = (uFocus == 1) == avant;
     // Partie écartée : elle s'efface en fondu par tramage (pas de transparence à trier).
-    if (!choisi && uMasque > 0.0) {
-      float bruit = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
-      if (bruit < uMasque) discard;
-    }
+    float bruit = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+    if (!choisi && uMasque > 0.0 && bruit < uMasque) discard;
+    // Gros morceau isolé : les autres morceaux s'effacent de la même façon.
+    if (uMorceau > 0 && code != uMorceau && bruit < uMasqueMorceau) discard;
     float gris = dot(base, vec3(0.299, 0.587, 0.114));
     vec3 eteint = mix(colore, vec3(gris) * 0.45, 0.85);
     vec3 eclaire = mix(base, teinte, 0.12);
     diffuseColor.rgb = choisi ? mix(colore, eclaire, uFocusMix) : mix(colore, eteint, uFocusMix);
+    // Morceau survolé : il s'éclaircit, les autres morceaux du quartier passent légèrement en retrait.
+    if (choisi && uSurvol > 0) {
+      diffuseColor.rgb = code == uSurvol ? mix(diffuseColor.rgb, vec3(1.0), 0.3) : diffuseColor.rgb * 0.72;
+    }
   } else {
     diffuseColor.rgb = colore;
   }
-  float bord = 1.0 - smoothstep(0.012, 0.018, trait);
-  float coeur = 1.0 - smoothstep(0.006, 0.009, trait);
+  // Sur un morceau isolé, le trait de coupe n'a plus de sens.
+  float visibiliteTrait = uMorceau > 0 ? 1.0 - uMasqueMorceau : 1.0;
+  float bord = (1.0 - smoothstep(0.012, 0.018, trait)) * visibiliteTrait;
+  float coeur = (1.0 - smoothstep(0.006, 0.009, trait)) * visibiliteTrait;
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1), bord);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), coeur);
 }`
       );
   };
-  matiere.customProgramCacheKey = () => "coupe-carcasse";
+  matiere.customProgramCacheKey = () => "coupe-carcasse-morceaux";
   matiere.needsUpdate = true;
 };
 
 const easing = (t) => 1 - Math.pow(1 - t, 3);
 
+const NOM_COURT = { avant: "l'avant", arriere: "l'arrière" };
+
 /**
  * parties : { avant: { titre, description }, arriere: { titre, description } }
- * onExplorer(partie) : appelé quand l'utilisateur veut ouvrir la partie choisie.
+ * onExplorer(partie) : appelé quand l'utilisateur veut ouvrir les pièces du quartier choisi.
+ * onExplorerMorceau(morceau) : idem pour un gros morceau (voir data/zonesBoeuf.js).
+ * onSelection(partie) et onMorceau(idMorceau) : signalent le quartier et le morceau affichés.
  */
 const Carcasse3D = ({
   ref,
   modele = "/models/demi_carcasse_boeuf_v2.glb",
   apercu = "/models/demi_carcasse_boeuf_apercu.webp",
-  coupe = null, parties, onExplorer, onSelection, partieInitiale = null }) => {
+  coupe = null, parties, onExplorer, onExplorerMorceau, onSelection, onMorceau, partieInitiale = null }) => {
   const conteneurRef = useRef(null);
+  const infobulleRef = useRef(null);
   const actionsRef = useRef(null);
   const uniformesRef = useRef(creerUniformes());
   const largeursRef = useRef(null);
   const coupeRef = useRef(coupe);
+  // Quartier et morceau affichés, lus par les gestionnaires de la 3D.
+  const niveauRef = useRef({ partie: null, morceau: 0 });
   const [etat, setEtat] = useState("chargement");
   const [vueActive, setVueActive] = useState("fente");
   const [selection, setSelection] = useState(null);
-  const [isole, setIsole] = useState(false);
+  const [morceau, setMorceau] = useState(0);
+  const [designe, setDesigne] = useState(null);
+  const [tactile] = useState(ecranTactile);
   const [progression, setProgression] = useState(0);
 
   useEffect(() => {
@@ -210,7 +209,7 @@ const Carcasse3D = ({
     controles.rotateSpeed = 0.9;
     controles.minPolarAngle = Math.PI / 2;
     controles.maxPolarAngle = Math.PI / 2;
-    controles.minDistance = 0.8;
+    controles.minDistance = 0.5;
     controles.maxDistance = 10;
 
     const distancePour = (hauteur, largeur) => {
@@ -237,34 +236,53 @@ const Carcasse3D = ({
     };
 
     let boites = null;
+    let boitesMorceaux = null;
     let masqueCible = 0;
+    let masqueMorceauCible = 0;
     let dernierInstant = performance.now();
     let pointsPistolet = null;
 
     const allerVers = (cle) => {
       masqueCible = 0;
+      masqueMorceauCible = 0;
       animer({ cible: CENTRE, angle: VUES[cle].angle, distance: distanceIdeale(), focus: 0 });
     };
 
-    // Le bas du cadre est occupé par la fiche de la partie : on cadre la partie dans l'espace libre au-dessus.
-    const zoomerSur = (partie, isole = false) => {
-      if (!boites) return;
-      masqueCible = isole ? 1 : 0;
-      const boite = boites[partie];
+    // Le bas du cadre est occupé par la fiche : on cadre la boîte dans l'espace libre au-dessus.
+    const cadrer = (boite, { reserveMobile, reserveBureau, marge, angle, centreSurAxe = false }) => {
       const centre = boite.getCenter(new THREE.Vector3());
       const taille = boite.getSize(new THREE.Vector3());
       const hauteurCadre = conteneur.clientHeight || 600;
-      // Isolée, la fiche est plus courte et la partie remplit davantage l'écran.
-      const reserve = isole ? (conteneur.clientWidth < 600 ? 165 : 150) : conteneur.clientWidth < 600 ? 255 : 205;
+      const reserve = conteneur.clientWidth < 600 ? reserveMobile : reserveBureau;
       const libre = THREE.MathUtils.clamp(1 - reserve / hauteurCadre, 0.45, 0.85);
-      const marge = isole ? 1.02 : 1.1;
-      const distance = distancePour((taille.y * marge) / libre, Math.max(taille.z, taille.x) * (isole ? 1.1 : 1.3));
+      // Les faces les plus proches de la caméra paraissent plus grandes : on recule d'une demi-profondeur.
+      const profondeur = centreSurAxe ? 0 : Math.max(taille.z, taille.x) / 2;
+      const distance = distancePour((taille.y * marge) / libre, Math.max(taille.z, taille.x) * marge * 1.1) + profondeur;
       const hauteurVisible = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
       animer({
-        cible: new THREE.Vector3(0, centre.y - (hauteurVisible * (1 - libre)) / 2, 0),
+        cible: new THREE.Vector3(centreSurAxe ? 0 : centre.x, centre.y - (hauteurVisible * (1 - libre)) / 2, centreSurAxe ? 0 : centre.z),
+        angle,
         distance,
         focus: 1,
       });
+    };
+
+    // Quartier choisi : l'autre quartier s'efface et la caméra se rapproche.
+    const zoomerSur = (partie) => {
+      if (!boites) return;
+      masqueCible = 1;
+      masqueMorceauCible = 0;
+      cadrer(boites[partie], { reserveMobile: 200, reserveBureau: 170, marge: 1.1, centreSurAxe: true });
+    };
+
+    // Gros morceau choisi : seul ce morceau reste visible, vu de sa meilleure face.
+    const zoomerSurMorceau = (code) => {
+      const boite = boitesMorceaux?.[code];
+      if (!boite) return;
+      masqueCible = 1;
+      masqueMorceauCible = 1;
+      const vue = morceauParCode(code)?.vue;
+      cadrer(boite, { reserveMobile: 250, reserveBureau: 200, marge: 1.12, angle: vue ? VUES[vue].angle : undefined });
     };
 
     const redimensionner = () => {
@@ -290,22 +308,29 @@ const Carcasse3D = ({
     const raycaster = new THREE.Raycaster();
     const pointeur = new THREE.Vector2();
     let appui = null;
-    let dernierToucher = null;
     let modeleCharge = null;
 
-    const partieSousLePointeur = (event) => {
-      if (!modeleCharge || !pointsPistolet) return null;
+    // Quartier et gros morceau sous le pointeur. Les parties effacées sont traversées.
+    const cibleSousLePointeur = (event) => {
+      if (!modeleCharge) return null;
       const r = rendu.domElement.getBoundingClientRect();
       pointeur.set(((event.clientX - r.left) / r.width) * 2 - 1, -((event.clientY - r.top) / r.height) * 2 + 1);
       raycaster.setFromCamera(pointeur, camera);
-      // Quand une partie est isolée, l'autre est invisible : on traverse ses faces.
-      const focus = uniformesRef.current.uFocus.value;
-      const partieIsolee = masqueCible > 0.5 && focus > 0 ? (focus === 1 ? "avant" : "arriere") : null;
+      const { partie: partieIsolee, morceau: morceauIsole } = niveauRef.current;
       for (const impact of raycaster.intersectObject(modeleCharge, true)) {
-        const partie = estAvantPistolet(pointsPistolet, impact.point.y, impact.point.z) ? "avant" : "arriere";
-        if (!partieIsolee || partie === partieIsolee) return partie;
+        const codes = impact.object.geometry.attributes.aMorceau;
+        const code = codes && impact.face ? codes.getX(impact.face.c) : 0;
+        const partie = morceauParCode(code)?.quartier;
+        if (!partie) continue;
+        if (morceauIsole && code !== morceauIsole) continue;
+        if (partieIsolee && partie !== partieIsolee) continue;
+        return { partie, code };
       }
       return null;
+    };
+
+    const masquerInfobulle = () => {
+      if (infobulleRef.current) infobulleRef.current.style.display = "none";
     };
 
     const surAppui = (event) => {
@@ -317,33 +342,49 @@ const Carcasse3D = ({
       const duree = performance.now() - appui.t;
       appui = null;
       if (deplacement > 10 || duree > 500) return;
-      const partie = partieSousLePointeur(event);
-      if (!partie) return;
-      // Deux appuis rapprochés sur la même partie : on l'isole.
-      const maintenant = performance.now();
-      const double =
-        dernierToucher &&
-        dernierToucher.partie === partie &&
-        maintenant - dernierToucher.t < 380 &&
-        Math.hypot(event.clientX - dernierToucher.x, event.clientY - dernierToucher.y) < 40;
-      dernierToucher = double ? null : { partie, t: maintenant, x: event.clientX, y: event.clientY };
-      if (double) actionsRef.current?.isoler(partie);
-      else actionsRef.current?.choisir(partie);
+      const r = rendu.domElement.getBoundingClientRect();
+      actionsRef.current?.toucher(cibleSousLePointeur(event), {
+        souris: event.pointerType === "mouse",
+        x: event.clientX - r.left,
+        y: event.clientY - r.top,
+      });
     };
     const surSurvol = (event) => {
       if (event.pointerType !== "mouse" || appui) return;
-      rendu.domElement.style.cursor = partieSousLePointeur(event) ? "pointer" : "grab";
+      const cible = cibleSousLePointeur(event);
+      const { partie, morceau: morceauIsole } = niveauRef.current;
+      rendu.domElement.style.cursor = cible && !morceauIsole ? "pointer" : "grab";
+      // Survol des gros morceaux, une fois dans un quartier.
+      const code = partie && !morceauIsole && cible ? cible.code : 0;
+      uniformesRef.current.uSurvol.value = code;
+      const infobulle = infobulleRef.current;
+      if (!infobulle) return;
+      if (!code) {
+        masquerInfobulle();
+        return;
+      }
+      const r = rendu.domElement.getBoundingClientRect();
+      infobulle.firstChild.textContent = morceauParCode(code).nom;
+      infobulle.style.display = "block";
+      infobulle.style.left = `${event.clientX - r.left}px`;
+      infobulle.style.top = `${event.clientY - r.top}px`;
+    };
+    const surSortie = () => {
+      if (!niveauRef.current.morceau && !actionsRef.current?.designeActif()) uniformesRef.current.uSurvol.value = 0;
+      masquerInfobulle();
     };
     rendu.domElement.addEventListener("pointerdown", surAppui);
     rendu.domElement.addEventListener("pointerup", surRelache);
     rendu.domElement.addEventListener("pointermove", surSurvol);
+    rendu.domElement.addEventListener("pointerleave", surSortie);
 
     actionsRef.current = {
       allerVers,
       zoomer,
       zoomerSur,
-      choisir: () => {},
-      isoler: () => {},
+      zoomerSurMorceau,
+      toucher: () => {},
+      designeActif: () => false,
     };
     controles.addEventListener("start", () => {
       if (animation) {
@@ -351,6 +392,7 @@ const Carcasse3D = ({
         if (animation.focusFin === 0) uniformesRef.current.uFocus.value = 0;
       }
       animation = null;
+      masquerInfobulle();
       setVueActive(null);
     });
 
@@ -359,11 +401,14 @@ const Carcasse3D = ({
       modele,
       (gltf) => {
         if (annule) return;
-        largeursRef.current = mesurerLargeurs(gltf.scene);
+        const mesures = mesurerCarcasse(gltf.scene);
+        largeursRef.current = mesures.largeurs;
         pointsPistolet = PISTOLET.trace.map(
-          (p) => new THREE.Vector2(p.hauteur, versPositionZ(largeursRef.current, p.hauteur, p.largeur))
+          (p) => new THREE.Vector2(p.hauteur, versPositionZ(mesures.largeurs, p.hauteur, p.largeur))
         );
         boites = mesurerParties(gltf.scene, pointsPistolet);
+        marquerMorceaux(gltf.scene, mesures, (y, z) => estAvantPistolet(pointsPistolet, y, z));
+        boitesMorceaux = mesurerMorceaux(gltf.scene);
         gltf.scene.traverse((objet) => {
           if (objet.isMesh) {
             const matieres = Array.isArray(objet.material) ? objet.material : [objet.material];
@@ -382,17 +427,19 @@ const Carcasse3D = ({
       }
     );
 
+    // Fondu d'environ 0,6 s, indépendant du mouvement de caméra.
+    const approcher = (valeur, cible, ecoule) =>
+      Math.abs(valeur - cible) > 0.001 ? valeur + (cible - valeur) * (1 - Math.exp(-ecoule / 160)) : cible;
+
     rendu.setAnimationLoop(() => {
       const instant = performance.now();
       const ecoule = instant - dernierInstant;
       dernierInstant = instant;
       const u = uniformesRef.current;
-      if (Math.abs(u.uMasque.value - masqueCible) > 0.001) {
-        // Fondu d'environ 0,6 s, indépendant du mouvement de caméra.
-        u.uMasque.value += (masqueCible - u.uMasque.value) * (1 - Math.exp(-ecoule / 160));
-      } else {
-        u.uMasque.value = masqueCible;
-      }
+      u.uMasque.value = approcher(u.uMasque.value, masqueCible, ecoule);
+      u.uMasqueMorceau.value = approcher(u.uMasqueMorceau.value, masqueMorceauCible, ecoule);
+      // Les autres morceaux sont revenus : on oublie le morceau isolé.
+      if (masqueMorceauCible === 0 && u.uMasqueMorceau.value === 0) u.uMorceau.value = 0;
       if (animation) {
         const t = Math.min((performance.now() - animation.debut) / DUREE_ZOOM, 1);
         const k = easing(t);
@@ -421,6 +468,7 @@ const Carcasse3D = ({
       rendu.domElement.removeEventListener("pointerdown", surAppui);
       rendu.domElement.removeEventListener("pointerup", surRelache);
       rendu.domElement.removeEventListener("pointermove", surSurvol);
+      rendu.domElement.removeEventListener("pointerleave", surSortie);
       rendu.setAnimationLoop(null);
       controles.dispose();
       scene.traverse((objet) => {
@@ -460,23 +508,75 @@ const Carcasse3D = ({
     }
   };
 
-  const choisir = (partie, isoler = false) => {
+  const changerNiveau = (partie, code) => {
+    niveauRef.current = { partie, morceau: code };
     setSelection(partie);
-    setIsole(isoler);
+    setMorceau(code);
+    setDesigne(null);
     onSelection?.(partie);
-    uniformesRef.current.uFocus.value = partie === "avant" ? 1 : 2;
-    appliquerAffichage(coupeRef.current, partie);
-    actionsRef.current?.zoomerSur(partie, isoler);
+    onMorceau?.(code ? morceauParCode(code).id : null);
+    const u = uniformesRef.current;
+    u.uSurvol.value = 0;
+    if (code) u.uMorceau.value = code;
+    if (partie) {
+      u.uFocus.value = partie === "avant" ? 1 : 2;
+      appliquerAffichage(coupeRef.current, partie);
+    }
   };
 
-  const isoler = (partie) => choisir(partie, true);
+  // Choisir un quartier : il est isolé directement, on peut ensuite viser ses gros morceaux.
+  const choisir = (partie) => {
+    changerNiveau(partie, 0);
+    actionsRef.current?.zoomerSur(partie);
+  };
+
+  const choisirMorceau = (code) => {
+    const info = morceauParCode(code);
+    if (!info) return;
+    changerNiveau(info.quartier, code);
+    actionsRef.current?.zoomerSurMorceau(code);
+  };
 
   const toutVoir = () => {
+    niveauRef.current = { partie: null, morceau: 0 };
     setSelection(null);
-    setIsole(false);
+    setMorceau(0);
+    setDesigne(null);
+    uniformesRef.current.uSurvol.value = 0;
     onSelection?.(null);
+    onMorceau?.(null);
     setVueActive("fente");
     actionsRef.current?.allerVers("fente");
+  };
+
+  // Appui ou clic sur la carcasse, selon l'endroit où l'on se trouve.
+  const toucher = (cible, { souris, x, y }) => {
+    const { partie, morceau: morceauIsole } = niveauRef.current;
+    if (morceauIsole) return;
+    if (!partie) {
+      if (cible) choisir(cible.partie);
+      return;
+    }
+    if (!cible) {
+      setDesigne(null);
+      uniformesRef.current.uSurvol.value = 0;
+      return;
+    }
+    // À la souris, le survol a déjà désigné le morceau : le clic zoome.
+    if (souris || designe?.code === cible.code) {
+      choisirMorceau(cible.code);
+      return;
+    }
+    // Au doigt : premier appui, le morceau s'éclaircit et son nom s'affiche.
+    uniformesRef.current.uSurvol.value = cible.code;
+    setDesigne({ code: cible.code, x, y });
+  };
+
+  // Survol d'un bouton de morceau sous la 3D : on éclaire le morceau correspondant.
+  const survoler = (idMorceau) => {
+    if (niveauRef.current.morceau) return;
+    const info = idMorceau ? morceauParId(idMorceau) : null;
+    uniformesRef.current.uSurvol.value = info && info.quartier === niveauRef.current.partie ? info.code : designe?.code ?? 0;
   };
 
   // Arrivée depuis une fiche pièce (?partie=avant) : on zoome sur ce quartier dès que la 3D est prête.
@@ -490,7 +590,8 @@ const Carcasse3D = ({
 
   useImperativeHandle(ref, () => ({
     choisir: (partie) => choisir(partie),
-    isoler: (partie) => isoler(partie),
+    choisirMorceau: (idMorceau) => choisirMorceau(morceauParId(idMorceau)?.code),
+    survoler: (idMorceau) => survoler(idMorceau),
     toutVoir: () => toutVoir(),
   }));
 
@@ -512,16 +613,21 @@ const Carcasse3D = ({
   useEffect(() => {
     if (actionsRef.current) {
       actionsRef.current.choisir = choisir;
-      actionsRef.current.isoler = isoler;
+      actionsRef.current.toucher = toucher;
+      actionsRef.current.designeActif = () => Boolean(designe);
     }
   });
 
   const changerVue = (cle) => {
     setVueActive(cle);
     if (selection) {
+      niveauRef.current = { partie: null, morceau: 0 };
       setSelection(null);
-      setIsole(false);
+      setMorceau(0);
+      setDesigne(null);
+      uniformesRef.current.uSurvol.value = 0;
       onSelection?.(null);
+      onMorceau?.(null);
     }
     actionsRef.current?.allerVers(cle);
   };
@@ -538,7 +644,16 @@ const Carcasse3D = ({
     _hover: { bg: "brand.beige" },
   };
 
+  const styleBoutonFiche = {
+    rounded: "full",
+    flex: { base: 1, md: "none" },
+    minW: 0,
+    px: { base: 3, md: 5 },
+  };
+
   const infoPartie = selection && parties ? parties[selection] : null;
+  const infoMorceau = morceau ? morceauParCode(morceau) : null;
+  const infoDesigne = designe ? morceauParCode(designe.code) : null;
 
   return (
     <Box
@@ -579,8 +694,56 @@ const Carcasse3D = ({
         transition="opacity 0.5s ease"
         cursor="grab"
         role="img"
-        aria-label="Demi-carcasse de bœuf en 3D. Touchez l'avant ou l'arrière pour zoomer dessus, glissez pour la faire pivoter."
+        aria-label="Demi-carcasse de bœuf en 3D. Touchez l'avant ou l'arrière pour zoomer dessus, puis un gros morceau pour le voir seul. Glissez pour la faire pivoter."
       />
+
+      {/* Nom du morceau survolé à la souris, déplacé directement par la 3D. */}
+      <Box
+        ref={infobulleRef}
+        display="none"
+        position="absolute"
+        pointerEvents="none"
+        transform="translate(14px, -50%)"
+        bg="white"
+        boxShadow="carte"
+        rounded="lg"
+        px={3}
+        py={2}
+        zIndex={2}
+        aria-hidden="true"
+      >
+        <Text fontWeight="bold" color="brand.rouge" fontSize="sm" whiteSpace="nowrap" />
+        <Text color="gray.600" fontSize="xs" whiteSpace="nowrap">
+          Cliquez pour zoomer
+        </Text>
+      </Box>
+
+      {/* Au doigt : bulle du morceau désigné par un premier appui. */}
+      {infoDesigne && (
+        <Box
+          position="absolute"
+          left={`${designe.x}px`}
+          top={`${designe.y}px`}
+          transform={designe.y < 90 ? "translate(-50%, 18px)" : "translate(-50%, calc(-100% - 18px))"}
+          maxW="70%"
+          bg="white"
+          boxShadow="carteSurvol"
+          rounded="lg"
+          px={3}
+          py={2}
+          zIndex={2}
+          pointerEvents="none"
+          textAlign="center"
+          role="status"
+        >
+          <Text fontWeight="bold" color="brand.rouge" fontSize="sm">
+            {infoDesigne.nom}
+          </Text>
+          <Text color="gray.600" fontSize="xs">
+            Touchez encore pour zoomer
+          </Text>
+        </Box>
+      )}
 
       {etat === "chargement" && (
         <Flex
@@ -640,6 +803,7 @@ const Carcasse3D = ({
 
           {infoPartie ? (
             <Box
+              key={infoMorceau ? infoMorceau.id : selection}
               position="absolute"
               left={3}
               right={{ base: 3, md: "auto" }}
@@ -660,10 +824,17 @@ const Carcasse3D = ({
                 },
               }}
             >
-              <Flex justify="space-between" align="start" gap={2} mb={isole ? 3 : 1}>
-                <Heading as="h2" fontFamily="title" fontSize="xl" color="brand.rouge" lineHeight="1.2" pt={1}>
-                  {infoPartie.titre}
-                </Heading>
+              <Flex justify="space-between" align="start" gap={2} mb={1}>
+                <Box>
+                  {infoMorceau && (
+                    <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="wide" color="gray.600">
+                      {infoPartie.titre}
+                    </Text>
+                  )}
+                  <Heading as="h2" fontFamily="title" fontSize="xl" color="brand.rouge" lineHeight="1.2" pt={infoMorceau ? 0 : 1}>
+                    {infoMorceau ? infoMorceau.nom : infoPartie.titre}
+                  </Heading>
+                </Box>
                 <Button
                   onClick={toutVoir}
                   aria-label="Revenir à la carcasse entière"
@@ -680,43 +851,36 @@ const Carcasse3D = ({
                   <FiX aria-hidden="true" />
                 </Button>
               </Flex>
-              {!isole && (
-                <Text fontSize="sm" color="gray.700" mb={3}>
-                  {infoPartie.description}
-                </Text>
-              )}
+              <Text fontSize="sm" color="gray.700" mb={3}>
+                {infoMorceau
+                  ? infoMorceau.description
+                  : tactile
+                    ? "Touchez un morceau pour le repérer, puis touchez-le encore pour le voir seul."
+                    : "Survolez un morceau pour le repérer, puis cliquez dessus pour le voir seul."}
+              </Text>
               <Flex gap={2}>
                 <Button
-                  onClick={() => onExplorer?.(selection)}
+                  onClick={() => (infoMorceau ? onExplorerMorceau?.(infoMorceau) : onExplorer?.(selection))}
                   bg="brand.rouge"
                   color="white"
-                  rounded="full"
-                  flex={{ base: 1, md: "none" }}
-                  minW={0}
-                  px={{ base: 3, md: 5 }}
                   _hover={{ bg: "brand.rougeFonce" }}
+                  {...styleBoutonFiche}
                 >
                   Voir les pièces <FiArrowRight aria-hidden="true" />
                 </Button>
-                <Button
-                  onClick={() => (isole ? choisir(selection) : isoler(selection))}
-                  variant="outline"
-                  rounded="full"
-                  flex={{ base: 1, md: "none" }}
-                  minW={0}
-                  px={{ base: 3, md: 5 }}
-                  borderColor="gray.300"
-                  color="brand.gris"
-                >
-                  {isole ? <FiEye aria-hidden="true" /> : <FiZoomIn aria-hidden="true" />}
-                  {isole ? "Tout afficher" : "Isoler"}
-                </Button>
+                {infoMorceau && (
+                  <Button
+                    onClick={() => choisir(selection)}
+                    variant="outline"
+                    borderColor="gray.300"
+                    color="brand.gris"
+                    {...styleBoutonFiche}
+                  >
+                    <FiArrowLeft aria-hidden="true" />
+                    Retour à {NOM_COURT[selection]}
+                  </Button>
+                )}
               </Flex>
-              {!isole && (
-                <Text fontSize="xs" color="gray.600" mt={2}>
-                  Astuce : touchez deux fois la carcasse pour isoler une partie.
-                </Text>
-              )}
             </Box>
           ) : (
             <Flex
