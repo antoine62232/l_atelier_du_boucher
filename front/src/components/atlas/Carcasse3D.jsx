@@ -146,13 +146,13 @@ float flanc = uFaceExterieure ? smoothstep(0.7, 0.33, abs(nMonde.x)) : 0.0;
 if (flanc > 0.0) {
   vec3 teinteLisse = texture(map, vMapUv, 7.0).rgb;
   float poidsY = abs(nMonde.y) / (abs(nMonde.y) + abs(nMonde.z) + 1e-4);
-  vec2 cz = vPosMonde.xy * 2.6;
-  vec2 cy = vPosMonde.xz * 2.6;
-  vec3 motifZ = mix(texture(uGrain, cz).rgb, texture(uGrain, cz * 0.43 + vec2(0.37, 0.11)).rgb, 0.45);
-  vec3 motifY = mix(texture(uGrain, cy).rgb, texture(uGrain, cy * 0.43 + vec2(0.19, 0.53)).rgb, 0.45);
+  vec2 cz = vPosMonde.xy * 2.2;
+  vec2 cy = vPosMonde.xz * 2.2;
+  vec3 motifZ = mix(texture(uGrain, cz).rgb, texture(uGrain, cz * 0.43 + vec2(0.37, 0.11)).rgb, 0.25);
+  vec3 motifY = mix(texture(uGrain, cy).rgb, texture(uGrain, cy * 0.43 + vec2(0.19, 0.53)).rgb, 0.25);
   vec3 motif = mix(motifZ, motifY, poidsY);
   vec3 moyenneMotif = textureLod(uGrain, vec2(0.5), 12.0).rgb;
-  vec3 couverture = motif * mix(vec3(1.0), teinteLisse / max(moyenneMotif, vec3(0.05)), 0.55);
+  vec3 couverture = motif * mix(vec3(1.0), teinteLisse / max(moyenneMotif, vec3(0.05)), 0.35);
   // Côté ventre (flanc, poitrine) : peu de gras, la viande du flanchet et de la paroi apparaît.
   // Motif tiré d'une photo de carcasse côté ventre, étiré dans le sens de la hauteur.
   vec2 cv = vec2(vPosMonde.x * 3.2, vPosMonde.y * 1.25);
@@ -232,7 +232,7 @@ const NOM_COURT = { avant: "l'avant", arriere: "l'arrière" };
  */
 const Carcasse3D = ({
   ref,
-  modele = "/models/demi_carcasse_boeuf_v7.glb",
+  modele = "/models/demi_carcasse_boeuf_v8.glb",
   apercu = "/models/demi_carcasse_boeuf_v7_apercu.webp",
   coupe = null, parties, onExplorer, onExplorerMorceau, onSelection, onMorceau, partieInitiale = null }) => {
   const conteneurRef = useRef(null);
@@ -255,7 +255,7 @@ const Carcasse3D = ({
     const conteneur = conteneurRef.current;
     if (!conteneur) return undefined;
     const uniformes = uniformesRef.current;
-    const grain = new THREE.TextureLoader().load("/models/couverture_dos.webp");
+    const grain = new THREE.TextureLoader().load("/models/couverture_dos_v2.webp");
     grain.wrapS = THREE.RepeatWrapping;
     grain.wrapT = THREE.RepeatWrapping;
     grain.colorSpace = THREE.SRGBColorSpace;
