@@ -7,8 +7,15 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { COULEUR_ARRIERE, COULEUR_AVANT, COUPES_BOEUF } from "../../data/coupesBoeuf";
-import { morceauParCode, morceauParId } from "../../data/zonesBoeuf";
-import { marquerMorceaux, mesurerCarcasse, mesurerMorceaux, versPositionZ } from "./zonesModele";
+import { GLSL_CLASSER_POINT, morceauParCode, morceauParId } from "../../data/zonesBoeuf";
+import {
+  estFaceExterieure,
+  mesurerLargeurs,
+  mesurerMorceaux,
+  morceauDuPoint,
+  texturerLargeurs,
+  versPositionZ,
+} from "./zonesModele";
 
 const CENTRE = new THREE.Vector3(0, 1.25, 0);
 const PISTOLET = COUPES_BOEUF.find((c) => c.type === "pistolet");
@@ -33,7 +40,12 @@ const creerUniformes = () => ({
   uSurvol: { value: 0 },
   uMorceau: { value: 0 },
   uMasqueMorceau: { value: 0 },
+  // Largeur de la carcasse par tranche de hauteur, pour classer chaque pixel dans un gros morceau.
+  uLargeurs: { value: null },
 });
+
+// Couleur de la viande sur une face de coupe (espace linéaire).
+const COULEUR_COUPE = "vec3(0.30, 0.025, 0.03)";
 
 // Sur un écran tactile, pas de survol : un premier appui désigne le morceau, un second zoome.
 const ecranTactile = () => typeof window !== "undefined" && !window.matchMedia?.("(hover: hover)").matches;
@@ -65,21 +77,23 @@ const mesurerParties = (racine, pts) => {
   return boites;
 };
 
-const brancherCoupe = (matiere, uniformes) => {
+// exterieur : la matière habille la face extérieure (et non la face de fente).
+const brancherCoupe = (matiere, uniformes, exterieur) => {
+  // Les faces arrière ne se voient qu'à travers une coupe : elles servent de face de coupe pleine.
+  matiere.side = THREE.DoubleSide;
   matiere.onBeforeCompile = (shader) => {
-    Object.assign(shader.uniforms, uniformes);
+    Object.assign(shader.uniforms, uniformes, { uFaceExterieure: { value: exterieur } });
     shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vPosMonde;\nattribute float aMorceau;\nflat varying float vMorceau;")
+      .replace("#include <common>", "#include <common>\nvarying vec3 vPosMonde;")
       .replace(
         "#include <begin_vertex>",
-        "#include <begin_vertex>\nvPosMonde = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvMorceau = aMorceau;"
+        "#include <begin_vertex>\nvPosMonde = (modelMatrix * vec4(transformed, 1.0)).xyz;"
       );
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "#include <common>",
         `#include <common>
 varying vec3 vPosMonde;
-flat varying float vMorceau;
 uniform int uMode;
 uniform float uCoupeY;
 uniform vec2 uPts[4];
@@ -91,6 +105,9 @@ uniform float uMasque;
 uniform int uSurvol;
 uniform int uMorceau;
 uniform float uMasqueMorceau;
+uniform sampler2D uLargeurs;
+uniform bool uFaceExterieure;
+${GLSL_CLASSER_POINT}
 float distanceSegment(vec2 p, vec2 a, vec2 b) {
   vec2 ab = b - a;
   float t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0);
@@ -116,7 +133,15 @@ if (uMode > 0) {
   vec3 base = diffuseColor.rgb;
   vec3 teinte = avant ? uCouleurAvant : uCouleurArriere;
   vec3 colore = mix(base, teinte, 0.38);
-  int code = int(vMorceau + 0.5);
+  // Gros morceau de ce pixel : même règle que data/zonesBoeuf.js, calculée au pixel pour des bords nets.
+  int tr = clamp(int(floor(y / 2.5 * 125.0)), 0, 124);
+  vec2 zl = texelFetch(uLargeurs, ivec2(tr, 0), 0).rg;
+  float largeur = clamp((z - zl.x) / max(zl.y - zl.x, 1e-4), 0.0, 1.0);
+  int code = classerPoint(avant, y, largeur, uFaceExterieure);
+  if (!gl_FrontFacing) {
+    base = ${COULEUR_COUPE};
+    colore = base;
+  }
   if (uFocus > 0) {
     bool choisi = (uFocus == 1) == avant;
     // Partie écartée : elle s'efface en fondu par tramage (pas de transparence à trier).
@@ -126,7 +151,7 @@ if (uMode > 0) {
     if (uMorceau > 0 && code != uMorceau && bruit < uMasqueMorceau) discard;
     float gris = dot(base, vec3(0.299, 0.587, 0.114));
     vec3 eteint = mix(colore, vec3(gris) * 0.45, 0.85);
-    vec3 eclaire = mix(base, teinte, 0.12);
+    vec3 eclaire = gl_FrontFacing ? mix(base, teinte, 0.12) : base;
     diffuseColor.rgb = choisi ? mix(colore, eclaire, uFocusMix) : mix(colore, eteint, uFocusMix);
     // Morceau survolé : il s'éclaircit, les autres morceaux du quartier passent légèrement en retrait.
     if (choisi && uSurvol > 0) {
@@ -136,7 +161,7 @@ if (uMode > 0) {
     diffuseColor.rgb = colore;
   }
   // Sur un morceau isolé, le trait de coupe n'a plus de sens.
-  float visibiliteTrait = uMorceau > 0 ? 1.0 - uMasqueMorceau : 1.0;
+  float visibiliteTrait = (uMorceau > 0 ? 1.0 - uMasqueMorceau : 1.0) * (gl_FrontFacing ? 1.0 : 0.0);
   float bord = (1.0 - smoothstep(0.012, 0.018, trait)) * visibiliteTrait;
   float coeur = (1.0 - smoothstep(0.006, 0.009, trait)) * visibiliteTrait;
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1), bord);
@@ -144,7 +169,7 @@ if (uMode > 0) {
 }`
       );
   };
-  matiere.customProgramCacheKey = () => "coupe-carcasse-morceaux";
+  matiere.customProgramCacheKey = () => "coupe-carcasse-pixels";
   matiere.needsUpdate = true;
 };
 
@@ -160,8 +185,8 @@ const NOM_COURT = { avant: "l'avant", arriere: "l'arrière" };
  */
 const Carcasse3D = ({
   ref,
-  modele = "/models/demi_carcasse_boeuf_v2.glb",
-  apercu = "/models/demi_carcasse_boeuf_apercu.webp",
+  modele = "/models/demi_carcasse_boeuf_v3.glb",
+  apercu = "/models/demi_carcasse_boeuf_v3_apercu.webp",
   coupe = null, parties, onExplorer, onExplorerMorceau, onSelection, onMorceau, partieInitiale = null }) => {
   const conteneurRef = useRef(null);
   const infobulleRef = useRef(null);
@@ -182,6 +207,7 @@ const Carcasse3D = ({
   useEffect(() => {
     const conteneur = conteneurRef.current;
     if (!conteneur) return undefined;
+    const uniformes = uniformesRef.current;
 
     const rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -199,6 +225,10 @@ const Carcasse3D = ({
     const lumiere = new THREE.DirectionalLight(0xffffff, 0.8);
     lumiere.position.set(2, 3, 3);
     scene.add(lumiere);
+    // Seconde lumière, plus douce, pour que la face extérieure ne reste pas dans l'ombre.
+    const contreJour = new THREE.DirectionalLight(0xffffff, 0.55);
+    contreJour.position.set(-2.5, 2, -1);
+    scene.add(contreJour);
 
     const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 50);
     const controles = new OrbitControls(camera, rendu.domElement);
@@ -318,8 +348,12 @@ const Carcasse3D = ({
       raycaster.setFromCamera(pointeur, camera);
       const { partie: partieIsolee, morceau: morceauIsole } = niveauRef.current;
       for (const impact of raycaster.intersectObject(modeleCharge, true)) {
-        const codes = impact.object.geometry.attributes.aMorceau;
-        const code = codes && impact.face ? codes.getX(impact.face.c) : 0;
+        const code = morceauDuPoint(
+          largeursRef.current,
+          (y, z) => estAvantPistolet(pointsPistolet, y, z),
+          impact.point,
+          impact.object.userData.faceExterieure
+        );
         const partie = morceauParCode(code)?.quartier;
         if (!partie) continue;
         if (morceauIsole && code !== morceauIsole) continue;
@@ -401,18 +435,19 @@ const Carcasse3D = ({
       modele,
       (gltf) => {
         if (annule) return;
-        const mesures = mesurerCarcasse(gltf.scene);
-        largeursRef.current = mesures.largeurs;
+        const largeurs = mesurerLargeurs(gltf.scene);
+        largeursRef.current = largeurs;
+        uniformesRef.current.uLargeurs.value = texturerLargeurs(largeurs);
         pointsPistolet = PISTOLET.trace.map(
-          (p) => new THREE.Vector2(p.hauteur, versPositionZ(mesures.largeurs, p.hauteur, p.largeur))
+          (p) => new THREE.Vector2(p.hauteur, versPositionZ(largeurs, p.hauteur, p.largeur))
         );
         boites = mesurerParties(gltf.scene, pointsPistolet);
-        marquerMorceaux(gltf.scene, mesures, (y, z) => estAvantPistolet(pointsPistolet, y, z));
-        boitesMorceaux = mesurerMorceaux(gltf.scene);
+        boitesMorceaux = mesurerMorceaux(gltf.scene, largeurs, (y, z) => estAvantPistolet(pointsPistolet, y, z));
         gltf.scene.traverse((objet) => {
           if (objet.isMesh) {
+            objet.userData.faceExterieure = estFaceExterieure(objet);
             const matieres = Array.isArray(objet.material) ? objet.material : [objet.material];
-            matieres.forEach((m) => brancherCoupe(m, uniformesRef.current));
+            matieres.forEach((m) => brancherCoupe(m, uniformesRef.current, objet.userData.faceExterieure));
           }
         });
         modeleCharge = gltf.scene;
@@ -481,6 +516,7 @@ const Carcasse3D = ({
           });
         }
       });
+      uniformes.uLargeurs.value?.dispose();
       environnement.dispose();
       pmrem.dispose();
       rendu.dispose();

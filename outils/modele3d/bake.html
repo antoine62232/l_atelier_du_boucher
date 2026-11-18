@@ -1,0 +1,37 @@
+<!doctype html><html><body style="margin:0"><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+const params = new URLSearchParams(location.search);
+const W = +params.get("w") || 768, H = +params.get("h") || 2048;
+const Z0 = -0.45, Z1 = 0.45, Y0 = 0, Y1 = 2.5;
+const rendu = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias: false, preserveDrawingBuffer: true });
+rendu.setSize(W, H, false);
+window.bake = async (nomNoeud, cote, mode) => {
+  const g = await new GLTFLoader().loadAsync("/models/__original.glb");
+  const scene = new THREE.Scene();
+  let mesh = null;
+  g.scene.traverse((o) => { if (o.isMesh && (o.name === nomNoeud || o.parent?.name === nomNoeud)) mesh = o; });
+  if (!mesh) g.scene.traverse((o) => { if (o.isMesh && !mesh && o.name.includes(nomNoeud)) mesh = o; });
+  const noms = []; g.scene.traverse((o) => o.isMesh && noms.push(o.name + "/" + o.parent?.name));
+  if (!mesh) return { erreur: "introuvable", noms };
+  const carte = mesh.material.map; carte.colorSpace = THREE.SRGBColorSpace;
+  const mat = mode === "couleur"
+    ? new THREE.MeshBasicMaterial({ map: carte, side: THREE.DoubleSide })
+    : new THREE.ShaderMaterial({ side: THREE.DoubleSide, vertexShader: "varying float vx; void main(){ vx=(modelMatrix*vec4(position,1.)).x; gl_Position=projectionMatrix*viewMatrix*modelMatrix*vec4(position,1.);}",
+        fragmentShader: "varying float vx; void main(){ float v=(vx+0.5); gl_FragColor=vec4(floor(v*255.)/255., fract(v*255.), 0., 1.);}" });
+  mesh.material = mat;
+  scene.add(g.scene);
+  rendu.setClearColor(0x000000, 0);
+  rendu.outputColorSpace = mode === "couleur" ? THREE.SRGBColorSpace : THREE.LinearSRGBColorSpace;
+  // caméra orthographique le long de x : image en (z, y)
+  const cam = new THREE.OrthographicCamera(Z0, Z1, Y1, Y0, 0.01, 10);
+  if (cote === "fente") { cam.position.set(3, 0, 0); cam.up.set(0,1,0); cam.lookAt(0, 0, 0); cam.left = -Z1; cam.right = -Z0; }
+  else { cam.position.set(-3, 0, 0); cam.up.set(0,1,0); cam.lookAt(0, 0, 0); }
+  cam.updateProjectionMatrix();
+  g.scene.traverse((o) => { if (o.isMesh && o !== mesh) o.visible = false; });
+  rendu.render(scene, cam);
+  return { ok: true, noms };
+};
+document.title = "pret";
+</script></body></html>
