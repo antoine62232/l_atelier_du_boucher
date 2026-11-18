@@ -124,7 +124,7 @@ const LIMITE_BAVETTES = [
  * @param {boolean} avant le point est dans l'avant de la coupe pistolet
  * @param {number} hauteur en mètres
  * @param {number} largeur fraction de 0 (rachis) à 1 (ventre)
- * @param {boolean} exterieur le point est sur la moitié extérieure de l'épaisseur
+ * @param {boolean} exterieur le point est sur la face extérieure (et non sur la face de fente)
  * @returns {number} code du morceau
  */
 export const classerPoint = (avant, hauteur, largeur, exterieur) => {
@@ -139,3 +139,31 @@ export const classerPoint = (avant, hauteur, largeur, exterieur) => {
   if (hauteur > DEBUT_BAVETTES && largeur > interpoler(LIMITE_BAVETTES, hauteur)) return 5;
   return 4;
 };
+
+// Même règle, écrite en GLSL pour classer chaque pixel dans le shader (bords nets).
+const nombre = (v) => (Number.isInteger(v) ? `${v}.0` : `${v}`);
+const glslInterpoler = (nom, points) => {
+  let corps = `  if (x <= ${nombre(points[0][0])}) return ${nombre(points[0][1])};\n`;
+  for (let i = 1; i < points.length; i += 1) {
+    const [x0, y0] = points[i - 1];
+    const [x1, y1] = points[i];
+    corps += `  if (x <= ${nombre(x1)}) return mix(${nombre(y0)}, ${nombre(y1)}, (x - ${nombre(x0)}) / ${nombre(x1 - x0)});\n`;
+  }
+  corps += `  return ${nombre(points[points.length - 1][1])};\n`;
+  return `float ${nom}(float x) {\n${corps}}\n`;
+};
+
+export const GLSL_CLASSER_POINT = `${glslInterpoler("hautEpaule", HAUT_EPAULE)}${glslInterpoler("limiteCollier", LIMITE_COLLIER)}${glslInterpoler("basCuisse", BAS_CUISSE)}${glslInterpoler("limiteBavettes", LIMITE_BAVETTES)}
+int classerPoint(bool avant, float hauteur, float largeur, bool exterieur) {
+  if (avant) {
+    bool jarretAvant = hauteur < 0.3 && largeur > 0.7;
+    bool surLEpaule = exterieur && largeur > ${nombre(RACHIS_EPAULE)} && hauteur < hautEpaule(largeur);
+    if (jarretAvant || surLEpaule) return 1;
+    if (hauteur < ${nombre(COUPE_5_6)} && largeur < limiteCollier(hauteur)) return 2;
+    return 3;
+  }
+  if (hauteur > basCuisse(largeur)) return 6;
+  if (hauteur > ${nombre(DEBUT_BAVETTES)} && largeur > limiteBavettes(hauteur)) return 5;
+  return 4;
+}
+`;
