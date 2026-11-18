@@ -18,7 +18,7 @@ export const MORCEAUX = [
     nom: "L'Épaule",
     idPartie: 1,
     chemin: "/atlas/boeuf/avant/epaule",
-    // L'épaule est posée sur la face extérieure : on la montre de ce côté.
+    // Face montrée au zoom : l'épaule et la cuisse se voient mieux de l'extérieur.
     vue: "exterieur",
     description: "Posée sur les côtes, côté extérieur. Paleron, macreuse, jumeau, dessus de palette et jarret avant.",
   },
@@ -29,6 +29,7 @@ export const MORCEAUX = [
     nom: "Le Collier basses côtes",
     idPartie: 2,
     chemin: "/atlas/boeuf/avant/collier",
+    vue: "fente",
     description: "Le long du rachis, des premières vertèbres du cou à la 5e côte. Collier et basses côtes, à braiser ou à griller.",
   },
   {
@@ -38,6 +39,7 @@ export const MORCEAUX = [
     nom: "Le Caparaçon",
     idPartie: 3,
     chemin: "/atlas/boeuf/avant/caparacon",
+    vue: "fente",
     description: "La partie ventrale des côtes : plat de côtes, poitrine, tendron, flanchet, avec la hampe et l'onglet.",
   },
   {
@@ -47,6 +49,7 @@ export const MORCEAUX = [
     nom: "Le Déhanché milieu de train de côtes",
     idPartie: 4,
     chemin: "/atlas/boeuf/arriere/dehanche",
+    vue: "fente",
     description: "Le dos, de la 6e côte à la hanche : entrecôtes et côtes de bœuf, faux-filet et filet.",
   },
   {
@@ -56,6 +59,7 @@ export const MORCEAUX = [
     nom: "Le Jeu de bavettes",
     idPartie: 5,
     chemin: "/atlas/boeuf/arriere/bavettes",
+    vue: "fente",
     description: "La paroi du ventre sous l'aloyau : bavette d'aloyau et bavette de flanchet.",
   },
   {
@@ -65,6 +69,7 @@ export const MORCEAUX = [
     nom: "La Cuisse hanche (BCUH)",
     idPartie: 6,
     chemin: "/atlas/boeuf/arriere/cuisse",
+    vue: "exterieur",
     description: "La cuisse avec la hanche : rumsteck, tende de tranche, tranche, gîte, araignée et jarret arrière.",
   },
 ];
@@ -88,12 +93,12 @@ const interpoler = (points, x) => {
 // Limites, en [largeur, hauteur] ou [hauteur, largeur].
 // Haut de l'épaule sur la face extérieure, selon la largeur.
 const HAUT_EPAULE = [
-  [0, 0.5],
-  [0.12, 0.62],
-  [0.35, 0.7],
-  [0.6, 0.66],
-  [0.85, 0.55],
-  [1, 0.45],
+  [0, 0.55],
+  [0.12, 0.66],
+  [0.35, 0.72],
+  [0.6, 0.7],
+  [0.85, 0.6],
+  [1, 0.5],
 ];
 // Côté rachis, la bande des basses côtes reste visible au-dessus de l'épaule.
 const RACHIS_EPAULE = 0.1;
@@ -101,22 +106,23 @@ const RACHIS_EPAULE = 0.1;
 const COUPE_5_6 = entreCotes(5);
 // Séparation collier basses côtes / caparaçon, selon la hauteur.
 const LIMITE_COLLIER = [
-  [0, 0.55],
-  [0.3, 0.5],
-  [0.62, 0.43],
+  [0, 0.72],
+  [0.34, 0.66],
+  [0.45, 0.52],
+  [0.665, 0.43],
 ];
 // Bas de la cuisse hanche, selon la largeur.
 const BAS_CUISSE = [
-  [0, 1.52],
-  [0.4, 1.55],
-  [1, 1.62],
+  [0, 1.62],
+  [0.4, 1.66],
+  [1, 1.72],
 ];
 // Séparation déhanché / jeu de bavettes, selon la hauteur. Sous la dernière côte,
 // la partie ventrale des côtes part avec le caparaçon (avant) : pas de bavettes.
-const DEBUT_BAVETTES = 1.08;
+const DEBUT_BAVETTES = 1.05;
 const LIMITE_BAVETTES = [
-  [1.08, 0.3],
-  [1.5, 0.4],
+  [1.05, 0.3],
+  [1.6, 0.4],
 ];
 
 /**
@@ -129,7 +135,7 @@ const LIMITE_BAVETTES = [
  */
 export const classerPoint = (avant, hauteur, largeur, exterieur) => {
   if (avant) {
-    const jarretAvant = hauteur < 0.3 && largeur > 0.7;
+    const jarretAvant = hauteur < 0.34 && largeur > 0.7 && (hauteur > 0.07 || largeur > 0.9);
     const surLEpaule = exterieur && largeur > RACHIS_EPAULE && hauteur < interpoler(HAUT_EPAULE, largeur);
     if (jarretAvant || surLEpaule) return 1;
     if (hauteur < COUPE_5_6 && largeur < interpoler(LIMITE_COLLIER, hauteur)) return 2;
@@ -156,7 +162,7 @@ const glslInterpoler = (nom, points) => {
 export const GLSL_CLASSER_POINT = `${glslInterpoler("hautEpaule", HAUT_EPAULE)}${glslInterpoler("limiteCollier", LIMITE_COLLIER)}${glslInterpoler("basCuisse", BAS_CUISSE)}${glslInterpoler("limiteBavettes", LIMITE_BAVETTES)}
 int classerPoint(bool avant, float hauteur, float largeur, bool exterieur) {
   if (avant) {
-    bool jarretAvant = hauteur < 0.3 && largeur > 0.7;
+    bool jarretAvant = hauteur < 0.34 && largeur > 0.7 && (hauteur > 0.07 || largeur > 0.9);
     bool surLEpaule = exterieur && largeur > ${nombre(RACHIS_EPAULE)} && hauteur < hautEpaule(largeur);
     if (jarretAvant || surLEpaule) return 1;
     if (hauteur < ${nombre(COUPE_5_6)} && largeur < limiteCollier(hauteur)) return 2;
