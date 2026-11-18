@@ -124,6 +124,10 @@ float distanceSegment(vec2 p, vec2 a, vec2 b) {
 }`
       )
       .replace(
+        "#include <roughnessmap_fragment>",
+        "#include <roughnessmap_fragment>\nroughnessFactor = mix(0.5, 0.3, flanc);"
+      )
+      .replace(
         "#include <normal_fragment_maps>",
         "vec3 normaleSansCarte = normal;\n#include <normal_fragment_maps>\nnormal = normalize(mix(normal, normaleSansCarte, flanc));"
       )
@@ -131,19 +135,20 @@ float distanceSegment(vec2 p, vec2 a, vec2 b) {
         "#include <map_fragment>",
         `#include <map_fragment>
 // Flancs très inclinés (dos, ventre, dessus de la cuisse) : les photos, prises de face, y sont étirées.
-// On garde leur couleur moyenne et on y pose un grain de gras projeté de côté.
+// On y montre la couverture de gras telle qu'on la voit sur les carcasses : claire, lisse et luisante,
+// légèrement teintée par la photo voisine, avec un voile très discret.
 vec3 nMonde = normalize(vNormaleMonde) * (gl_FrontFacing ? 1.0 : -1.0);
 float flanc = smoothstep(0.7, 0.33, abs(nMonde.x));
 #ifdef USE_MAP
 if (flanc > 0.0) {
   vec3 teinteLisse = texture(map, vMapUv, 7.0).rgb;
-  vec2 pz = vPosMonde.xy * 3.6;
-  vec2 py = vPosMonde.xz * 3.6;
-  float gz = texture(uGrain, pz).r * texture(uGrain, pz * 0.37 + vec2(0.31, 0.57)).r;
-  float gy = texture(uGrain, py).r * texture(uGrain, py * 0.37 + vec2(0.13, 0.71)).r;
+  vec3 gras = vec3(0.84, 0.64, 0.59);
+  vec2 pz = vPosMonde.xy * 2.2;
+  vec2 py = vPosMonde.xz * 2.2;
   float poidsY = abs(nMonde.y) / (abs(nMonde.y) + abs(nMonde.z) + 1e-4);
-  float grain = mix(gz, gy, poidsY) * 1.96 / 1.0;
-  diffuseColor.rgb = mix(diffuseColor.rgb, teinteLisse * clamp(grain, 0.55, 1.45), flanc);
+  float voile = mix(texture(uGrain, pz).r, texture(uGrain, py).r, poidsY) * 1.4;
+  vec3 couverture = mix(gras, teinteLisse, 0.3) * mix(1.0, clamp(voile, 0.8, 1.15), 0.35);
+  diffuseColor.rgb = mix(diffuseColor.rgb, couverture, flanc);
 }
 #endif
 if (uMode > 0) {
@@ -216,8 +221,8 @@ const NOM_COURT = { avant: "l'avant", arriere: "l'arrière" };
  */
 const Carcasse3D = ({
   ref,
-  modele = "/models/demi_carcasse_boeuf_v5.glb",
-  apercu = "/models/demi_carcasse_boeuf_v5_apercu.webp",
+  modele = "/models/demi_carcasse_boeuf_v6.glb",
+  apercu = "/models/demi_carcasse_boeuf_v6_apercu.webp",
   coupe = null, parties, onExplorer, onExplorerMorceau, onSelection, onMorceau, partieInitiale = null }) => {
   const conteneurRef = useRef(null);
   const infobulleRef = useRef(null);
