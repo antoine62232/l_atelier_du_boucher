@@ -43,8 +43,9 @@ const creerUniformes = () => ({
   uMasqueMorceau: { value: 0 },
   // Largeur de la carcasse par tranche de hauteur, pour classer chaque pixel dans un gros morceau.
   uLargeurs: { value: null },
-  // Grain de gras, posé sur les flancs très inclinés.
+  // Couverture de gras (morceau de photo), posée sur les flancs très inclinés.
   uGrain: { value: null },
+  uVentre: { value: null },
 });
 
 // Couleur de la viande sur une face de coupe (espace linéaire).
@@ -103,6 +104,7 @@ const brancherCoupe = (matiere, uniformes, exterieur) => {
 varying vec3 vPosMonde;
 varying vec3 vNormaleMonde;
 uniform sampler2D uGrain;
+uniform sampler2D uVentre;
 uniform int uMode;
 uniform float uCoupeY;
 uniform vec2 uPts[4];
@@ -124,6 +126,10 @@ float distanceSegment(vec2 p, vec2 a, vec2 b) {
 }`
       )
       .replace(
+        "#include <roughnessmap_fragment>",
+        "#include <roughnessmap_fragment>\nroughnessFactor = 0.55;"
+      )
+      .replace(
         "#include <normal_fragment_maps>",
         "vec3 normaleSansCarte = normal;\n#include <normal_fragment_maps>\nnormal = normalize(mix(normal, normaleSansCarte, flanc));"
       )
@@ -131,19 +137,29 @@ float distanceSegment(vec2 p, vec2 a, vec2 b) {
         "#include <map_fragment>",
         `#include <map_fragment>
 // Flancs très inclinés (dos, ventre, dessus de la cuisse) : les photos, prises de face, y sont étirées.
-// On garde leur couleur moyenne et on y pose un grain de gras projeté de côté.
+// On y pose un vrai morceau de la photo extérieure (couverture de gras rosée et marbrée), répété sans raccord
+// visible et teinté par la couleur locale de la photo.
 vec3 nMonde = normalize(vNormaleMonde) * (gl_FrontFacing ? 1.0 : -1.0);
-float flanc = smoothstep(0.7, 0.33, abs(nMonde.x));
+// Uniquement sur la face extérieure : sur la face de fente, le bord est une coupe (pas de gras de couverture).
+float flanc = uFaceExterieure ? smoothstep(0.7, 0.33, abs(nMonde.x)) : 0.0;
 #ifdef USE_MAP
 if (flanc > 0.0) {
   vec3 teinteLisse = texture(map, vMapUv, 7.0).rgb;
-  vec2 pz = vPosMonde.xy * 3.6;
-  vec2 py = vPosMonde.xz * 3.6;
-  float gz = texture(uGrain, pz).r * texture(uGrain, pz * 0.37 + vec2(0.31, 0.57)).r;
-  float gy = texture(uGrain, py).r * texture(uGrain, py * 0.37 + vec2(0.13, 0.71)).r;
   float poidsY = abs(nMonde.y) / (abs(nMonde.y) + abs(nMonde.z) + 1e-4);
-  float grain = mix(gz, gy, poidsY) * 1.96 / 1.0;
-  diffuseColor.rgb = mix(diffuseColor.rgb, teinteLisse * clamp(grain, 0.55, 1.45), flanc);
+  vec2 cz = vPosMonde.xy * 2.6;
+  vec2 cy = vPosMonde.xz * 2.6;
+  vec3 motifZ = mix(texture(uGrain, cz).rgb, texture(uGrain, cz * 0.43 + vec2(0.37, 0.11)).rgb, 0.45);
+  vec3 motifY = mix(texture(uGrain, cy).rgb, texture(uGrain, cy * 0.43 + vec2(0.19, 0.53)).rgb, 0.45);
+  vec3 motif = mix(motifZ, motifY, poidsY);
+  vec3 moyenneMotif = textureLod(uGrain, vec2(0.5), 12.0).rgb;
+  vec3 couverture = motif * mix(vec3(1.0), teinteLisse / max(moyenneMotif, vec3(0.05)), 0.55);
+  // Côté ventre (flanc, poitrine) : peu de gras, la viande du flanchet et de la paroi apparaît.
+  // Motif tiré d'une photo de carcasse côté ventre, étiré dans le sens de la hauteur.
+  vec2 cv = vec2(vPosMonde.x * 3.2, vPosMonde.y * 1.25);
+  vec3 viande = mix(texture(uVentre, cv).rgb, texture(uVentre, cv * 0.47 + vec2(0.29, 0.61)).rgb, 0.4);
+  float cote = smoothstep(-0.15, 0.35, nMonde.z) * (1.0 - smoothstep(0.55, 0.85, abs(nMonde.y)));
+  couverture = mix(couverture, viande, cote);
+  diffuseColor.rgb = mix(diffuseColor.rgb, couverture, flanc);
 }
 #endif
 if (uMode > 0) {
@@ -216,8 +232,8 @@ const NOM_COURT = { avant: "l'avant", arriere: "l'arrière" };
  */
 const Carcasse3D = ({
   ref,
-  modele = "/models/demi_carcasse_boeuf_v5.glb",
-  apercu = "/models/demi_carcasse_boeuf_v5_apercu.webp",
+  modele = "/models/demi_carcasse_boeuf_v7.glb",
+  apercu = "/models/demi_carcasse_boeuf_v7_apercu.webp",
   coupe = null, parties, onExplorer, onExplorerMorceau, onSelection, onMorceau, partieInitiale = null }) => {
   const conteneurRef = useRef(null);
   const infobulleRef = useRef(null);
@@ -239,11 +255,16 @@ const Carcasse3D = ({
     const conteneur = conteneurRef.current;
     if (!conteneur) return undefined;
     const uniformes = uniformesRef.current;
-    const grain = new THREE.TextureLoader().load("/models/gras_detail.webp");
+    const grain = new THREE.TextureLoader().load("/models/couverture_dos.webp");
     grain.wrapS = THREE.RepeatWrapping;
     grain.wrapT = THREE.RepeatWrapping;
-    grain.colorSpace = THREE.NoColorSpace;
+    grain.colorSpace = THREE.SRGBColorSpace;
     uniformes.uGrain.value = grain;
+    const ventre = new THREE.TextureLoader().load("/models/flanc_ventre.webp");
+    ventre.wrapS = THREE.RepeatWrapping;
+    ventre.wrapT = THREE.RepeatWrapping;
+    ventre.colorSpace = THREE.SRGBColorSpace;
+    uniformes.uVentre.value = ventre;
 
     const rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -554,6 +575,7 @@ const Carcasse3D = ({
       });
       uniformes.uLargeurs.value?.dispose();
       grain.dispose();
+      ventre.dispose();
       environnement.dispose();
       pmrem.dispose();
       rendu.dispose();
