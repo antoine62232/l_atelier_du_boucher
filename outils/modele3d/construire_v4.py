@@ -38,10 +38,23 @@ def lire(carte, y, z, ordre=1):
 
 
 # Contour de référence, lissé.
-contour = ndi.gaussian_filter(m_f.astype(np.float32), 3) > 0.5
+contour = ndi.gaussian_filter(m_f.astype(np.float32), 10) > 0.5
+# Encoche de la queue (attache coupée) sur le dos, au niveau du bassin : on la comble en partie,
+# sinon l'arrondi du dos y fait une marche.
+_r = 0.06 / S
+_dil = ndi.distance_transform_edt(~contour) <= _r
+_clo = ndi.distance_transform_edt(_dil) > _r
+_lig, _col = np.mgrid[0:HF, 0:WF]
+_yw, _zw = (Y1 - _lig) * S, (_col - XC) * S
+contour = contour | (_clo & (_yw > 1.55) & (_yw < 2.05) & (_zw < -0.15))
+# Pointe de la hanche et attache de la queue : sur la photo, le bord du dos y fait une pointe et un creux
+# nets, qui donnent une arête en 3D. On adoucit fortement le contour du dos à cet endroit.
+_zone = ndi.gaussian_filter(((_yw > 1.5) & (_yw < 2.0) & (_zw < -0.2)).astype(np.float32), 0.04 / S)
+_lisse = ndi.gaussian_filter(contour.astype(np.float32), 0.035 / S)
+contour = (contour.astype(np.float32) * (1 - _zone) + _lisse * _zone) > 0.5
 dedans = ndi.distance_transform_edt(contour) * S
 dehors = ndi.distance_transform_edt(~contour) * S
-sdf = ndi.gaussian_filter(np.where(contour, -dedans, dehors), 1.5)
+sdf = ndi.gaussian_filter(np.where(contour, -dedans, dehors), 4)
 
 # --- Photo extérieure recalée ligne par ligne sur le contour de la fente --------------------
 ye, xe_ = np.nonzero(m_e)
@@ -93,6 +106,28 @@ def prolonger(img, m):
 m_int = ndi.binary_erosion(contour, iterations=3)
 tex_f = prolonger(img_f.astype(np.float32), m_int & m_f)
 tex_e = prolonger(ext, m_int & (ext.sum(2) > 0))
+# Raccord des deux faces au bord : la face extérieure prend, sur ses 3 derniers centimètres,
+# la couleur (floutée) du bord de la face de fente ; sur les jarrets, ronds des deux côtés,
+# les deux faces convergent vers leur moyenne. Sinon la jonction se voit comme une couture.
+_d = ndi.distance_transform_edt(contour) * S
+_flou = lambda t, s_: np.stack([ndi.gaussian_filter(t[..., k], s_) for k in range(3)], -1)
+_bf, _be = _flou(tex_f, 20), _flou(tex_e, 20)
+
+
+def _segment_px(p0, p1, rayon):
+    (y0, z0), (y1, z1) = p0, p1
+    d_ = np.array([y1 - y0, z1 - z0]); L_ = np.linalg.norm(d_); d_ /= L_
+    u_ = np.clip((_yw - y0) * d_[0] + (_zw - z0) * d_[1], 0, L_)
+    return np.hypot(_yw - (y0 + u_ * d_[0]), _zw - (z0 + u_ * d_[1])) < rayon
+
+
+_membre_px = ndi.gaussian_filter((_segment_px((0.30, 0.17), (0.06, 0.50), 0.11) | _segment_px((2.18, -0.14), (2.50, -0.10), 0.12)).astype(np.float32), 25)
+_w_bord = np.clip(1 - _d / 0.03, 0, 1)[..., None]
+_w_membre = (np.clip(1 - _d / 0.05, 0, 1) * np.clip(_membre_px * 1.5, 0, 1))[..., None]
+_moy = (_bf + _be) / 2
+tex_e = tex_e * (1 - _w_bord) + _bf * _w_bord
+tex_e = tex_e * (1 - _w_membre) + _moy * _w_membre
+tex_f = tex_f * (1 - _w_membre) + _moy * _w_membre
 Image.fromarray(np.clip(tex_f, 0, 255).astype(np.uint8)).save("v4_fente.png")
 Image.fromarray(np.clip(tex_e, 0, 255).astype(np.uint8)).save("v4_ext.png")
 
@@ -156,21 +191,41 @@ def max_doux(champs, k=30.0):
     return np.log(sum(np.exp(k * c) for c in champs)) / k
 
 
-# Épaisseur de la face extérieure (distance du plan de fente à la peau), par région.
-dos = lambda y0, y1, val: val * np.exp(-0.5 * ((GZ - (z_rachis + 0.10)) / 0.13) ** 2) * (
-    1 / (1 + np.exp(-(GY - y0) / 0.04))) * (1 / (1 + np.exp((GY - y1) / 0.04)))
-epaisseur = max_doux([
-    bosse(1.98, -0.18, 0.34, 0.28, 0.24),   # cuisse
-    bosse(1.72, -0.34, 0.28, 0.14, 0.12),   # hanche (rumsteck)
-    dos(1.08, 1.70, 0.23),                  # déhanché, aloyau
-    dos(0.60, 1.12, 0.25),                  # entrecôtes, milieu de train de côtes
-    bosse(0.42, -0.08, 0.33, 0.20, 0.22),   # épaule
-    bosse(0.16, -0.30, 0.20, 0.12, 0.15),   # collier
-    bosse(0.36, 0.14, 0.17, 0.10, 0.12),    # poitrine
-    creux + 0.05,                           # paroi : flanc, plat de côtes
-    np.full_like(GY, 0.06),
-])
-epaisseur = np.maximum(ndi.gaussian_filter(epaisseur, 3), creux + 0.045)
+# Épaisseur de la face extérieure (distance du plan de fente à la peau).
+# Profil en hauteur relevé sur la vue de dos (Normabev) : cuisse large et ronde, dos plus étroit,
+# épaule de nouveau large, collier qui s'affine. Puis profil en travers, du dos (f = 0) au ventre (f = 1).
+bord_dorsal = np.where(masque_g.any(1), gz[np.argmax(masque_g, axis=1)], 0)
+bord_dorsal = ndi.gaussian_filter1d(ndi.median_filter(bord_dorsal, 31), 12)[:, None] * np.ones((1, NZ))
+bord_ventral_lisse = ndi.gaussian_filter1d(ndi.median_filter(bord_ventral[:, 0], 31), 12)[:, None] * np.ones((1, NZ))
+f_larg = np.clip((GZ - bord_dorsal) / np.maximum(bord_ventral_lisse - bord_dorsal, 0.05), 0, 1)
+
+EPAISSEUR_HAUTEUR = [
+    (0.00, 0.21), (0.15, 0.27), (0.35, 0.34), (0.55, 0.35), (0.75, 0.31), (1.00, 0.29),
+    (1.30, 0.30), (1.55, 0.31), (1.75, 0.33), (1.95, 0.34), (2.12, 0.29), (2.28, 0.17), (2.50, 0.09),
+]
+A = interp(EPAISSEUR_HAUTEUR, GY)
+courbe = lambda points, x: np.interp(x, np.array(points, float)[:, 0], np.array(points, float)[:, 1])
+
+# Coupes en travers, mélangées selon la hauteur.
+coupe_avant = courbe([(0, 1.0), (0.4, 1.0), (0.75, 0.85), (1.0, 0.7)], f_larg)                 # épaule, poitrine
+coupe_cotes = courbe([(0, 1.0), (0.3, 1.0), (0.55, 0.62), (0.8, 0.42), (1.0, 0.35)], f_larg)   # côtes
+coupe_flanc = courbe([(0, 1.0), (0.25, 0.95), (0.42, 0.45), (0.6, 0.2), (1.0, 0.15)], f_larg)  # flanc
+coupe_cuisse = courbe([(0, 0.8), (0.35, 1.0), (0.7, 0.88), (1.0, 0.62)], f_larg)               # cuisse ronde
+poids = lambda y0, y1: np.clip((GY - y0) / (y1 - y0), 0, 1)
+travers = coupe_avant
+travers = travers + (coupe_cotes - travers) * poids(0.62, 0.80)
+travers = travers + (coupe_flanc - travers) * poids(1.02, 1.15)
+travers = travers + (coupe_cuisse - travers) * poids(1.58, 1.78)
+epaisseur = ndi.gaussian_filter(A * travers, 8)
+epaisseur = np.maximum(epaisseur, creux + 0.045)
+
+# Le globe (intérieur de la cuisse) n'est pas coupé par la fente : il dépasse un peu du plan de fente,
+# au-dessus de la symphyse pelvienne sciée.
+globe = 0.085 * np.exp(-0.5 * (((GY - 2.03) / 0.19) ** 2 + ((GZ + 0.25) / 0.21) ** 2))
+_t = np.clip((GY - 1.80) / 0.28, 0, 1)
+globe *= _t * _t * (3 - 2 * _t)  # naissance progressive au-dessus du bassin
+rho_globe = np.sqrt(np.clip(1 - (1 - np.clip(dist / 0.10, 0, 1)) ** 2, 0, 1))
+globe = ndi.gaussian_filter(globe, 3) * rho_globe
 
 # Jarrets : tubes ronds, décalés du plan de fente.
 def masque_segment(p0, p1, rayon):
@@ -180,27 +235,31 @@ def masque_segment(p0, p1, rayon):
     py, pz = y0 + u * d[0], z0 + u * d[1]
     return np.hypot(GY - py, GZ - pz) < rayon
 
-membre = masque_segment((0.30, 0.17), (0.06, 0.50), 0.11) | masque_segment((2.20, -0.14), (2.50, -0.10), 0.12)
-membre &= masque_g
-poids_membre = np.clip(ndi.gaussian_filter(membre.astype(np.float32), 6) * 1.6, 0, 1)
-rayon_local = ndi.grey_dilation(dist * membre, size=(25, 25))
-rayon_local = np.maximum(ndi.gaussian_filter(rayon_local, 3), 0.02)
+jarret_avant = masque_segment((0.30, 0.17), (0.06, 0.50), 0.11) & masque_g
+jarret_arriere = masque_segment((2.18, -0.14), (2.50, -0.10), 0.12) & masque_g
+membre = jarret_avant | jarret_arriere
+# Fondu large entre le corps et le jarret : pas de marche à la jonction.
+poids_membre = np.clip(ndi.gaussian_filter(membre.astype(np.float32), 10) * 1.5, 0, 1)
+# Rayon du jarret : demi-largeur locale du membre, lissée le long du membre.
+rayon_local = ndi.grey_dilation(dist * membre, size=(31, 31))
+rayon_local = np.maximum(ndi.gaussian_filter(rayon_local, 6), 0.025)
 d_rel = np.clip(dist / rayon_local, 0, 1)
 demi_tube = rayon_local * np.sqrt(np.clip(1 - (1 - d_rel) ** 2, 0, 1))
-centre_membre = -rayon_local * 1.05
+# Axe du membre : le jarret avant pend côté extérieur, le jarret arrière est presque dans l'axe.
+decalage_membre = ndi.gaussian_filter(np.where(jarret_avant, -0.11, np.where(jarret_arriere, -0.05, 0.0)), 10)
+centre_membre = decalage_membre / np.maximum(ndi.gaussian_filter(membre.astype(np.float32), 10), 1e-3) * (membre | (poids_membre > 0))
 
 # Bords arrondis de la face extérieure : rayon proportionnel à l'épaisseur (dos, cuisse ronds),
 # sauf au bas du collier, coupé net en travers.
-r_arrondi = np.clip(epaisseur * 0.85, 0.03, 0.20)
+r_arrondi = np.clip(epaisseur * (0.6 + 0.3 * np.clip((GY - 1.55) / 0.25, 0, 1)), 0.03, 0.22)
 coupe_collier = np.clip((0.16 - GY) / 0.06, 0, 1) * np.clip((0.12 - GZ) / 0.08, 0, 1)
 r_arrondi = r_arrondi * (1 - coupe_collier) + 0.012 * coupe_collier
 rho = np.sqrt(np.clip(1 - (1 - np.clip(dist / r_arrondi, 0, 1)) ** 2, 0, 1))
 
-x_fente = (1 - poids_membre) * (-creux) + poids_membre * (centre_membre + demi_tube)
+x_fente = (1 - poids_membre) * (globe - creux) + poids_membre * (centre_membre + demi_tube)
 x_ext = (1 - poids_membre) * (-epaisseur * rho) + poids_membre * (centre_membre - demi_tube)
-x_fente = np.minimum(x_fente, 0.0) if True else x_fente
 x_ext = np.minimum(x_ext, x_fente - 0.004 * (dist > 0.003))
-np.save("v4_x_fente.npy", x_fente); np.save("v4_x_ext.npy", x_ext)
+np.save("v5_ep.npy", np.dstack([x_fente, x_ext, epaisseur, f_larg]))
 
 # --- Maillage ----------------------------------------------------------------------------
 cy = (gy[:-1] + gy[1:]) / 2
@@ -272,7 +331,7 @@ def nappe(x, fente, nom, normal_bord, uv):
 
 
 # Carcasse centrée sur l'axe de rotation de la caméra (le plan de fente passe à x = +DECALAGE).
-DECALAGE = round(float(-(xe.min() + 0.0) / 2), 3)
+DECALAGE = round(float(-(xe.min() + xf.max()) / 2), 3)
 xf = xf + DECALAGE
 xe = xe + DECALAGE
 print("décalage x", DECALAGE)

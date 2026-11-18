@@ -133,10 +133,10 @@ float distanceSegment(vec2 p, vec2 a, vec2 b) {
 // Flancs très inclinés (dos, ventre, dessus de la cuisse) : les photos, prises de face, y sont étirées.
 // On garde leur couleur moyenne et on y pose un grain de gras projeté de côté.
 vec3 nMonde = normalize(vNormaleMonde) * (gl_FrontFacing ? 1.0 : -1.0);
-float flanc = smoothstep(0.55, 0.22, abs(nMonde.x));
+float flanc = smoothstep(0.7, 0.33, abs(nMonde.x));
 #ifdef USE_MAP
 if (flanc > 0.0) {
-  vec3 teinteLisse = texture(map, vMapUv, 5.5).rgb;
+  vec3 teinteLisse = texture(map, vMapUv, 7.0).rgb;
   vec2 pz = vPosMonde.xy * 3.6;
   vec2 py = vPosMonde.xz * 3.6;
   float gz = texture(uGrain, pz).r * texture(uGrain, pz * 0.37 + vec2(0.31, 0.57)).r;
@@ -216,8 +216,8 @@ const NOM_COURT = { avant: "l'avant", arriere: "l'arrière" };
  */
 const Carcasse3D = ({
   ref,
-  modele = "/models/demi_carcasse_boeuf_v4.glb",
-  apercu = "/models/demi_carcasse_boeuf_v4_apercu.webp",
+  modele = "/models/demi_carcasse_boeuf_v5.glb",
+  apercu = "/models/demi_carcasse_boeuf_v5_apercu.webp",
   coupe = null, parties, onExplorer, onExplorerMorceau, onSelection, onMorceau, partieInitiale = null }) => {
   const conteneurRef = useRef(null);
   const infobulleRef = useRef(null);
