@@ -1,18 +1,27 @@
-# Reconstruction du modèle 3D de la demi-carcasse
+# Modèle 3D de la demi-carcasse
 
-Le modèle d'origine (commit 2fdcec9, `front/public/models/demi_carcasse_boeuf.glb`) est fait de deux
-nappes qui ne coïncident pas : contours différents (deux pattes), trous, dos en lame.
-Ces scripts en tirent `demi_carcasse_boeuf_v3.glb`, un volume fermé aux bords arrondis.
+## Version actuelle : v4 (à partir de deux vraies photos)
 
-1. Extraire le modèle d'origine dans `front/public/models/__original.glb` :
-   `git show 2fdcec9:front/public/models/demi_carcasse_boeuf.glb > front/public/models/__original.glb`
-2. Copier `bake.html` dans `front/`, lancer `npx vite --port 5199` depuis `front/`.
-3. `python3 bake.py` : rend chaque face à plat (couleur et profondeur), 1152 × 3072 px.
-4. `python3 reconstruire.py` : contour de la face de fente comme référence, face extérieure recalée
-   dessus, trous bouchés, relief adouci, bords arrondis, deux surfaces régulières (pas de 4 mm).
-5. Compression : `npx @gltf-transform/cli webp reconstruit.glb tmp.glb --quality 86`
-   puis `npx @gltf-transform/cli meshopt tmp.glb demi_carcasse_boeuf_v3.glb --level medium`.
-6. Supprimer `__original.glb` et `bake.html` de `front/`.
+`front/public/models/demi_carcasse_boeuf_v4.glb` est construit à partir de deux photos détourées,
+face de fente (`demi-carcasse-boeuf-interieur.png`) et face extérieure (`demi-carcasse-boeuf-exterieur.png`),
+rangées dans le dossier « Projet ADB ».
 
-Dépendances Python : numpy, scipy, pillow, trimesh, playwright (avec Chrome).
+1. Agrandissement x4 sans flou (Real-ESRGAN, sur le processeur avec ncnn) :
+   `pip install ncnn`, télécharger `realesrgan-ncnn-vulkan-20220424-ubuntu.zip` (releases GitHub de Real-ESRGAN),
+   le décompresser dans `rv/`, puis `python3 agrandir.py interieur.png interieur_x4.png` (idem pour l'extérieur).
+2. `python3 construire_v4.py` : détourage, recalage de la face extérieure sur le contour de la face de fente,
+   volume (plan de fente au rachis, cage thoracique et abdomen en creux, épaisseurs par région, bords arrondis,
+   jarrets en tubes), normal maps tirées des photos. Sortie : `v4_brut.glb`.
+3. Compression : `npx @gltf-transform/cli webp v4_brut.glb tmp.glb --quality 88`
+   puis `npx @gltf-transform/cli meshopt tmp.glb demi_carcasse_boeuf_v4.glb --level medium`.
+
+Les repères anatomiques (axe du rachis, creux, épaisseurs, jarrets) sont en haut des sections de
+`construire_v4.py`. Les côtes, la coupe pistolet et les limites des morceaux sont dans
+`front/src/data/coupesBoeuf.js` et `front/src/data/zonesBoeuf.js`.
+Sur les flancs très inclinés, l'application remplace la photo étirée par `gras_detail.webp` (voir Carcasse3D.jsx).
+
 Changer de nom de fichier à chaque nouvelle version : `/models/*` est mis en cache un an (vercel.json).
+
+## Ancienne version : v3
+
+`bake.html`, `bake.py` et `reconstruire.py` reconstruisaient le modèle d'origine (commit 2fdcec9).

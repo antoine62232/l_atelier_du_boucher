@@ -5,8 +5,8 @@
 // Repères sur le modèle 3D : hauteur en mètres (0 = collier en bas, 2,5 = jarret arrière en haut).
 // La largeur est donnée en fraction : 0 = côté rachis, 1 = côté ventre.
 // Hauteur de chaque côte, comptée de la 1re (vers le collier, en bas) à la 13e,
-// relevée en comptant les côtes le long du rachis sur la face de fente du modèle.
-export const COTES = [0.345, 0.405, 0.47, 0.535, 0.59, 0.65, 0.71, 0.775, 0.835, 0.89, 0.955, 1.01, 1.06];
+// relevée en comptant les côtes le long du rachis sur la photo de la face de fente (modèle v4).
+export const COTES = [0.44, 0.49, 0.54, 0.59, 0.64, 0.69, 0.74, 0.79, 0.84, 0.89, 0.94, 0.99, 1.04];
 
 // Hauteur du trait de coupe entre la côte n et la côte n + 1
 export const entreCotes = (n) => (COTES[n - 1] + COTES[n]) / 2;
@@ -25,8 +25,8 @@ export const COUPES_BOEUF = [
     trace: [
       { hauteur: COUPE_5_6, largeur: 0 },
       { hauteur: COUPE_5_6, largeur: 0.43 },
-      { hauteur: 1.12, largeur: 0.26 },
-      { hauteur: 1.38, largeur: 1 },
+      { hauteur: 1.1, largeur: 0.26 },
+      { hauteur: 1.45, largeur: 1 },
     ],
     avant: {
       titre: "Avant CAPA (avant traité 5 côtes)",

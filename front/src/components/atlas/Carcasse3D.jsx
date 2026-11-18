@@ -9,6 +9,7 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
 import { COULEUR_ARRIERE, COULEUR_AVANT, COUPES_BOEUF } from "../../data/coupesBoeuf";
 import { GLSL_CLASSER_POINT, morceauParCode, morceauParId } from "../../data/zonesBoeuf";
 import {
+  TRANCHES,
   estFaceExterieure,
   mesurerLargeurs,
   mesurerMorceaux,
@@ -42,6 +43,8 @@ const creerUniformes = () => ({
   uMasqueMorceau: { value: 0 },
   // Largeur de la carcasse par tranche de hauteur, pour classer chaque pixel dans un gros morceau.
   uLargeurs: { value: null },
+  // Grain de gras, posé sur les flancs très inclinés.
+  uGrain: { value: null },
 });
 
 // Couleur de la viande sur une face de coupe (espace linéaire).
@@ -84,7 +87,11 @@ const brancherCoupe = (matiere, uniformes, exterieur) => {
   matiere.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniformes, { uFaceExterieure: { value: exterieur } });
     shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vPosMonde;")
+      .replace("#include <common>", "#include <common>\nvarying vec3 vPosMonde;\nvarying vec3 vNormaleMonde;")
+      .replace(
+        "#include <beginnormal_vertex>",
+        "#include <beginnormal_vertex>\nvNormaleMonde = normalize(mat3(modelMatrix) * objectNormal);"
+      )
       .replace(
         "#include <begin_vertex>",
         "#include <begin_vertex>\nvPosMonde = (modelMatrix * vec4(transformed, 1.0)).xyz;"
@@ -94,6 +101,8 @@ const brancherCoupe = (matiere, uniformes, exterieur) => {
         "#include <common>",
         `#include <common>
 varying vec3 vPosMonde;
+varying vec3 vNormaleMonde;
+uniform sampler2D uGrain;
 uniform int uMode;
 uniform float uCoupeY;
 uniform vec2 uPts[4];
@@ -115,8 +124,28 @@ float distanceSegment(vec2 p, vec2 a, vec2 b) {
 }`
       )
       .replace(
+        "#include <normal_fragment_maps>",
+        "vec3 normaleSansCarte = normal;\n#include <normal_fragment_maps>\nnormal = normalize(mix(normal, normaleSansCarte, flanc));"
+      )
+      .replace(
         "#include <map_fragment>",
         `#include <map_fragment>
+// Flancs très inclinés (dos, ventre, dessus de la cuisse) : les photos, prises de face, y sont étirées.
+// On garde leur couleur moyenne et on y pose un grain de gras projeté de côté.
+vec3 nMonde = normalize(vNormaleMonde) * (gl_FrontFacing ? 1.0 : -1.0);
+float flanc = smoothstep(0.55, 0.22, abs(nMonde.x));
+#ifdef USE_MAP
+if (flanc > 0.0) {
+  vec3 teinteLisse = texture(map, vMapUv, 5.5).rgb;
+  vec2 pz = vPosMonde.xy * 3.6;
+  vec2 py = vPosMonde.xz * 3.6;
+  float gz = texture(uGrain, pz).r * texture(uGrain, pz * 0.37 + vec2(0.31, 0.57)).r;
+  float gy = texture(uGrain, py).r * texture(uGrain, py * 0.37 + vec2(0.13, 0.71)).r;
+  float poidsY = abs(nMonde.y) / (abs(nMonde.y) + abs(nMonde.z) + 1e-4);
+  float grain = mix(gz, gy, poidsY) * 1.96 / 1.0;
+  diffuseColor.rgb = mix(diffuseColor.rgb, teinteLisse * clamp(grain, 0.55, 1.45), flanc);
+}
+#endif
 if (uMode > 0) {
   float y = vPosMonde.y;
   float z = vPosMonde.z;
@@ -134,8 +163,10 @@ if (uMode > 0) {
   vec3 teinte = avant ? uCouleurAvant : uCouleurArriere;
   vec3 colore = mix(base, teinte, 0.38);
   // Gros morceau de ce pixel : même règle que data/zonesBoeuf.js, calculée au pixel pour des bords nets.
-  int tr = clamp(int(floor(y / 2.5 * 125.0)), 0, 124);
-  vec2 zl = texelFetch(uLargeurs, ivec2(tr, 0), 0).rg;
+  float ft = y / 2.5 * ${TRANCHES}.0 - 0.5;
+  int t0 = clamp(int(floor(ft)), 0, ${TRANCHES - 1});
+  int t1 = min(t0 + 1, ${TRANCHES - 1});
+  vec2 zl = mix(texelFetch(uLargeurs, ivec2(t0, 0), 0).rg, texelFetch(uLargeurs, ivec2(t1, 0), 0).rg, clamp(ft - float(t0), 0.0, 1.0));
   float largeur = clamp((z - zl.x) / max(zl.y - zl.x, 1e-4), 0.0, 1.0);
   int code = classerPoint(avant, y, largeur, uFaceExterieure);
   if (!gl_FrontFacing) {
@@ -185,8 +216,8 @@ const NOM_COURT = { avant: "l'avant", arriere: "l'arrière" };
  */
 const Carcasse3D = ({
   ref,
-  modele = "/models/demi_carcasse_boeuf_v3.glb",
-  apercu = "/models/demi_carcasse_boeuf_v3_apercu.webp",
+  modele = "/models/demi_carcasse_boeuf_v4.glb",
+  apercu = "/models/demi_carcasse_boeuf_v4_apercu.webp",
   coupe = null, parties, onExplorer, onExplorerMorceau, onSelection, onMorceau, partieInitiale = null }) => {
   const conteneurRef = useRef(null);
   const infobulleRef = useRef(null);
@@ -208,6 +239,11 @@ const Carcasse3D = ({
     const conteneur = conteneurRef.current;
     if (!conteneur) return undefined;
     const uniformes = uniformesRef.current;
+    const grain = new THREE.TextureLoader().load("/models/gras_detail.webp");
+    grain.wrapS = THREE.RepeatWrapping;
+    grain.wrapT = THREE.RepeatWrapping;
+    grain.colorSpace = THREE.NoColorSpace;
+    uniformes.uGrain.value = grain;
 
     const rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -286,7 +322,7 @@ const Carcasse3D = ({
       const reserve = conteneur.clientWidth < 600 ? reserveMobile : reserveBureau;
       const libre = THREE.MathUtils.clamp(1 - reserve / hauteurCadre, 0.45, 0.85);
       // Les faces les plus proches de la caméra paraissent plus grandes : on recule d'une demi-profondeur.
-      const profondeur = centreSurAxe ? 0 : Math.max(taille.z, taille.x) / 2;
+      const profondeur = centreSurAxe ? taille.x / 2 : Math.max(taille.z, taille.x) / 2;
       const distance = distancePour((taille.y * marge) / libre, Math.max(taille.z, taille.x) * marge * 1.1) + profondeur;
       const hauteurVisible = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
       animer({
@@ -312,7 +348,7 @@ const Carcasse3D = ({
       masqueCible = 1;
       masqueMorceauCible = 1;
       const vue = morceauParCode(code)?.vue;
-      cadrer(boite, { reserveMobile: 250, reserveBureau: 200, marge: 1.12, angle: vue ? VUES[vue].angle : undefined });
+      cadrer(boite, { reserveMobile: 250, reserveBureau: 200, marge: 1.2, angle: vue ? VUES[vue].angle : undefined });
     };
 
     const redimensionner = () => {
@@ -517,6 +553,7 @@ const Carcasse3D = ({
         }
       });
       uniformes.uLargeurs.value?.dispose();
+      grain.dispose();
       environnement.dispose();
       pmrem.dispose();
       rendu.dispose();

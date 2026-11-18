@@ -2,17 +2,14 @@ import * as THREE from "three";
 import { classerPoint } from "../../data/zonesBoeuf";
 
 // Largeur de la carcasse (z) par tranche de hauteur : côté rachis en z négatif, côté ventre en z positif.
-export const TRANCHES = 125;
+export const TRANCHES = 250;
 const HAUTEUR_MAX = 2.5;
 
 export const tranche = (y) => Math.min(TRANCHES - 1, Math.max(0, Math.floor((y / HAUTEUR_MAX) * TRANCHES)));
 
 // Le modèle est fait de deux faces : la face de fente (x ≥ 0) et la face extérieure (x ≤ 0).
-// Boîte en coordonnées du monde : les positions du fichier sont compressées, donc mises à l'échelle par le nœud.
-export const estFaceExterieure = (objet) => {
-  objet.updateWorldMatrix(true, false);
-  return new THREE.Box3().setFromObject(objet).max.x <= 0.002;
-};
+// Reconnue à son nom dans le fichier (« face_exterieure »).
+export const estFaceExterieure = (objet) => /exterieure/i.test(objet.name) || /exterieure/i.test(objet.parent?.name ?? "");
 
 const parcourirSommets = (racine, rappel) => {
   racine.updateMatrixWorld(true);
@@ -53,11 +50,22 @@ export const texturerLargeurs = (largeurs) => {
   return texture;
 };
 
+// Largeur interpolée entre deux tranches voisines (comme dans le shader) : pas de marches sur les limites.
+const bornesInterpolees = (largeurs, y) => {
+  const ft = (y / HAUTEUR_MAX) * TRANCHES - 0.5;
+  const t0 = Math.min(TRANCHES - 1, Math.max(0, Math.floor(ft)));
+  const t1 = Math.min(TRANCHES - 1, t0 + 1);
+  const a = THREE.MathUtils.clamp(ft - t0, 0, 1);
+  const lire = (t, cle) => (Number.isFinite(largeurs[cle][t]) ? largeurs[cle][t] : 0);
+  return [
+    THREE.MathUtils.lerp(lire(t0, "zMin"), lire(t1, "zMin"), a),
+    THREE.MathUtils.lerp(lire(t0, "zMax"), lire(t1, "zMax"), a),
+  ];
+};
+
 export const fractionLargeur = (largeurs, y, z) => {
-  const t = tranche(y);
-  const zMin = largeurs.zMin[t];
-  const zMax = largeurs.zMax[t];
-  if (!Number.isFinite(zMin) || zMax - zMin < 1e-6) return 0;
+  const [zMin, zMax] = bornesInterpolees(largeurs, y);
+  if (zMax - zMin < 1e-6) return 0;
   return THREE.MathUtils.clamp((z - zMin) / (zMax - zMin), 0, 1);
 };
 
@@ -72,13 +80,28 @@ export const versPositionZ = (largeurs, hauteur, fraction) => {
 export const morceauDuPoint = (largeurs, estAvant, point, exterieur) =>
   classerPoint(estAvant(point.y, point.z), point.y, fractionLargeur(largeurs, point.y, point.z), exterieur);
 
-// Boîte englobante de chaque gros morceau, pour cadrer le zoom.
+// Boîte de chaque gros morceau, pour cadrer le zoom. On écarte 1 % des sommets de chaque côté :
+// quelques îlots isolés ne doivent pas élargir le cadrage.
+const quantile = (valeurs, q) => {
+  const tri = Float64Array.from(valeurs).sort();
+  return tri[Math.min(tri.length - 1, Math.max(0, Math.round(q * (tri.length - 1))))];
+};
+
 export const mesurerMorceaux = (racine, largeurs, estAvant) => {
-  const boites = {};
+  const points = {};
   parcourirSommets(racine, (v, exterieur) => {
     const code = morceauDuPoint(largeurs, estAvant, v, exterieur);
-    if (!boites[code]) boites[code] = new THREE.Box3();
-    boites[code].expandByPoint(v);
+    if (!points[code]) points[code] = { x: [], y: [], z: [] };
+    points[code].x.push(v.x);
+    points[code].y.push(v.y);
+    points[code].z.push(v.z);
+  });
+  const boites = {};
+  Object.entries(points).forEach(([code, p]) => {
+    boites[code] = new THREE.Box3(
+      new THREE.Vector3(quantile(p.x, 0.01), quantile(p.y, 0.01), quantile(p.z, 0.01)),
+      new THREE.Vector3(quantile(p.x, 0.99), quantile(p.y, 0.99), quantile(p.z, 0.99))
+    );
   });
   return boites;
 };
