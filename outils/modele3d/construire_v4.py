@@ -103,6 +103,13 @@ def prolonger(img, m):
     _, (iy, ix) = ndi.distance_transform_edt(~m, return_indices=True)
     return img[iy, ix]
 
+# La photo extérieure porte des ombres de prise de vue (bande sombre entre cuisse et dos, etc.)
+# qui font croire à des creux. On atténue l'éclairage à grande échelle (au-delà de 8 cm) de moitié.
+_Le = ext.mean(2)
+_poids = (_Le > 1).astype(np.float32)
+_Lb = ndi.gaussian_filter(_Le, 0.08 / S) / np.maximum(ndi.gaussian_filter(_poids, 0.08 / S), 1e-3)
+_moy = _Le[_poids > 0].mean()
+ext = ext * np.clip((_moy / np.maximum(_Lb, 1)) ** 0.5, 0.75, 1.35)[..., None] * _poids[..., None]
 m_int = ndi.binary_erosion(contour, iterations=3)
 tex_f = prolonger(img_f.astype(np.float32), m_int & m_f)
 tex_e = prolonger(ext, m_int & (ext.sum(2) > 0))
@@ -207,17 +214,17 @@ bord_ventral_lisse = ndi.gaussian_filter1d(ndi.median_filter(bord_ventral[:, 0],
 f_larg = np.clip((GZ - bord_dorsal) / np.maximum(bord_ventral_lisse - bord_dorsal, 0.05), 0, 1)
 
 EPAISSEUR_HAUTEUR = [
-    (0.00, 0.21), (0.15, 0.27), (0.35, 0.34), (0.55, 0.35), (0.75, 0.31), (1.00, 0.29),
-    (1.30, 0.31), (1.55, 0.32), (1.75, 0.332), (1.95, 0.34), (2.12, 0.29), (2.28, 0.17), (2.50, 0.09),
+    (0.00, 0.22), (0.15, 0.29), (0.35, 0.36), (0.55, 0.37), (0.75, 0.345), (1.00, 0.33),
+    (1.25, 0.33), (1.50, 0.345), (1.70, 0.365), (1.90, 0.38), (2.05, 0.37), (2.20, 0.30), (2.35, 0.19), (2.50, 0.09),
 ]
-A = interp(EPAISSEUR_HAUTEUR, GY)
+A = ndi.gaussian_filter1d(interp(EPAISSEUR_HAUTEUR, GY), 12, axis=0)  # courbe lisse, sans cassure
 courbe = lambda points, x: np.interp(x, np.array(points, float)[:, 0], np.array(points, float)[:, 1])
 
 # Coupes en travers, mélangées selon la hauteur.
-coupe_avant = courbe([(0, 1.0), (0.4, 1.0), (0.75, 0.85), (1.0, 0.7)], f_larg)                 # épaule, poitrine
-coupe_cotes = courbe([(0, 1.0), (0.3, 0.98), (0.5, 0.86), (0.7, 0.66), (0.85, 0.5), (1.0, 0.4)], f_larg)   # côtes
-coupe_flanc = courbe([(0, 1.0), (0.3, 0.95), (0.5, 0.78), (0.7, 0.52), (0.85, 0.36), (1.0, 0.26)], f_larg)  # flanc
-coupe_cuisse = courbe([(0, 0.97), (0.35, 1.0), (0.7, 0.9), (1.0, 0.66)], f_larg)               # cuisse ronde
+coupe_avant = courbe([(0, 0.74), (0.22, 0.95), (0.4, 1.0), (0.6, 0.93), (0.8, 0.8), (1.0, 0.66)], f_larg)                 # épaule, poitrine
+coupe_cotes = courbe([(0, 0.76), (0.2, 0.96), (0.33, 1.0), (0.5, 0.88), (0.7, 0.66), (0.85, 0.5), (1.0, 0.4)], f_larg)   # côtes
+coupe_flanc = courbe([(0, 0.78), (0.18, 0.97), (0.3, 1.0), (0.5, 0.82), (0.7, 0.55), (0.85, 0.38), (1.0, 0.27)], f_larg)  # flanc
+coupe_cuisse = courbe([(0, 0.8), (0.25, 0.96), (0.45, 1.0), (0.7, 0.9), (1.0, 0.66)], f_larg)               # cuisse ronde
 poids = lambda y0, y1: np.clip((GY - y0) / (y1 - y0), 0, 1)
 _ss_p = lambda y0, y1: poids(y0, y1) ** 2 * (3 - 2 * poids(y0, y1))
 travers = coupe_avant
@@ -239,10 +246,10 @@ epaisseur = epaisseur + ndi.gaussian_filter(relief, 4)
 
 # Du dos à la cuisse, la face extérieure monte sans creux : l'épaisseur ne redescend jamais en remontant
 # vers la cuisse (sinon un creux apparaît sous le globe, côté extérieur).
-_i0, _i1 = int(0.95 / PAS), int(1.92 / PAS)
+_i0, _i1 = int(0.95 / PAS), int(1.97 / PAS)
 _bloc = np.maximum.accumulate(epaisseur[_i0:_i1], axis=0)
 _ep2 = epaisseur.copy(); _ep2[_i0:_i1] = _bloc
-_w = (_ss_p(0.9, 1.05) * (1 - _ss_p(1.88, 2.0)))
+_w = (_ss_p(0.9, 1.05) * (1 - _ss_p(1.9, 2.15)))
 epaisseur = ndi.gaussian_filter(epaisseur * (1 - _w) + _ep2 * _w, 5)
 
 # Le globe (intérieur de la cuisse) n'est pas coupé par la fente : au-dessus du bassin scié, toute la face
@@ -276,7 +283,8 @@ centre_membre = decalage_membre / np.maximum(ndi.gaussian_filter(membre.astype(n
 
 # Bords arrondis de la face extérieure : rayon proportionnel à l'épaisseur (dos, cuisse ronds),
 # sauf au bas du collier, coupé net en travers.
-r_arrondi = np.clip(ndi.gaussian_filter(epaisseur, 12) * 0.75, 0.03, 0.22)
+# Arrondi large (ellipse plutôt que quart de cercle) : pas d'arête entre le dos et la face extérieure.
+r_arrondi = np.clip(ndi.gaussian_filter(epaisseur, 12) * 1.6, 0.05, 0.45)
 coupe_collier = np.clip((0.16 - GY) / 0.06, 0, 1) * np.clip((0.12 - GZ) / 0.08, 0, 1)
 r_arrondi = r_arrondi * (1 - coupe_collier) + 0.012 * coupe_collier
 # Distance au bord adoucie : la distance brute forme des arêtes (squelette du contour) qui se voient en stries.
@@ -289,7 +297,15 @@ _h = -x_ext
 _h2 = _h.copy(); _h2[_i0:_i1] = np.maximum.accumulate(_h[_i0:_i1], axis=0)
 _wf = np.clip(dist_l / 0.06, 0, 1) * (1 - poids_membre)
 _h = _h + (_h2 - _h) * _w * _wf
-x_ext = -ndi.gaussian_filter(_h, 3) * (dist > 0) + x_ext * (dist <= 0)
+# Lissage final de la face extérieure (épaisseur nulle hors du contour) : supprime les arêtes et les
+# plateaux, donne un dos et des flancs bombés. Les jarrets, déjà ronds, ne sont pas touchés.
+_hz = np.where(dist > 0, _h, 0.0)
+_hl = ndi.gaussian_filter(_hz, 0.05 / PAS)
+_hl = _hl * np.sqrt(np.clip(dist_l / 0.03, 0, 1))
+_hl = np.maximum(_hl, ndi.gaussian_filter(_hz, 3) * 0.0)
+_wm = np.clip(poids_membre * 1.5, 0, 1)
+_h = _hl * (1 - _wm) + ndi.gaussian_filter(_h, 3) * _wm
+x_ext = -_h * (dist > 0) + x_ext * (dist <= 0)
 x_ext = np.minimum(x_ext, x_fente - 0.004 * (dist > 0.003))
 
 
