@@ -147,12 +147,14 @@ const RecetteDetail = () => {
                 <Heading as="h2" size="lg" color="brand.brun" mb={6} fontFamily="title">Ingrédients</Heading>
                 <VStack align="stretch" gap={3}>
                     {ingredients && ingredients.length > 0 ? (
-                        ingredients.map((ing, index) => (
-                            <Flex key={index} justify="space-between" align="center" borderBottom="1px dashed" borderColor="gray.200" pb={2}>
+                        ingredients.map((ing) => (
+                            <Flex key={ing.ingredientId} justify="space-between" align="center" gap={4} borderBottom="1px dashed" borderColor="gray.200" pb={2}>
                                 <Text fontWeight="medium" color="gray.700">{ing.nomIngredient}</Text>
-                                <Text fontWeight="bold" color="brand.rouge">
-                                    {ing.quantiteValeur} {ing.unite}
-                                </Text>
+                                {ing.quantiteValeur != null && (
+                                    <Text fontWeight="bold" color="brand.rouge" flexShrink={0}>
+                                        {Number(ing.quantiteValeur).toLocaleString("fr-FR")} {ing.unite}
+                                    </Text>
+                                )}
                             </Flex>
                         ))
                     ) : (
