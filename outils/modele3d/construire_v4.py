@@ -195,6 +195,14 @@ profil_creux /= (0.55 ** 0.55 * 0.45 ** 0.9) / 1.0  # maximum ≈ 1 vers t ≈ 0
 profil_creux = np.clip(profil_creux / profil_creux.max(), 0, 1)
 creux = interp(PROF_CREUX, GY) * profil_creux * ((GZ > za) & (GZ < zb))
 creux = ndi.gaussian_filter(creux, 14)
+# Filet (psoas) le long des vertèbres lombaires, côté fente : masse ronde et pleine, pas un creux
+# (vu sur les vidéos de découpe). Entre la dernière côte et le bassin, on comble la cavité près du rachis
+# et on bombe légèrement le filet au-dessus du plan de fente.
+_lomb = np.clip((GY - 1.12) / 0.12, 0, 1) * np.clip((1.86 - GY) / 0.1, 0, 1)
+_lomb = _lomb * _lomb * (3 - 2 * _lomb)
+_dz = GZ - (z_rachis + 0.15)
+filet = 0.035 * _lomb * np.exp(-0.5 * (_dz / 0.075) ** 2)
+creux = creux * (1 - _lomb * np.exp(-0.5 * (_dz / 0.12) ** 2))
 
 
 def bosse(yc, zc, val, sy, sz):
@@ -240,7 +248,7 @@ epaisseur = ndi.gaussian_filter(epaisseur, 6)
 # (2 à 3 cm), pour suivre les muscles sous la fine couche de gras, sans effet de boule.
 _b = lambda yc, fc, a_, sy, sf: a_ * np.exp(-0.5 * (((GY - yc) / sy) ** 2 + ((f_larg - fc) / sf) ** 2))
 relief = (_b(0.42, 0.55, 0.028, 0.14, 0.20) + _b(0.62, 0.30, 0.018, 0.12, 0.16)
-          + 0.016 * np.exp(-0.5 * ((f_larg - 0.14) / 0.08) ** 2) * _ss_p(0.55, 0.75) * (1 - _ss_p(1.6, 1.8))
+          + 0.03 * np.exp(-0.5 * ((f_larg - 0.18) / 0.1) ** 2) * _ss_p(0.55, 0.75) * (1 - _ss_p(1.7, 1.9))
           + _b(1.80, 0.22, 0.022, 0.12, 0.16) + _b(2.02, 0.55, 0.026, 0.14, 0.22))
 epaisseur = epaisseur + ndi.gaussian_filter(relief, 4)
 
@@ -291,7 +299,8 @@ r_arrondi = r_arrondi * (1 - coupe_collier) + 0.012 * coupe_collier
 dist_l = ndi.gaussian_filter(dist, 7) * np.clip(dist / 0.012, 0, 1)
 rho = np.sqrt(np.clip(1 - (1 - np.clip(dist_l / r_arrondi, 0, 1)) ** 2, 0, 1))
 
-x_fente = (1 - poids_membre) * (globe - creux) + poids_membre * (centre_membre + demi_tube)
+filet = ndi.gaussian_filter(filet, 5) * np.sqrt(np.clip(ndi.gaussian_filter(dist, 7) / 0.08, 0, 1))
+x_fente = (1 - poids_membre) * (globe + filet - creux) + poids_membre * (centre_membre + demi_tube)
 x_ext = (1 - poids_membre) * (-epaisseur * rho) + poids_membre * (centre_membre - demi_tube)
 _h = -x_ext
 _h2 = _h.copy(); _h2[_i0:_i1] = np.maximum.accumulate(_h[_i0:_i1], axis=0)
