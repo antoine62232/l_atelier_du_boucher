@@ -20,6 +20,9 @@ Les repères anatomiques (axe du rachis, creux, épaisseurs, jarrets) sont en ha
 `front/src/data/coupesBoeuf.js` et `front/src/data/zonesBoeuf.js`.
 Sur les flancs très inclinés, l application remplace la photo étirée par `couverture_dos_v2.webp`, un morceau de la photo extérieure rendu raccordable (voir Carcasse3D.jsx).
 
+Sur l'épaule, le muscle à nu de la photo extérieure est prolongé jusqu'au jarret : `python3 zone_viande.py` donne le masque
+`zone_viande_epaule.webp` (repère des photos), lu par le shader de Carcasse3D.jsx qui y recopie la bande de muscle en miroir.
+
 Changer de nom de fichier à chaque nouvelle version : `/models/*` est mis en cache un an (vercel.json).
 
 ## Ancienne version : v3

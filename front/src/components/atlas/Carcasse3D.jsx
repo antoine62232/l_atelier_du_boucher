@@ -46,6 +46,8 @@ const creerUniformes = () => ({
   // Couverture de gras (morceau de photo), posée sur les flancs très inclinés.
   uGrain: { value: null },
   uVentre: { value: null },
+  // Zone où la viande de la poitrine apparaît sur l'épaule (masque dans le repère des photos).
+  uZoneViande: { value: null },
 });
 
 // Couleur de la viande sur une face de coupe (espace linéaire).
@@ -105,6 +107,7 @@ varying vec3 vPosMonde;
 varying vec3 vNormaleMonde;
 uniform sampler2D uGrain;
 uniform sampler2D uVentre;
+uniform sampler2D uZoneViande;
 uniform int uMode;
 uniform float uCoupeY;
 uniform vec2 uPts[4];
@@ -160,6 +163,20 @@ if (flanc > 0.0) {
   float cote = smoothstep(-0.15, 0.35, nMonde.z) * (1.0 - smoothstep(0.55, 0.85, abs(nMonde.y)));
   couverture = mix(couverture, viande, cote);
   diffuseColor.rgb = mix(diffuseColor.rgb, couverture, flanc);
+}
+// Bas de l'épaule : le muscle à nu de la photo (bande rouge du flanc, au-dessus de y = 0,79 m) se prolonge
+// jusqu'au jarret. On y lit la photo elle-même, en miroir par rapport au bas de la bande, pour garder
+// la même couleur et le même sens des fibres. Repère des UV : celui des photos (outils/modele3d).
+float zoneViande = uFaceExterieure ? texture(uZoneViande, vMapUv).r : 0.0;
+if (zoneViande > 0.0) {
+  const float M_PAR_PX = 0.00080775;
+  float yPhoto = (3161.0 - vMapUv.y * 3188.0) * M_PAR_PX;
+  float zPhoto = (vMapUv.x * 1352.0 - 681.5) * M_PAR_PX;
+  float yMiroir = 1.58 - yPhoto;
+  float zMiroir = 0.02 + (zPhoto - 0.03) * 0.5;
+  vec2 uvMuscle = vec2((681.5 + zMiroir / M_PAR_PX) / 1352.0, (3161.0 - yMiroir / M_PAR_PX) / 3188.0);
+  vec3 muscle = texture(map, uvMuscle).rgb * diffuse;
+  diffuseColor.rgb = mix(diffuseColor.rgb, muscle, zoneViande);
 }
 #endif
 if (uMode > 0) {
@@ -265,6 +282,10 @@ const Carcasse3D = ({
     ventre.wrapT = THREE.RepeatWrapping;
     ventre.colorSpace = THREE.SRGBColorSpace;
     uniformes.uVentre.value = ventre;
+    const zoneViande = new THREE.TextureLoader().load("/models/zone_viande_epaule.webp");
+    // Même repère que les textures du modèle glTF (pas de retournement vertical).
+    zoneViande.flipY = false;
+    uniformes.uZoneViande.value = zoneViande;
 
     const rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -576,6 +597,7 @@ const Carcasse3D = ({
       uniformes.uLargeurs.value?.dispose();
       grain.dispose();
       ventre.dispose();
+      zoneViande.dispose();
       environnement.dispose();
       pmrem.dispose();
       rendu.dispose();
