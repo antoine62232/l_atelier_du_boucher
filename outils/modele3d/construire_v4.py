@@ -216,16 +216,17 @@ creux = creux * (1 - _sternum * _zone_sternum)
 # vers le sternum en arc. Section en demi-ellipse entre le bord des vertèbres et le bord intérieur du sternum
 # (16 cm du bord ventral) : pas de plateau ni de paroi droite (effet « cube »), et vue de côté la paroi
 # proche reste cachée derrière le bord du sternum.
-_a = z_corps + 0.025
+# Le bord des vertèbres, côté cage, est une ligne droite (scie) et la cage tombe d'équerre juste après :
+# angle droit net, sans arrondi ni courbe. Ligne droite de la basse côte (y 0,30) aux dernières côtes (y 1,02).
+_z_droit = interp([(0.30, -0.10), (1.02, -0.23)], GY)
+_a = _z_droit
 _b = bord_ventral - 0.16
 _u = np.clip((GZ - _a) / np.maximum(_b - _a, 0.05), 0, 1)
-_voute = np.sqrt(np.clip(1 - (2 * _u - 1) ** 2, 0, 1)) ** 0.85
+_voute = np.sqrt(np.clip(1 - (2 * _u - 1) ** 2, 0, 1)) ** 0.8
 _voute = _voute * ((GZ > _a) & (GZ < _b))
-_prof = interp([(0.40, 0.0), (0.50, 0.12), (0.62, 0.17), (0.80, 0.20), (1.00, 0.20), (1.15, 0.17)], GY)
-_creux_cage = ndi.gaussian_filter(_prof * _voute, 3)
-creux = creux * (1 - _zone_sternum) + _creux_cage * _zone_sternum
-# Les corps vertébraux restent sur le plan de scie (pas d'arrondi qui les fait plonger dans la cage).
-creux = creux * plat
+_prof = interp([(0.30, 0.06), (0.40, 0.10), (0.50, 0.13), (0.62, 0.17), (0.80, 0.20), (1.00, 0.20), (1.15, 0.17)], GY)
+_creux_cage = ndi.gaussian_filter(_prof * _voute, (3, 1)) * (GZ > _a + 0.004)
+creux = creux * plat * (1 - _zone_sternum) + _creux_cage * _zone_sternum
 # Filet (psoas) sous les vertèbres lombaires, côté fente : masse ronde et pleine, pas un creux
 # (vu sur les vidéos de découpe). Entre la dernière côte et le bassin, on comble la cavité près du rachis
 # et on bombe légèrement le filet au-dessus du plan de fente.
@@ -338,7 +339,7 @@ dist_l = ndi.gaussian_filter(dist, 7) * np.clip(dist / 0.012, 0, 1)
 rho = np.sqrt(np.clip(1 - (1 - np.clip(dist_l / r_arrondi, 0, 1)) ** 2, 0, 1))
 
 filet = ndi.gaussian_filter(filet, 5) * np.sqrt(np.clip(ndi.gaussian_filter(dist, 7) / 0.08, 0, 1))
-x_fente = (1 - poids_membre) * (globe + (filet - creux) * plat) + poids_membre * (centre_membre + demi_tube)
+x_fente = (1 - poids_membre) * (globe + (filet - creux) * (plat * (1 - _zone_sternum) + _zone_sternum)) + poids_membre * (centre_membre + demi_tube)
 # Pointe de poitrine : là où le jarret avant s'attache, le tube du membre ne doit pas déborder du plan
 # de scie (sternum et poitrine sciés droits). Le tube reste rond seulement sur la partie libre du jarret.
 _attache = np.clip((GY - 0.17) / 0.1, 0, 1) * np.clip((0.95 - GY) / 0.1, 0, 1)
