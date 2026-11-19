@@ -216,6 +216,9 @@ if (uMode > 0) {
   }
   // Sur un morceau isolé, le trait de coupe n'a plus de sens.
   float visibiliteTrait = (uMorceau > 0 ? 1.0 - uMasqueMorceau : 1.0) * (gl_FrontFacing ? 1.0 : 0.0);
+  // Quartier isolé : la coupe se voit d'elle-même, pas de trait. Sur les parois de la face de fente presque
+  // parallèles au tracé, le trait s'étalait en grande tache blanche qui faisait croire à un trou.
+  if (uFocus > 0) visibiliteTrait *= 1.0 - uMasque;
   float bord = (1.0 - smoothstep(0.012, 0.018, trait)) * visibiliteTrait;
   float coeur = (1.0 - smoothstep(0.006, 0.009, trait)) * visibiliteTrait;
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1), bord);
