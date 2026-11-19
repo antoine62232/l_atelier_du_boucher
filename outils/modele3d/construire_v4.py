@@ -211,7 +211,12 @@ _d_ventral = bord_ventral - GZ
 _sternum = np.clip((0.33 - _d_ventral) / 0.11, 0, 1)  # plat jusqu'à 22 cm du bord (sternum entre 9 et 16 cm)
 _sternum = _sternum * _sternum * (3 - 2 * _sternum)
 _zone_sternum = np.clip((1.02 - GY) / 0.12, 0, 1)
-creux = creux * (1 - _sternum * _zone_sternum)
+# Entre le sternum et les côtes, la cage se creuse en courbe, dans la continuité des côtes : plat jusqu'au
+# bord intérieur du sternum (16 cm du bord ventral), puis profondeur limitée par une courbe douce sur 22 cm.
+_u = np.clip((_d_ventral - 0.16) / 0.22, 0, 1)
+_limite = 0.20 * (1 - np.cos(np.pi * _u)) / 2
+_limite = _limite * _zone_sternum + 1.0 * (1 - _zone_sternum)
+creux = np.minimum(creux, _limite)
 # Filet (psoas) sous les vertèbres lombaires, côté fente : masse ronde et pleine, pas un creux
 # (vu sur les vidéos de découpe). Entre la dernière côte et le bassin, on comble la cavité près du rachis
 # et on bombe légèrement le filet au-dessus du plan de fente.
