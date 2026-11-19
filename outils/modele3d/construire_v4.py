@@ -212,6 +212,18 @@ _sternum = np.clip((0.33 - _d_ventral) / 0.11, 0, 1)  # plat jusqu'à 22 cm du b
 _sternum = _sternum * _sternum * (3 - 2 * _sternum)
 _zone_sternum = np.clip((1.02 - GY) / 0.12, 0, 1)
 creux = creux * (1 - _sternum * _zone_sternum)
+# Cage thoracique : une voûte arrondie, comme les côtes qui partent des vertèbres, plongent et remontent
+# vers le sternum en arc. Section en demi-ellipse entre le bord des vertèbres et le bord intérieur du sternum
+# (16 cm du bord ventral) : pas de plateau ni de paroi droite (effet « cube »), et vue de côté la paroi
+# proche reste cachée derrière le bord du sternum.
+_a = z_corps + 0.01
+_b = bord_ventral - 0.16
+_u = np.clip((GZ - _a) / np.maximum(_b - _a, 0.05), 0, 1)
+_voute = np.sqrt(np.clip(1 - (2 * _u - 1) ** 2, 0, 1)) ** 0.85
+_voute = _voute * ((GZ > _a) & (GZ < _b))
+_prof = interp([(0.40, 0.0), (0.50, 0.12), (0.62, 0.17), (0.80, 0.20), (1.00, 0.20), (1.15, 0.17)], GY)
+_creux_cage = ndi.gaussian_filter(_prof * _voute, 3)
+creux = creux * (1 - _zone_sternum) + _creux_cage * _zone_sternum
 # Filet (psoas) sous les vertèbres lombaires, côté fente : masse ronde et pleine, pas un creux
 # (vu sur les vidéos de découpe). Entre la dernière côte et le bassin, on comble la cavité près du rachis
 # et on bombe légèrement le filet au-dessus du plan de fente.
