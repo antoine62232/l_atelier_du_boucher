@@ -24,8 +24,10 @@ export const COUPES_BOEUF = [
     // Tracé du trait de coupe : du rachis vers le milieu des côtes, puis le long des côtes jusqu'au flanc.
     trace: [
       { hauteur: COUPE_5_6, largeur: 0 },
-      { hauteur: COUPE_5_6, largeur: 0.43 },
-      { hauteur: 1.1, largeur: 0.26 },
+      // Le trait suit les côtes à environ 8 cm du bord des vertèbres : le faux-filet et le haut des côtes
+      // restent sur l'arrière (ART8).
+      { hauteur: COUPE_5_6, largeur: 0.46 },
+      { hauteur: 1.1, largeur: 0.44 },
       { hauteur: 1.45, largeur: 1 },
     ],
     avant: {

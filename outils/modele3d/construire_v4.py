@@ -368,7 +368,7 @@ _fond_cage = x_ext + 0.07
 x_fente = np.where(dist > 0, np.minimum(x_fente, x_fente * (1 - _w_cage) + _fond_cage * _w_cage), x_fente)
 # Le long de la coupe pistolet (5e/6e côte, voir coupesBoeuf.js), la face de fente colle à la face
 # extérieure : la tranche de l'avant n'est qu'une paroi fine (6 cm) qui suit le dos, arrondi compris.
-_zl = bord_dorsal + interp([(0.665, 0.43), (1.10, 0.26), (1.45, 1.0)], GY) * (bord_ventral_lisse - bord_dorsal)
+_zl = bord_dorsal + interp([(0.665, 0.46), (1.10, 0.44), (1.45, 1.0)], GY) * (bord_ventral_lisse - bord_dorsal)
 _w_pist = np.exp(-0.5 * ((GZ - _zl) / 0.07) ** 2) * np.clip((GY - 0.64) / 0.04, 0, 1) * np.clip((1.47 - GY) / 0.04, 0, 1)
 # Jamais sur la colonne : seulement dans la cage, après l'angle droit des vertèbres.
 _hors_col = np.clip((GZ - _z_droit - 0.01) / 0.02, 0, 1) * np.clip((1.16 - GY) / 0.05, 0, 1)
