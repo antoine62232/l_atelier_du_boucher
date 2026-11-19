@@ -315,8 +315,10 @@ r_arrondi = r_arrondi * (1 - coupe_collier) + 0.012 * coupe_collier
 # Bord ventral (poitrine, flanchet, bavettes) : paroi fine, coupée net au couteau, pas un ventre arrondi
 # (vu sur toutes les carcasses filmées).
 coupe_ventre = np.clip((f_larg - 0.72) / 0.12, 0, 1) * np.clip((GY - 0.42) / 0.1, 0, 1) * np.clip((1.85 - GY) / 0.12, 0, 1)
-coupe_ventre = ndi.gaussian_filter(coupe_ventre, 6)
-r_arrondi = r_arrondi * (1 - coupe_ventre) + 0.02 * coupe_ventre
+# Poitrine : le sternum est scié net, la face de fente reste plane jusqu'à l'arête (pas de bourrelet).
+coupe_poitrine = np.clip((f_larg - 0.70) / 0.10, 0, 1) * np.clip((GY - 0.30) / 0.06, 0, 1) * np.clip((1.05 - GY) / 0.1, 0, 1)
+coupe_ventre = ndi.gaussian_filter(np.maximum(coupe_ventre, coupe_poitrine), 4)
+r_arrondi = r_arrondi * (1 - coupe_ventre) + 0.02 * coupe_ventre * (1 - coupe_poitrine) + 0.008 * coupe_poitrine
 # Distance au bord adoucie : la distance brute forme des arêtes (squelette du contour) qui se voient en stries.
 dist_l = ndi.gaussian_filter(dist, 7) * np.clip(dist / 0.012, 0, 1)
 rho = np.sqrt(np.clip(1 - (1 - np.clip(dist_l / r_arrondi, 0, 1)) ** 2, 0, 1))
