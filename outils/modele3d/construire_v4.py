@@ -216,9 +216,9 @@ creux = creux * (1 - _sternum * _zone_sternum)
 # vers le sternum en arc. Section en demi-ellipse entre le bord des vertèbres et le bord intérieur du sternum
 # (16 cm du bord ventral) : pas de plateau ni de paroi droite (effet « cube »), et vue de côté la paroi
 # proche reste cachée derrière le bord du sternum.
-# Le bord des vertèbres, côté cage, est une ligne droite (scie) et la cage tombe d'équerre juste après :
-# angle droit net, sans arrondi ni courbe. Ligne droite de la basse côte (y 0,30) aux dernières côtes (y 1,02).
-_z_droit = interp([(0.30, -0.10), (1.02, -0.23)], GY)
+# Le bord des vertèbres, côté cage, suit le contour des corps vertébraux de la photo, et la cage tombe d'équerre juste après :
+# angle droit net, sans arrondi, de la basse côte aux dernières côtes.
+_z_droit = z_corps + 0.005  # suit le bord des vertèbres de la photo, arête nette
 _a = _z_droit
 _b = bord_ventral - 0.16
 _u = np.clip((GZ - _a) / np.maximum(_b - _a, 0.05), 0, 1)
