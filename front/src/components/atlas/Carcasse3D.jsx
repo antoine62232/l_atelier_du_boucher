@@ -45,6 +45,7 @@ const creerUniformes = () => ({
   uLargeurs: { value: null },
   // Couverture de gras (morceau de photo), posée sur les flancs très inclinés.
   uGrain: { value: null },
+  uVentre: { value: null },
 });
 
 // Couleur de la viande sur une face de coupe (espace linéaire).
@@ -103,6 +104,7 @@ const brancherCoupe = (matiere, uniformes, exterieur) => {
 varying vec3 vPosMonde;
 varying vec3 vNormaleMonde;
 uniform sampler2D uGrain;
+uniform sampler2D uVentre;
 uniform int uMode;
 uniform float uCoupeY;
 uniform vec2 uPts[4];
@@ -153,23 +155,9 @@ if (flanc > 0.0) {
   vec3 couverture = motif * mix(vec3(1.0), teinteLisse / max(moyenneMotif, vec3(0.05)), 0.35);
   // Côté ventre (flanc, poitrine) : peu de gras, la viande du flanchet et de la paroi apparaît.
   // Motif tiré d'une photo de carcasse côté ventre, étiré dans le sens de la hauteur.
-  // Viande : la bande de muscle à nu de la photo extérieure (flanc, y 0,85 à 1,35 m, z -0,06 à 0,10 m),
-  // répétée en miroir sur tout le côté ventre, du jarret arrière au collier. Même rouge et mêmes fibres
-  // que le muscle visible sur la face extérieure, sans raccord. Repère des UV : celui des photos.
-  const float M_PAR_PX = 0.00080775;
-  vec2 rep = vec2(vPosMonde.x / 0.16, vPosMonde.y / 0.5);
-  vec2 miroir = abs(fract(rep * 0.5) * 2.0 - 1.0);
-  vec2 rep2 = rep * vec2(0.73, 0.61) + vec2(0.37, 0.19);
-  vec2 miroir2 = abs(fract(rep2 * 0.5) * 2.0 - 1.0);
-  vec2 uvA = vec2((681.5 + (-0.06 + 0.16 * miroir.x) / M_PAR_PX) / 1352.0, (3161.0 - (0.85 + 0.5 * miroir.y) / M_PAR_PX) / 3188.0);
-  vec2 uvB = vec2((681.5 + (-0.06 + 0.16 * miroir2.x) / M_PAR_PX) / 1352.0, (3161.0 - (0.85 + 0.5 * miroir2.y) / M_PAR_PX) / 3188.0);
-  vec3 viande = mix(texture(map, uvA).rgb, texture(map, uvB).rgb, 0.35) * diffuse;
-  // Jarret avant (segment y 0,30 z 0,17 à y 0,06 z 0,50) : pas de viande, il garde la photo.
-  vec2 pj = vPosMonde.yz - vec2(0.30, 0.17);
-  vec2 dj = vec2(-0.24, 0.33);
-  float dJarret = length(pj - dj * clamp(dot(pj, dj) / dot(dj, dj), 0.0, 1.0));
-  float horsJarret = smoothstep(0.10, 0.16, dJarret);
-  float cote = smoothstep(-0.15, 0.35, nMonde.z) * (1.0 - smoothstep(0.55, 0.85, abs(nMonde.y))) * horsJarret;
+  vec2 cv = vec2(vPosMonde.x * 3.2, vPosMonde.y * 1.25);
+  vec3 viande = mix(texture(uVentre, cv).rgb, texture(uVentre, cv * 0.47 + vec2(0.29, 0.61)).rgb, 0.4);
+  float cote = smoothstep(-0.15, 0.35, nMonde.z) * (1.0 - smoothstep(0.55, 0.85, abs(nMonde.y)));
   couverture = mix(couverture, viande, cote);
   diffuseColor.rgb = mix(diffuseColor.rgb, couverture, flanc);
 }
@@ -272,6 +260,11 @@ const Carcasse3D = ({
     grain.wrapT = THREE.RepeatWrapping;
     grain.colorSpace = THREE.SRGBColorSpace;
     uniformes.uGrain.value = grain;
+    const ventre = new THREE.TextureLoader().load("/models/flanc_ventre.webp");
+    ventre.wrapS = THREE.RepeatWrapping;
+    ventre.wrapT = THREE.RepeatWrapping;
+    ventre.colorSpace = THREE.SRGBColorSpace;
+    uniformes.uVentre.value = ventre;
 
     const rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -582,6 +575,7 @@ const Carcasse3D = ({
       });
       uniformes.uLargeurs.value?.dispose();
       grain.dispose();
+      ventre.dispose();
       environnement.dispose();
       pmrem.dispose();
       rendu.dispose();
