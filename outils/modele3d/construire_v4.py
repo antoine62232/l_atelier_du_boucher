@@ -325,6 +325,11 @@ rho = np.sqrt(np.clip(1 - (1 - np.clip(dist_l / r_arrondi, 0, 1)) ** 2, 0, 1))
 
 filet = ndi.gaussian_filter(filet, 5) * np.sqrt(np.clip(ndi.gaussian_filter(dist, 7) / 0.08, 0, 1))
 x_fente = (1 - poids_membre) * (globe + (filet - creux) * plat) + poids_membre * (centre_membre + demi_tube)
+# Pointe de poitrine : là où le jarret avant s'attache, le tube du membre ne doit pas déborder du plan
+# de scie (sternum et poitrine sciés droits). Le tube reste rond seulement sur la partie libre du jarret.
+_attache = np.clip((GY - 0.17) / 0.1, 0, 1) * np.clip((0.95 - GY) / 0.1, 0, 1)
+_attache = _attache * _attache * (3 - 2 * _attache)
+x_fente = x_fente - np.maximum(x_fente, 0) * _attache
 x_ext = (1 - poids_membre) * (-epaisseur * rho) + poids_membre * (centre_membre - demi_tube)
 _h = -x_ext
 _h2 = _h.copy(); _h2[_i0:_i1] = np.maximum.accumulate(_h[_i0:_i1], axis=0)
