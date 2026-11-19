@@ -153,21 +153,13 @@ if (flanc > 0.0) {
   vec3 couverture = motif * mix(vec3(1.0), teinteLisse / max(moyenneMotif, vec3(0.05)), 0.35);
   // Côté ventre (flanc, poitrine) : peu de gras, la viande du flanchet et de la paroi apparaît.
   // Motif tiré d'une photo de carcasse côté ventre, étiré dans le sens de la hauteur.
-  // Côté ventre (flanchet, poitrine) : sur la pente extérieure, gras fin et irrégulier sur la viande rouge
-  // qui transparaît par plaques. Seule la tranche du bord (les 4 derniers cm avant le plan de fente,
-  // x = 0,156 m) est une coupe : muscle rouge sombre en couches, avec de fines lignes de gras ondulées.
+  // Côté ventre (flanchet, poitrine) : gras fin et irrégulier sur la viande rouge qui transparaît par
+  // plaques, jusqu'au bord de la fente (pas de bande de couleur le long du bord).
   vec3 grainV = texture(uGrain, vec2(vPosMonde.x * 5.0 + vPosMonde.z * 3.0, vPosMonde.y * 1.7)).rgb;
   vec3 grainV2 = texture(uGrain, vec2(vPosMonde.z * 2.1, vPosMonde.y * 0.8) + 0.37).rgb;
   vec3 muscle = vec3(0.24, 0.032, 0.042) * (0.7 + 0.6 * grainV2.r);
   float plaques = smoothstep(0.42, 0.62, dot(grainV2, vec3(0.33)) + (grainV.g - 0.5) * 0.4);
-  vec3 penteVentre = mix(muscle * 1.15, couverture, 0.35 + 0.65 * plaques);
-  float profond = 0.156 - vPosMonde.x;
-  float ondule = sin(vPosMonde.y * 5.3 + grainV.r * 4.0) * 0.004 + (grainV.g - 0.5) * 0.006;
-  float couche = abs(fract((profond + ondule) * 55.0) - 0.5) * 2.0;
-  float gras = smoothstep(0.86, 0.97, couche) * smoothstep(0.3, 0.6, grainV2.g);
-  vec3 tranche = mix(muscle, vec3(0.80, 0.72, 0.62), gras * 0.8);
-  float estTranche = 1.0 - smoothstep(0.035, 0.05, profond);
-  vec3 viande = mix(penteVentre, tranche, estTranche);
+  vec3 viande = mix(muscle * 1.15, couverture, 0.35 + 0.65 * plaques);
   // Jarret avant (segment y 0,30 z 0,17 à y 0,06 z 0,50) : il garde sa photo (membrane blanchâtre).
   vec2 pj = vPosMonde.yz - vec2(0.30, 0.17);
   vec2 dj = vec2(-0.24, 0.33);
