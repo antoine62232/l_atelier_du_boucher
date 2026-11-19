@@ -142,6 +142,14 @@ _moy = (_bf + _be) / 2
 tex_e = tex_e * (1 - _w_bord) + _bf * _w_bord
 tex_e = tex_e * (1 - _w_membre) + _moy * _w_membre
 tex_f = tex_f * (1 - _w_membre) + _moy * _w_membre
+# Hampe (pilier du diaphragme, côté fente, y 0,95 à 1,2 m) : la photo y porte une ombre de prise de vue
+# (bande gris foncé sous le bord du diaphragme). On relève la luminosité à grande échelle dans cette zone.
+_zone_h = ndi.gaussian_filter(((_yw > 0.95) & (_yw < 1.22) & (_zw > -0.22) & (_zw < 0.22)).astype(np.float32), 0.03 / S)
+_Lf = tex_f.mean(2)
+_Lfb = ndi.gaussian_filter(_Lf, 0.025 / S)
+_ref = np.percentile(_Lf[(_zone_h > 0.9)], 75)
+_gain = np.clip(_ref / np.maximum(_Lfb, 1), 1.0, 1.8)
+tex_f = tex_f * (1 + (_gain - 1) * _zone_h)[..., None]
 Image.fromarray(np.clip(tex_f, 0, 255).astype(np.uint8)).save("v4_fente.png")
 Image.fromarray(np.clip(tex_e, 0, 255).astype(np.uint8)).save("v4_ext.png")
 
@@ -210,7 +218,8 @@ creux = ndi.gaussian_filter(creux, 14) * plat_creux
 _d_ventral = bord_ventral - GZ
 _sternum = np.clip((0.33 - _d_ventral) / 0.11, 0, 1)  # plat jusqu'à 22 cm du bord (sternum entre 9 et 16 cm)
 _sternum = _sternum * _sternum * (3 - 2 * _sternum)
-_zone_sternum = np.clip((1.02 - GY) / 0.12, 0, 1)
+_zone_sternum = np.clip((1.10 - GY) / 0.20, 0, 1)
+_zone_sternum = _zone_sternum * _zone_sternum * (3 - 2 * _zone_sternum)
 creux = creux * (1 - _sternum * _zone_sternum)
 # Cage thoracique : une voûte arrondie, comme les côtes qui partent des vertèbres, plongent et remontent
 # vers le sternum en arc. Section en demi-ellipse entre le bord des vertèbres et le bord intérieur du sternum
