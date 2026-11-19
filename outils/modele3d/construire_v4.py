@@ -218,7 +218,7 @@ creux = creux * (1 - _sternum * _zone_sternum)
 # proche reste cachée derrière le bord du sternum.
 # Le bord des vertèbres, côté cage, suit le contour des corps vertébraux de la photo, et la cage tombe d'équerre juste après :
 # angle droit net, sans arrondi, de la basse côte aux dernières côtes.
-_z_droit = z_corps + 0.005  # suit le bord des vertèbres de la photo, arête nette
+_z_droit = z_corps + interp([(0.30, 0.045), (0.50, 0.05), (0.75, 0.05), (0.92, 0.025), (1.02, 0.005)], GY)  # bord des vertèbres relevé par Antoine (capture du 19/11)
 _a = _z_droit
 _b = bord_ventral - 0.16
 _u = np.clip((GZ - _a) / np.maximum(_b - _a, 0.05), 0, 1)
