@@ -297,6 +297,8 @@ epaisseur = ndi.gaussian_filter(epaisseur * (1 - _w) + _ep2 * _w, 5)
 _ss = lambda a_, b_, v: np.clip((v - a_) / (b_ - a_), 0, 1) ** 2 * (3 - 2 * np.clip((v - a_) / (b_ - a_), 0, 1))
 rho_globe = np.sqrt(np.clip(1 - (1 - np.clip(ndi.gaussian_filter(dist, 7) / 0.16, 0, 1)) ** 2, 0, 1))
 globe = 0.065 * _ss(1.86, 2.10, GY) * (1 - _ss(2.20, 2.42, GY)) * rho_globe
+# Tende de tranche : grosse masse ronde qui bombe nettement sous le bassin (photos de globes du 19/11).
+globe = globe + 0.05 * np.exp(-0.5 * (((GY - 2.08) / 0.11) ** 2 + ((GZ + 0.17) / 0.12) ** 2)) * rho_globe
 globe = ndi.gaussian_filter(globe, 6)
 
 # Jarrets : tubes ronds, décalés du plan de fente.
@@ -340,6 +342,12 @@ rho = np.sqrt(np.clip(1 - (1 - np.clip(dist_l / r_arrondi, 0, 1)) ** 2, 0, 1))
 
 filet = ndi.gaussian_filter(filet, 5) * np.sqrt(np.clip(ndi.gaussian_filter(dist, 7) / 0.08, 0, 1))
 x_fente = (1 - poids_membre) * (globe + (filet - creux) * (plat * (1 - _zone_sternum) + _zone_sternum)) + poids_membre * (centre_membre + demi_tube)
+# Bassin scié (os coxal, « araignée ») : vrai creux, pas une surface plate. Poche profonde dans le trou
+# du bassin (y 1,88 ; z -0,27), cuvette plus douce sur l'anneau d'os, muscles qui bombent autour.
+_poche = 0.11 * np.exp(-0.5 * (((GY - 1.885) / 0.045) ** 2 + ((GZ + 0.27) / 0.05) ** 2))
+_cuvette = 0.045 * np.exp(-0.5 * (((GY - 1.87) / 0.08) ** 2 + ((GZ + 0.30) / 0.11) ** 2))
+_creux_bassin = ndi.gaussian_filter(_poche + _cuvette, 2) * (dist > 0)
+x_fente = x_fente - _creux_bassin * (1 - poids_membre)
 # Pointe de poitrine : là où le jarret avant s'attache, le tube du membre ne doit pas déborder du plan
 # de scie (sternum et poitrine sciés droits). Le tube reste rond seulement sur la partie libre du jarret.
 _attache = np.clip((GY - 0.17) / 0.1, 0, 1) * np.clip((0.95 - GY) / 0.1, 0, 1)
