@@ -8,12 +8,15 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { COULEUR_ARRIERE, COULEUR_AVANT, COUPES_BOEUF } from "../../data/coupesBoeuf";
 import { GLSL_CLASSER_POINT, morceauParCode, morceauParId } from "../../data/zonesBoeuf";
+import { GLSL_CLASSER_PIECE, pieceParCode } from "../../data/piecesCuisse";
 import {
   TRANCHES,
   estFaceExterieure,
   mesurerLargeurs,
   mesurerMorceaux,
+  mesurerPieces,
   morceauDuPoint,
+  pieceDuPoint,
   texturerLargeurs,
   versPositionZ,
 } from "./zonesModele";
@@ -21,6 +24,9 @@ import {
 const CENTRE = new THREE.Vector3(0, 1.25, 0);
 const PISTOLET = COUPES_BOEUF.find((c) => c.type === "pistolet");
 const DUREE_ZOOM = 900;
+// Pièce de la cuisse choisie : vol jusqu'au centre en tournoyant, pendant que le reste rétrécit.
+const DUREE_PIECE = 2200;
+const CODE_CUISSE = 6;
 
 const VUES = {
   fente: { label: "Face de fente", angle: Math.PI / 2 },
@@ -45,7 +51,10 @@ const creerUniformes = () => ({
   uLargeurs: { value: null },
   // Couverture de gras (morceau de photo), posée sur les flancs très inclinés.
   uGrain: { value: null },
-  uVentre: { value: null },
+  // Pièces de la cuisse : survolée, choisie, et effacement du reste de la carcasse.
+  uSurvolPiece: { value: 0 },
+  uPiece: { value: 0 },
+  uMasquePiece: { value: 0 },
 });
 
 // Couleur de la viande sur une face de coupe (espace linéaire).
@@ -82,20 +91,26 @@ const mesurerParties = (racine, pts) => {
 };
 
 // exterieur : la matière habille la face extérieure (et non la face de fente).
-const brancherCoupe = (matiere, uniformes, exterieur) => {
+// copie : matière de la copie qui ne montre que la pièce choisie. repere : inverse de la position animée
+// du modèle, pour classer chaque point dans le repère d'origine même quand il bouge.
+const brancherCoupe = (matiere, uniformes, exterieur, copie = false, repere = new THREE.Matrix4()) => {
   // Les faces arrière ne se voient qu'à travers une coupe : elles servent de face de coupe pleine.
   matiere.side = THREE.DoubleSide;
   matiere.onBeforeCompile = (shader) => {
-    Object.assign(shader.uniforms, uniformes, { uFaceExterieure: { value: exterieur } });
+    Object.assign(shader.uniforms, uniformes, {
+      uFaceExterieure: { value: exterieur },
+      uCopiePiece: { value: copie },
+      uRepere: { value: repere },
+    });
     shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vPosMonde;\nvarying vec3 vNormaleMonde;")
+      .replace("#include <common>", "#include <common>\nvarying vec3 vPosMonde;\nvarying vec3 vNormaleMonde;\nuniform mat4 uRepere;")
       .replace(
         "#include <beginnormal_vertex>",
-        "#include <beginnormal_vertex>\nvNormaleMonde = normalize(mat3(modelMatrix) * objectNormal);"
+        "#include <beginnormal_vertex>\nvNormaleMonde = normalize(mat3(uRepere * modelMatrix) * objectNormal);"
       )
       .replace(
         "#include <begin_vertex>",
-        "#include <begin_vertex>\nvPosMonde = (modelMatrix * vec4(transformed, 1.0)).xyz;"
+        "#include <begin_vertex>\nvPosMonde = (uRepere * modelMatrix * vec4(transformed, 1.0)).xyz;"
       );
     shader.fragmentShader = shader.fragmentShader
       .replace(
@@ -104,7 +119,6 @@ const brancherCoupe = (matiere, uniformes, exterieur) => {
 varying vec3 vPosMonde;
 varying vec3 vNormaleMonde;
 uniform sampler2D uGrain;
-uniform sampler2D uVentre;
 uniform int uMode;
 uniform float uCoupeY;
 uniform vec2 uPts[4];
@@ -118,7 +132,12 @@ uniform int uMorceau;
 uniform float uMasqueMorceau;
 uniform sampler2D uLargeurs;
 uniform bool uFaceExterieure;
+uniform bool uCopiePiece;
+uniform int uSurvolPiece;
+uniform int uPiece;
+uniform float uMasquePiece;
 ${GLSL_CLASSER_POINT}
+${GLSL_CLASSER_PIECE}
 float distanceSegment(vec2 p, vec2 a, vec2 b) {
   vec2 ab = b - a;
   float t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0);
@@ -155,9 +174,18 @@ if (flanc > 0.0) {
   vec3 couverture = motif * mix(vec3(1.0), teinteLisse / max(moyenneMotif, vec3(0.05)), 0.35);
   // Côté ventre (flanc, poitrine) : peu de gras, la viande du flanchet et de la paroi apparaît.
   // Motif tiré d'une photo de carcasse côté ventre, étiré dans le sens de la hauteur.
-  vec2 cv = vec2(vPosMonde.x * 3.2, vPosMonde.y * 1.25);
-  vec3 viande = mix(texture(uVentre, cv).rgb, texture(uVentre, cv * 0.47 + vec2(0.29, 0.61)).rgb, 0.4);
-  float cote = smoothstep(-0.15, 0.35, nMonde.z) * (1.0 - smoothstep(0.55, 0.85, abs(nMonde.y)));
+  // Côté ventre (flanchet, poitrine) : gras fin et irrégulier sur la viande rouge qui transparaît par
+  // plaques, jusqu'au bord de la fente (pas de bande de couleur le long du bord).
+  vec3 grainV = texture(uGrain, vec2(vPosMonde.x * 5.0 + vPosMonde.z * 3.0, vPosMonde.y * 1.7)).rgb;
+  vec3 grainV2 = texture(uGrain, vec2(vPosMonde.z * 2.1, vPosMonde.y * 0.8) + 0.37).rgb;
+  vec3 muscle = vec3(0.24, 0.032, 0.042) * (0.7 + 0.6 * grainV2.r);
+  float plaques = smoothstep(0.42, 0.62, dot(grainV2, vec3(0.33)) + (grainV.g - 0.5) * 0.4);
+  vec3 viande = mix(muscle * 1.15, couverture, 0.35 + 0.65 * plaques);
+  // Jarret avant (segment y 0,30 z 0,17 à y 0,06 z 0,50) : il garde sa photo (membrane blanchâtre).
+  vec2 pj = vPosMonde.yz - vec2(0.30, 0.17);
+  vec2 dj = vec2(-0.24, 0.33);
+  float dJarret = length(pj - dj * clamp(dot(pj, dj) / dot(dj, dj), 0.0, 1.0));
+  float cote = smoothstep(-0.15, 0.35, nMonde.z) * (1.0 - smoothstep(0.55, 0.85, abs(nMonde.y))) * smoothstep(0.10, 0.16, dJarret);
   couverture = mix(couverture, viande, cote);
   diffuseColor.rgb = mix(diffuseColor.rgb, couverture, flanc);
 }
@@ -185,6 +213,11 @@ if (uMode > 0) {
   vec2 zl = mix(texelFetch(uLargeurs, ivec2(t0, 0), 0).rg, texelFetch(uLargeurs, ivec2(t1, 0), 0).rg, clamp(ft - float(t0), 0.0, 1.0));
   float largeur = clamp((z - zl.x) / max(zl.y - zl.x, 1e-4), 0.0, 1.0);
   int code = classerPoint(avant, y, largeur, uFaceExterieure);
+  int piece = code == ${CODE_CUISSE} ? classerPieceCuisse(y, largeur, uFaceExterieure) : 0;
+  // Copie de la pièce choisie : seule la pièce reste. Carcasse : elle s'efface quand une pièce est choisie.
+  float bruitPiece = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  if (uCopiePiece && piece != uPiece) discard;
+  if (!uCopiePiece && uPiece > 0 && bruitPiece < uMasquePiece) discard;
   if (!gl_FrontFacing) {
     base = ${COULEUR_COUPE};
     colore = base;
@@ -204,11 +237,18 @@ if (uMode > 0) {
     if (choisi && uSurvol > 0) {
       diffuseColor.rgb = code == uSurvol ? mix(diffuseColor.rgb, vec3(1.0), 0.3) : diffuseColor.rgb * 0.72;
     }
+    // Pièce de la cuisse survolée.
+    if (choisi && uSurvolPiece > 0 && !uCopiePiece) {
+      diffuseColor.rgb = piece == uSurvolPiece ? mix(diffuseColor.rgb, vec3(1.0), 0.3) : diffuseColor.rgb * 0.72;
+    }
   } else {
     diffuseColor.rgb = colore;
   }
   // Sur un morceau isolé, le trait de coupe n'a plus de sens.
   float visibiliteTrait = (uMorceau > 0 ? 1.0 - uMasqueMorceau : 1.0) * (gl_FrontFacing ? 1.0 : 0.0);
+  // Quartier isolé : la coupe se voit d'elle-même, pas de trait. Sur les parois de la face de fente presque
+  // parallèles au tracé, le trait s'étalait en grande tache blanche qui faisait croire à un trou.
+  if (uFocus > 0) visibiliteTrait *= 1.0 - uMasque;
   float bord = (1.0 - smoothstep(0.012, 0.018, trait)) * visibiliteTrait;
   float coeur = (1.0 - smoothstep(0.006, 0.009, trait)) * visibiliteTrait;
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1), bord);
@@ -232,7 +272,7 @@ const NOM_COURT = { avant: "l'avant", arriere: "l'arrière" };
  */
 const Carcasse3D = ({
   ref,
-  modele = "/models/demi_carcasse_boeuf_v11.glb",
+  modele = "/models/demi_carcasse_boeuf_v29.glb",
   apercu = "/models/demi_carcasse_boeuf_v7_apercu.webp",
   coupe = null, parties, onExplorer, onExplorerMorceau, onSelection, onMorceau, partieInitiale = null }) => {
   const conteneurRef = useRef(null);
@@ -242,12 +282,13 @@ const Carcasse3D = ({
   const largeursRef = useRef(null);
   const coupeRef = useRef(coupe);
   // Quartier et morceau affichés, lus par les gestionnaires de la 3D.
-  const niveauRef = useRef({ partie: null, morceau: 0 });
+  const niveauRef = useRef({ partie: null, morceau: 0, piece: 0 });
   const [etat, setEtat] = useState("chargement");
   const [vueActive, setVueActive] = useState("fente");
   const [selection, setSelection] = useState(null);
   const [morceau, setMorceau] = useState(0);
   const [designe, setDesigne] = useState(null);
+  const [piece, setPiece] = useState(0);
   const [tactile] = useState(ecranTactile);
   const [progression, setProgression] = useState(0);
 
@@ -260,11 +301,6 @@ const Carcasse3D = ({
     grain.wrapT = THREE.RepeatWrapping;
     grain.colorSpace = THREE.SRGBColorSpace;
     uniformes.uGrain.value = grain;
-    const ventre = new THREE.TextureLoader().load("/models/flanc_ventre.webp");
-    ventre.wrapS = THREE.RepeatWrapping;
-    ventre.wrapT = THREE.RepeatWrapping;
-    ventre.colorSpace = THREE.SRGBColorSpace;
-    uniformes.uVentre.value = ventre;
 
     const rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -324,6 +360,13 @@ const Carcasse3D = ({
 
     let boites = null;
     let boitesMorceaux = null;
+    let boitesPieces = null;
+    let copiePiece = null;
+    const pivotPiece = new THREE.Group();
+    const repereModele = new THREE.Matrix4();
+    const repereCopie = new THREE.Matrix4();
+    let animationPiece = null;
+    let rotationLente = 0;
     let masqueCible = 0;
     let masqueMorceauCible = 0;
     let dernierInstant = performance.now();
@@ -360,6 +403,69 @@ const Carcasse3D = ({
       masqueCible = 1;
       masqueMorceauCible = 0;
       cadrer(boites[partie], { reserveMobile: 200, reserveBureau: 170, marge: 1.1, centreSurAxe: true });
+    };
+
+    // Remet la carcasse en place et cache la pièce.
+    const quitterPiece = () => {
+      animationPiece = null;
+      rotationLente = 0;
+      pivotPiece.visible = false;
+      if (modeleCharge) {
+        modeleCharge.visible = true;
+        modeleCharge.position.set(0, 0, 0);
+        modeleCharge.scale.setScalar(1);
+      }
+      const u = uniformesRef.current;
+      u.uPiece.value = 0;
+      u.uMasquePiece.value = 0;
+      u.uSurvolPiece.value = 0;
+    };
+
+    // Pièce de la cuisse choisie : elle vole jusqu'au centre de l'écran en tournoyant lentement et grossit ;
+    // le reste de la carcasse rétrécit vers elle et s'efface. Ensuite on la fait pivoter comme la carcasse.
+    const montrerPiece = (code) => {
+      const boite = boitesPieces?.[code];
+      if (!boite || !modeleCharge) return;
+      const centre = boite.getCenter(new THREE.Vector3());
+      const taille = boite.getSize(new THREE.Vector3());
+      const u = uniformesRef.current;
+      u.uPiece.value = code;
+      u.uSurvolPiece.value = 0;
+      animation = null;
+      // Arrivée : au point visé par la caméra, à une taille qui remplit bien l'espace au-dessus de la fiche.
+      const arrivee = controles.target.clone();
+      const distance = camera.position.distanceTo(arrivee);
+      const hauteurVisible = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+      const echelle = THREE.MathUtils.clamp((hauteurVisible * 0.5) / Math.max(taille.x, taille.y, taille.z), 1, 6);
+      copiePiece.position.copy(centre).multiplyScalar(-1);
+      pivotPiece.position.copy(centre);
+      pivotPiece.rotation.set(0, 0, 0);
+      pivotPiece.scale.setScalar(1);
+      pivotPiece.visible = true;
+      animationPiece = { debut: performance.now(), centre, arrivee, echelle };
+    };
+
+    const avancerPiece = (instant) => {
+      if (!animationPiece) {
+        if (rotationLente && pivotPiece.visible) pivotPiece.rotation.y += rotationLente;
+        return;
+      }
+      const { debut, centre, arrivee, echelle } = animationPiece;
+      const t = Math.min((instant - debut) / DUREE_PIECE, 1);
+      const k = easing(t);
+      pivotPiece.position.lerpVectors(centre, arrivee, k);
+      pivotPiece.rotation.y = k * Math.PI * 2;
+      pivotPiece.scale.setScalar(THREE.MathUtils.lerp(1, echelle, k));
+      // La carcasse rétrécit autour de la pièce et s'efface.
+      const r = THREE.MathUtils.lerp(1, 0.05, easing(Math.min(t * 1.3, 1)));
+      modeleCharge.scale.setScalar(r);
+      modeleCharge.position.copy(pivotPiece.position).addScaledVector(centre, -r);
+      uniformesRef.current.uMasquePiece.value = Math.min(t * 1.6, 1);
+      if (t >= 1) {
+        modeleCharge.visible = false;
+        animationPiece = null;
+        rotationLente = 0.003;
+      }
     };
 
     // Gros morceau choisi : seul ce morceau reste visible, vu de sa meilleure face.
@@ -399,7 +505,7 @@ const Carcasse3D = ({
 
     // Quartier et gros morceau sous le pointeur. Les parties effacées sont traversées.
     const cibleSousLePointeur = (event) => {
-      if (!modeleCharge) return null;
+      if (!modeleCharge || !modeleCharge.visible || niveauRef.current.piece) return null;
       const r = rendu.domElement.getBoundingClientRect();
       pointeur.set(((event.clientX - r.left) / r.width) * 2 - 1, -((event.clientY - r.top) / r.height) * 2 + 1);
       raycaster.setFromCamera(pointeur, camera);
@@ -415,7 +521,16 @@ const Carcasse3D = ({
         if (!partie) continue;
         if (morceauIsole && code !== morceauIsole) continue;
         if (partieIsolee && partie !== partieIsolee) continue;
-        return { partie, code };
+        const piece =
+          morceauIsole === CODE_CUISSE
+            ? pieceDuPoint(
+                largeursRef.current,
+                (y, z) => estAvantPistolet(pointsPistolet, y, z),
+                impact.point,
+                impact.object.userData.faceExterieure
+              )
+            : 0;
+        return { partie, code, piece };
       }
       return null;
     };
@@ -444,7 +559,24 @@ const Carcasse3D = ({
       if (event.pointerType !== "mouse" || appui) return;
       const cible = cibleSousLePointeur(event);
       const { partie, morceau: morceauIsole } = niveauRef.current;
-      rendu.domElement.style.cursor = cible && !morceauIsole ? "pointer" : "grab";
+      const surPiece = morceauIsole === CODE_CUISSE && cible?.piece;
+      rendu.domElement.style.cursor = cible && (!morceauIsole || surPiece) ? "pointer" : "grab";
+      // Dans la cuisse : survol des pièces.
+      if (morceauIsole === CODE_CUISSE) {
+        uniformesRef.current.uSurvolPiece.value = surPiece ? cible.piece : 0;
+        const bulle = infobulleRef.current;
+        if (!bulle) return;
+        if (!surPiece) {
+          masquerInfobulle();
+          return;
+        }
+        const r = rendu.domElement.getBoundingClientRect();
+        bulle.firstChild.textContent = pieceParCode(cible.piece).nom;
+        bulle.style.display = "block";
+        bulle.style.left = `${event.clientX - r.left}px`;
+        bulle.style.top = `${event.clientY - r.top}px`;
+        return;
+      }
       // Survol des gros morceaux, une fois dans un quartier.
       const code = partie && !morceauIsole && cible ? cible.code : 0;
       uniformesRef.current.uSurvol.value = code;
@@ -462,6 +594,7 @@ const Carcasse3D = ({
     };
     const surSortie = () => {
       if (!niveauRef.current.morceau && !actionsRef.current?.designeActif()) uniformesRef.current.uSurvol.value = 0;
+      if (!actionsRef.current?.designeActif()) uniformesRef.current.uSurvolPiece.value = 0;
       masquerInfobulle();
     };
     rendu.domElement.addEventListener("pointerdown", surAppui);
@@ -470,6 +603,8 @@ const Carcasse3D = ({
     rendu.domElement.addEventListener("pointerleave", surSortie);
 
     actionsRef.current = {
+      montrerPiece,
+      quitterPiece,
       allerVers,
       zoomer,
       zoomerSur,
@@ -478,6 +613,7 @@ const Carcasse3D = ({
       designeActif: () => false,
     };
     controles.addEventListener("start", () => {
+      rotationLente = 0;
       if (animation) {
         uniformesRef.current.uFocusMix.value = animation.focusFin;
         if (animation.focusFin === 0) uniformesRef.current.uFocus.value = 0;
@@ -500,11 +636,26 @@ const Carcasse3D = ({
         );
         boites = mesurerParties(gltf.scene, pointsPistolet);
         boitesMorceaux = mesurerMorceaux(gltf.scene, largeurs, (y, z) => estAvantPistolet(pointsPistolet, y, z));
+        boitesPieces = mesurerPieces(gltf.scene, largeurs, (y, z) => estAvantPistolet(pointsPistolet, y, z));
+        // Copie du modèle pour la pièce choisie : mêmes géométries, matières à part qui ne gardent que la pièce.
+        copiePiece = gltf.scene.clone(true);
+        copiePiece.traverse((objet) => {
+          if (objet.isMesh) {
+            const exterieur = estFaceExterieure(objet);
+            objet.material = Array.isArray(objet.material) ? objet.material.map((m) => m.clone()) : objet.material.clone();
+            const matieres = Array.isArray(objet.material) ? objet.material : [objet.material];
+            matieres.forEach((m) => brancherCoupe(m, uniformesRef.current, exterieur, true, repereCopie));
+            objet.raycast = () => {};
+          }
+        });
+        pivotPiece.add(copiePiece);
+        pivotPiece.visible = false;
+        scene.add(pivotPiece);
         gltf.scene.traverse((objet) => {
           if (objet.isMesh) {
             objet.userData.faceExterieure = estFaceExterieure(objet);
             const matieres = Array.isArray(objet.material) ? objet.material : [objet.material];
-            matieres.forEach((m) => brancherCoupe(m, uniformesRef.current, objet.userData.faceExterieure));
+            matieres.forEach((m) => brancherCoupe(m, uniformesRef.current, objet.userData.faceExterieure, false, repereModele));
           }
         });
         modeleCharge = gltf.scene;
@@ -550,6 +701,15 @@ const Carcasse3D = ({
           animation = null;
         }
       }
+      avancerPiece(instant);
+      if (modeleCharge) {
+        modeleCharge.updateMatrixWorld(true);
+        repereModele.copy(modeleCharge.matrixWorld).invert();
+      }
+      if (copiePiece && pivotPiece.visible) {
+        copiePiece.updateMatrixWorld(true);
+        repereCopie.copy(copiePiece.matrixWorld).invert();
+      }
       controles.update();
       rendu.render(scene, camera);
     });
@@ -575,7 +735,6 @@ const Carcasse3D = ({
       });
       uniformes.uLargeurs.value?.dispose();
       grain.dispose();
-      ventre.dispose();
       environnement.dispose();
       pmrem.dispose();
       rendu.dispose();
@@ -604,7 +763,9 @@ const Carcasse3D = ({
   };
 
   const changerNiveau = (partie, code) => {
-    niveauRef.current = { partie, morceau: code };
+    if (niveauRef.current.piece) actionsRef.current?.quitterPiece();
+    setPiece(0);
+    niveauRef.current = { partie, morceau: code, piece: 0 };
     setSelection(partie);
     setMorceau(code);
     setDesigne(null);
@@ -632,8 +793,19 @@ const Carcasse3D = ({
     actionsRef.current?.zoomerSurMorceau(code);
   };
 
+  // Pièce de la cuisse choisie.
+  const choisirPiece = (code) => {
+    if (!pieceParCode(code)) return;
+    niveauRef.current = { ...niveauRef.current, piece: code };
+    setPiece(code);
+    setDesigne(null);
+    actionsRef.current?.montrerPiece(code);
+  };
+
   const toutVoir = () => {
-    niveauRef.current = { partie: null, morceau: 0 };
+    if (niveauRef.current.piece) actionsRef.current?.quitterPiece();
+    setPiece(0);
+    niveauRef.current = { partie: null, morceau: 0, piece: 0 };
     setSelection(null);
     setMorceau(0);
     setDesigne(null);
@@ -646,7 +818,22 @@ const Carcasse3D = ({
 
   // Appui ou clic sur la carcasse, selon l'endroit où l'on se trouve.
   const toucher = (cible, { souris, x, y }) => {
-    const { partie, morceau: morceauIsole } = niveauRef.current;
+    const { partie, morceau: morceauIsole, piece: pieceChoisie } = niveauRef.current;
+    if (pieceChoisie) return;
+    if (morceauIsole === CODE_CUISSE) {
+      if (!cible?.piece) {
+        setDesigne(null);
+        uniformesRef.current.uSurvolPiece.value = 0;
+        return;
+      }
+      if (souris || designe?.piece === cible.piece) {
+        choisirPiece(cible.piece);
+        return;
+      }
+      uniformesRef.current.uSurvolPiece.value = cible.piece;
+      setDesigne({ piece: cible.piece, x, y });
+      return;
+    }
     if (morceauIsole) return;
     if (!partie) {
       if (cible) choisir(cible.partie);
@@ -716,7 +903,9 @@ const Carcasse3D = ({
   const changerVue = (cle) => {
     setVueActive(cle);
     if (selection) {
-      niveauRef.current = { partie: null, morceau: 0 };
+      if (niveauRef.current.piece) actionsRef.current?.quitterPiece();
+      setPiece(0);
+      niveauRef.current = { partie: null, morceau: 0, piece: 0 };
       setSelection(null);
       setMorceau(0);
       setDesigne(null);
@@ -748,7 +937,8 @@ const Carcasse3D = ({
 
   const infoPartie = selection && parties ? parties[selection] : null;
   const infoMorceau = morceau ? morceauParCode(morceau) : null;
-  const infoDesigne = designe ? morceauParCode(designe.code) : null;
+  const infoDesigne = designe ? (designe.piece ? pieceParCode(designe.piece) : morceauParCode(designe.code)) : null;
+  const infoPiece = piece ? pieceParCode(piece) : null;
 
   return (
     <Box
@@ -835,7 +1025,7 @@ const Carcasse3D = ({
             {infoDesigne.nom}
           </Text>
           <Text color="gray.600" fontSize="xs">
-            Touchez encore pour zoomer
+            {designe?.piece ? "Touchez encore pour la voir seule" : "Touchez encore pour zoomer"}
           </Text>
         </Box>
       )}
@@ -898,7 +1088,7 @@ const Carcasse3D = ({
 
           {infoPartie ? (
             <Box
-              key={infoMorceau ? infoMorceau.id : selection}
+              key={infoPiece ? infoPiece.id : infoMorceau ? infoMorceau.id : selection}
               position="absolute"
               left={3}
               right={{ base: 3, md: "auto" }}
@@ -923,11 +1113,11 @@ const Carcasse3D = ({
                 <Box>
                   {infoMorceau && (
                     <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="wide" color="gray.600">
-                      {infoPartie.titre}
+                      {infoPiece ? infoMorceau.nom : infoPartie.titre}
                     </Text>
                   )}
                   <Heading as="h2" fontFamily="title" fontSize="xl" color="brand.rouge" lineHeight="1.2" pt={infoMorceau ? 0 : 1}>
-                    {infoMorceau ? infoMorceau.nom : infoPartie.titre}
+                    {infoPiece ? infoPiece.nom : infoMorceau ? infoMorceau.nom : infoPartie.titre}
                   </Heading>
                 </Box>
                 <Button
@@ -947,8 +1137,12 @@ const Carcasse3D = ({
                 </Button>
               </Flex>
               <Text fontSize="sm" color="gray.700" mb={3}>
-                {infoMorceau
-                  ? infoMorceau.description
+                {infoPiece
+                  ? infoPiece.description
+                  : infoMorceau
+                  ? morceau === CODE_CUISSE
+                    ? `${infoMorceau.description} ${tactile ? "Touchez une pièce pour la repérer, puis touchez-la encore pour la voir seule." : "Survolez une pièce pour la repérer, puis cliquez dessus pour la voir seule."}`
+                    : infoMorceau.description
                   : tactile
                     ? "Touchez un morceau pour le repérer, puis touchez-le encore pour le voir seul."
                     : "Survolez un morceau pour le repérer, puis cliquez dessus pour le voir seul."}
@@ -963,7 +1157,19 @@ const Carcasse3D = ({
                 >
                   Voir les pièces <FiArrowRight aria-hidden="true" />
                 </Button>
-                {infoMorceau && (
+                {infoPiece && (
+                  <Button
+                    onClick={() => choisirMorceau(CODE_CUISSE)}
+                    variant="outline"
+                    borderColor="gray.300"
+                    color="brand.gris"
+                    {...styleBoutonFiche}
+                  >
+                    <FiArrowLeft aria-hidden="true" />
+                    Retour à la cuisse
+                  </Button>
+                )}
+                {infoMorceau && !infoPiece && (
                   <Button
                     onClick={() => choisir(selection)}
                     variant="outline"

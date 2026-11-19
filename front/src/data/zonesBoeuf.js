@@ -109,7 +109,7 @@ const LIMITE_COLLIER = [
   [0, 0.72],
   [0.34, 0.66],
   [0.45, 0.52],
-  [0.665, 0.43],
+  [0.665, 0.46],
 ];
 // Bas de la cuisse hanche, selon la largeur.
 const BAS_CUISSE = [

@@ -187,10 +187,10 @@ bord_ventral = ndi.uniform_filter1d(bord_ventral, 9)[:, None] * np.ones((1, NZ))
 
 # Creux de la cage thoracique et de l'abdomen (côté fente).
 PROF_CREUX = [(0.40, 0.0), (0.52, 0.15), (0.75, 0.20), (1.00, 0.20), (1.15, 0.17), (1.35, 0.13), (1.55, 0.07), (1.80, 0.0)]
-# Bord ventral des corps vertébraux, relevé sur la photo de la face de fente (bande striée des vertèbres sciées).
+# Bord ventral des corps vertébraux (la colonne remonte vers le ventre en allant vers le cou), relevé sur la photo de la face de fente (bande striée des vertèbres sciées).
 # Tout ce qui est côté dos (vertèbres, apophyses, long dorsal) est scié à plat : la fente reste plane et droite.
 # La cavité et le filet ne commencent qu'après ce bord.
-CORPS = [(0.0, -0.24), (0.45, -0.235), (0.60, -0.245), (0.80, -0.25), (1.00, -0.255), (1.15, -0.25), (1.30, -0.245), (1.50, -0.245), (1.75, -0.24), (2.0, -0.24)]
+CORPS = [(0.0, -0.10), (0.20, -0.12), (0.35, -0.13), (0.45, -0.155), (0.55, -0.18), (0.65, -0.20), (0.75, -0.215), (0.85, -0.235), (0.95, -0.25), (1.05, -0.255), (1.15, -0.25), (1.30, -0.245), (1.50, -0.245), (1.75, -0.24), (2.0, -0.24)]
 z_corps = ndi.gaussian_filter1d(interp(CORPS, GY), 10, axis=0)
 plat = np.clip((GZ - z_corps) / 0.035, 0, 1)
 plat = plat * plat * (3 - 2 * plat)  # 0 sur la colonne, 1 à 3,5 cm au-delà
@@ -205,6 +205,28 @@ profil_creux /= (0.55 ** 0.55 * 0.45 ** 0.9) / 1.0  # maximum ≈ 1 vers t ≈ 0
 profil_creux = np.clip(profil_creux / profil_creux.max(), 0, 1)
 creux = interp(PROF_CREUX, GY) * profil_creux * ((GZ > za) & (GZ < zb))
 creux = ndi.gaussian_filter(creux, 14) * plat_creux
+# Poitrine (sternum scié avec la fente) : de la pointe de poitrine jusqu'aux dernières côtes sternales,
+# la bande le long du bord ventral est sciée à plat, comme la colonne. Pas de creux entre les côtes et le bord.
+_d_ventral = bord_ventral - GZ
+_sternum = np.clip((0.33 - _d_ventral) / 0.11, 0, 1)  # plat jusqu'à 22 cm du bord (sternum entre 9 et 16 cm)
+_sternum = _sternum * _sternum * (3 - 2 * _sternum)
+_zone_sternum = np.clip((1.02 - GY) / 0.12, 0, 1)
+creux = creux * (1 - _sternum * _zone_sternum)
+# Cage thoracique : une voûte arrondie, comme les côtes qui partent des vertèbres, plongent et remontent
+# vers le sternum en arc. Section en demi-ellipse entre le bord des vertèbres et le bord intérieur du sternum
+# (16 cm du bord ventral) : pas de plateau ni de paroi droite (effet « cube »), et vue de côté la paroi
+# proche reste cachée derrière le bord du sternum.
+# Le bord des vertèbres, côté cage, suit le contour des corps vertébraux de la photo, et la cage tombe d'équerre juste après :
+# angle droit net, sans arrondi, de la basse côte aux dernières côtes.
+_z_droit = z_corps + interp([(0.30, 0.045), (0.50, 0.05), (0.75, 0.05), (0.92, 0.025), (1.02, 0.005)], GY)  # bord des vertèbres relevé par Antoine (capture du 19/11)
+_a = _z_droit
+_b = bord_ventral - 0.16
+_u = np.clip((GZ - _a) / np.maximum(_b - _a, 0.05), 0, 1)
+_voute = np.sqrt(np.clip(1 - (2 * _u - 1) ** 2, 0, 1)) ** 0.8
+_voute = _voute * ((GZ > _a) & (GZ < _b))
+_prof = interp([(0.30, 0.06), (0.40, 0.10), (0.50, 0.13), (0.62, 0.17), (0.80, 0.20), (1.00, 0.20), (1.15, 0.17)], GY)
+_creux_cage = ndi.gaussian_filter(_prof * _voute, (3, 1)) * (GZ > _a + 0.004)
+creux = creux * plat * (1 - _zone_sternum) + _creux_cage * _zone_sternum
 # Filet (psoas) sous les vertèbres lombaires, côté fente : masse ronde et pleine, pas un creux
 # (vu sur les vidéos de découpe). Entre la dernière côte et le bassin, on comble la cavité près du rachis
 # et on bombe légèrement le filet au-dessus du plan de fente.
@@ -239,9 +261,9 @@ A = ndi.gaussian_filter1d(interp(EPAISSEUR_HAUTEUR, GY), 12, axis=0)  # courbe l
 courbe = lambda points, x: np.interp(x, np.array(points, float)[:, 0], np.array(points, float)[:, 1])
 
 # Coupes en travers, mélangées selon la hauteur.
-coupe_avant = courbe([(0, 0.74), (0.22, 0.95), (0.4, 1.0), (0.6, 0.93), (0.8, 0.8), (1.0, 0.66)], f_larg)                 # épaule, poitrine
-coupe_cotes = courbe([(0, 0.76), (0.2, 0.96), (0.33, 1.0), (0.5, 0.88), (0.7, 0.66), (0.85, 0.5), (1.0, 0.4)], f_larg)   # côtes
-coupe_flanc = courbe([(0, 0.78), (0.18, 0.97), (0.3, 1.0), (0.5, 0.82), (0.7, 0.55), (0.85, 0.38), (1.0, 0.27)], f_larg)  # flanc
+coupe_avant = courbe([(0, 0.74), (0.22, 0.95), (0.4, 1.0), (0.6, 0.93), (0.8, 0.74), (1.0, 0.5)], f_larg)                 # épaule, poitrine
+coupe_cotes = courbe([(0, 0.76), (0.2, 0.96), (0.33, 1.0), (0.5, 0.88), (0.7, 0.6), (0.85, 0.4), (1.0, 0.24)], f_larg)   # côtes
+coupe_flanc = courbe([(0, 0.78), (0.18, 0.97), (0.3, 1.0), (0.5, 0.8), (0.7, 0.45), (0.85, 0.24), (1.0, 0.11)], f_larg)  # flanc
 coupe_cuisse = courbe([(0, 0.8), (0.25, 0.96), (0.45, 1.0), (0.7, 0.9), (1.0, 0.66)], f_larg)               # cuisse ronde
 poids = lambda y0, y1: np.clip((GY - y0) / (y1 - y0), 0, 1)
 _ss_p = lambda y0, y1: poids(y0, y1) ** 2 * (3 - 2 * poids(y0, y1))
@@ -275,6 +297,8 @@ epaisseur = ndi.gaussian_filter(epaisseur * (1 - _w) + _ep2 * _w, 5)
 _ss = lambda a_, b_, v: np.clip((v - a_) / (b_ - a_), 0, 1) ** 2 * (3 - 2 * np.clip((v - a_) / (b_ - a_), 0, 1))
 rho_globe = np.sqrt(np.clip(1 - (1 - np.clip(ndi.gaussian_filter(dist, 7) / 0.16, 0, 1)) ** 2, 0, 1))
 globe = 0.065 * _ss(1.86, 2.10, GY) * (1 - _ss(2.20, 2.42, GY)) * rho_globe
+# Tende de tranche : grosse masse ronde qui bombe nettement sous le bassin (photos de globes du 19/11).
+globe = globe + 0.05 * np.exp(-0.5 * (((GY - 2.08) / 0.11) ** 2 + ((GZ + 0.17) / 0.12) ** 2)) * rho_globe
 globe = ndi.gaussian_filter(globe, 6)
 
 # Jarrets : tubes ronds, décalés du plan de fente.
@@ -305,12 +329,30 @@ centre_membre = decalage_membre / np.maximum(ndi.gaussian_filter(membre.astype(n
 r_arrondi = np.clip(ndi.gaussian_filter(epaisseur, 12) * 1.6, 0.05, 0.45)
 coupe_collier = np.clip((0.16 - GY) / 0.06, 0, 1) * np.clip((0.12 - GZ) / 0.08, 0, 1)
 r_arrondi = r_arrondi * (1 - coupe_collier) + 0.012 * coupe_collier
+# Bord ventral (poitrine, flanchet, bavettes) : paroi fine, coupée net au couteau, pas un ventre arrondi
+# (vu sur toutes les carcasses filmées).
+coupe_ventre = np.clip((f_larg - 0.72) / 0.12, 0, 1) * np.clip((GY - 0.42) / 0.1, 0, 1) * np.clip((1.85 - GY) / 0.12, 0, 1)
+# Poitrine : le sternum est scié net, la face de fente reste plane jusqu'à l'arête (pas de bourrelet).
+coupe_poitrine = np.clip((f_larg - 0.70) / 0.10, 0, 1) * np.clip((GY - 0.30) / 0.06, 0, 1) * np.clip((1.05 - GY) / 0.1, 0, 1)
+coupe_ventre = ndi.gaussian_filter(np.maximum(coupe_ventre, coupe_poitrine), 4)
+r_arrondi = r_arrondi * (1 - coupe_ventre) + 0.02 * coupe_ventre * (1 - coupe_poitrine) + 0.008 * coupe_poitrine
 # Distance au bord adoucie : la distance brute forme des arêtes (squelette du contour) qui se voient en stries.
 dist_l = ndi.gaussian_filter(dist, 7) * np.clip(dist / 0.012, 0, 1)
 rho = np.sqrt(np.clip(1 - (1 - np.clip(dist_l / r_arrondi, 0, 1)) ** 2, 0, 1))
 
 filet = ndi.gaussian_filter(filet, 5) * np.sqrt(np.clip(ndi.gaussian_filter(dist, 7) / 0.08, 0, 1))
-x_fente = (1 - poids_membre) * (globe + (filet - creux) * plat) + poids_membre * (centre_membre + demi_tube)
+x_fente = (1 - poids_membre) * (globe + (filet - creux) * (plat * (1 - _zone_sternum) + _zone_sternum)) + poids_membre * (centre_membre + demi_tube)
+# Bassin scié (os coxal, « araignée ») : vrai creux, pas une surface plate. Poche profonde dans le trou
+# du bassin (y 1,88 ; z -0,27), cuvette plus douce sur l'anneau d'os, muscles qui bombent autour.
+_poche = 0.11 * np.exp(-0.5 * (((GY - 1.885) / 0.045) ** 2 + ((GZ + 0.27) / 0.05) ** 2))
+_cuvette = 0.045 * np.exp(-0.5 * (((GY - 1.87) / 0.08) ** 2 + ((GZ + 0.30) / 0.11) ** 2))
+_creux_bassin = ndi.gaussian_filter(_poche + _cuvette, 2) * (dist > 0)
+x_fente = x_fente - _creux_bassin * (1 - poids_membre)
+# Pointe de poitrine : là où le jarret avant s'attache, le tube du membre ne doit pas déborder du plan
+# de scie (sternum et poitrine sciés droits). Le tube reste rond seulement sur la partie libre du jarret.
+_attache = np.clip((GY - 0.17) / 0.1, 0, 1) * np.clip((0.95 - GY) / 0.1, 0, 1)
+_attache = _attache * _attache * (3 - 2 * _attache)
+x_fente = x_fente - np.maximum(x_fente, 0) * _attache
 x_ext = (1 - poids_membre) * (-epaisseur * rho) + poids_membre * (centre_membre - demi_tube)
 _h = -x_ext
 _h2 = _h.copy(); _h2[_i0:_i1] = np.maximum.accumulate(_h[_i0:_i1], axis=0)
@@ -325,6 +367,21 @@ _hl = np.maximum(_hl, ndi.gaussian_filter(_hz, 3) * 0.0)
 _wm = np.clip(poids_membre * 1.5, 0, 1)
 _h = _hl * (1 - _wm) + ndi.gaussian_filter(_h, 3) * _wm
 x_ext = -_h * (dist > 0) + x_ext * (dist <= 0)
+# Cage thoracique côté dos : juste après l'angle droit des vertèbres, la cage est profonde (il ne reste que
+# la paroi des côtes, environ 7 cm). La coupe pistolet passe là : sa tranche n'est qu'une paroi fine.
+# Vers le sternum, la voûte remonte comme avant.
+_w_cage = np.clip(_u / 0.06, 0, 1) * np.clip((0.75 - _u) / 0.35, 0, 1)
+_w_cage = ndi.gaussian_filter(_w_cage * (_voute > 0) * _zone_sternum, 2)
+_fond_cage = x_ext + 0.07
+x_fente = np.where(dist > 0, np.minimum(x_fente, x_fente * (1 - _w_cage) + _fond_cage * _w_cage), x_fente)
+# Le long de la coupe pistolet (5e/6e côte, voir coupesBoeuf.js), la face de fente colle à la face
+# extérieure : la tranche de l'avant n'est qu'une paroi fine (6 cm) qui suit le dos, arrondi compris.
+_zl = bord_dorsal + interp([(0.665, 0.46), (1.10, 0.44), (1.45, 1.0)], GY) * (bord_ventral_lisse - bord_dorsal)
+_w_pist = np.exp(-0.5 * ((GZ - _zl) / 0.07) ** 2) * np.clip((GY - 0.64) / 0.04, 0, 1) * np.clip((1.47 - GY) / 0.04, 0, 1)
+# Jamais sur la colonne : seulement dans la cage, après l'angle droit des vertèbres.
+_hors_col = np.clip((GZ - _z_droit - 0.01) / 0.02, 0, 1) * np.clip((1.16 - GY) / 0.05, 0, 1)
+_w_pist = ndi.gaussian_filter(_w_pist, 3) * _hors_col
+x_fente = np.where(dist > 0, np.minimum(x_fente, x_fente * (1 - _w_pist) + (x_ext + 0.06) * _w_pist), x_fente)
 x_ext = np.minimum(x_ext, x_fente - 0.004 * (dist > 0.003))
 
 

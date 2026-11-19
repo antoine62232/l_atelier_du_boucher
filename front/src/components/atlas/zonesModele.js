@@ -1,5 +1,8 @@
 import * as THREE from "three";
 import { classerPoint } from "../../data/zonesBoeuf";
+import { classerPieceCuisse } from "../../data/piecesCuisse";
+
+const CODE_CUISSE = 6;
 
 // Largeur de la carcasse (z) par tranche de hauteur : côté rachis en z négatif, côté ventre en z positif.
 export const TRANCHES = 250;
@@ -91,6 +94,33 @@ export const mesurerMorceaux = (racine, largeurs, estAvant) => {
   const points = {};
   parcourirSommets(racine, (v, exterieur) => {
     const code = morceauDuPoint(largeurs, estAvant, v, exterieur);
+    if (!points[code]) points[code] = { x: [], y: [], z: [] };
+    points[code].x.push(v.x);
+    points[code].y.push(v.y);
+    points[code].z.push(v.z);
+  });
+  const boites = {};
+  Object.entries(points).forEach(([code, p]) => {
+    boites[code] = new THREE.Box3(
+      new THREE.Vector3(quantile(p.x, 0.01), quantile(p.y, 0.01), quantile(p.z, 0.01)),
+      new THREE.Vector3(quantile(p.x, 0.99), quantile(p.y, 0.99), quantile(p.z, 0.99))
+    );
+  });
+  return boites;
+};
+
+// Pièce de la cuisse sous un point (0 si le point n'est pas dans la cuisse hanche).
+export const pieceDuPoint = (largeurs, estAvant, point, exterieur) => {
+  if (morceauDuPoint(largeurs, estAvant, point, exterieur) !== CODE_CUISSE) return 0;
+  return classerPieceCuisse(point.y, fractionLargeur(largeurs, point.y, point.z), exterieur);
+};
+
+// Boîte de chaque pièce de la cuisse, pour l'amener au centre et la cadrer.
+export const mesurerPieces = (racine, largeurs, estAvant) => {
+  const points = {};
+  parcourirSommets(racine, (v, exterieur) => {
+    const code = pieceDuPoint(largeurs, estAvant, v, exterieur);
+    if (!code) return;
     if (!points[code]) points[code] = { x: [], y: [], z: [] };
     points[code].x.push(v.x);
     points[code].y.push(v.y);
