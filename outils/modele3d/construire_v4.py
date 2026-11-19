@@ -239,9 +239,9 @@ A = ndi.gaussian_filter1d(interp(EPAISSEUR_HAUTEUR, GY), 12, axis=0)  # courbe l
 courbe = lambda points, x: np.interp(x, np.array(points, float)[:, 0], np.array(points, float)[:, 1])
 
 # Coupes en travers, mélangées selon la hauteur.
-coupe_avant = courbe([(0, 0.74), (0.22, 0.95), (0.4, 1.0), (0.6, 0.93), (0.8, 0.8), (1.0, 0.66)], f_larg)                 # épaule, poitrine
-coupe_cotes = courbe([(0, 0.76), (0.2, 0.96), (0.33, 1.0), (0.5, 0.88), (0.7, 0.66), (0.85, 0.5), (1.0, 0.4)], f_larg)   # côtes
-coupe_flanc = courbe([(0, 0.78), (0.18, 0.97), (0.3, 1.0), (0.5, 0.82), (0.7, 0.55), (0.85, 0.38), (1.0, 0.27)], f_larg)  # flanc
+coupe_avant = courbe([(0, 0.74), (0.22, 0.95), (0.4, 1.0), (0.6, 0.93), (0.8, 0.74), (1.0, 0.5)], f_larg)                 # épaule, poitrine
+coupe_cotes = courbe([(0, 0.76), (0.2, 0.96), (0.33, 1.0), (0.5, 0.88), (0.7, 0.6), (0.85, 0.4), (1.0, 0.24)], f_larg)   # côtes
+coupe_flanc = courbe([(0, 0.78), (0.18, 0.97), (0.3, 1.0), (0.5, 0.8), (0.7, 0.45), (0.85, 0.24), (1.0, 0.11)], f_larg)  # flanc
 coupe_cuisse = courbe([(0, 0.8), (0.25, 0.96), (0.45, 1.0), (0.7, 0.9), (1.0, 0.66)], f_larg)               # cuisse ronde
 poids = lambda y0, y1: np.clip((GY - y0) / (y1 - y0), 0, 1)
 _ss_p = lambda y0, y1: poids(y0, y1) ** 2 * (3 - 2 * poids(y0, y1))
@@ -305,6 +305,11 @@ centre_membre = decalage_membre / np.maximum(ndi.gaussian_filter(membre.astype(n
 r_arrondi = np.clip(ndi.gaussian_filter(epaisseur, 12) * 1.6, 0.05, 0.45)
 coupe_collier = np.clip((0.16 - GY) / 0.06, 0, 1) * np.clip((0.12 - GZ) / 0.08, 0, 1)
 r_arrondi = r_arrondi * (1 - coupe_collier) + 0.012 * coupe_collier
+# Bord ventral (poitrine, flanchet, bavettes) : paroi fine, coupée net au couteau, pas un ventre arrondi
+# (vu sur toutes les carcasses filmées).
+coupe_ventre = np.clip((f_larg - 0.72) / 0.12, 0, 1) * np.clip((GY - 0.42) / 0.1, 0, 1) * np.clip((1.85 - GY) / 0.12, 0, 1)
+coupe_ventre = ndi.gaussian_filter(coupe_ventre, 6)
+r_arrondi = r_arrondi * (1 - coupe_ventre) + 0.02 * coupe_ventre
 # Distance au bord adoucie : la distance brute forme des arêtes (squelette du contour) qui se voient en stries.
 dist_l = ndi.gaussian_filter(dist, 7) * np.clip(dist / 0.012, 0, 1)
 rho = np.sqrt(np.clip(1 - (1 - np.clip(dist_l / r_arrondi, 0, 1)) ** 2, 0, 1))
