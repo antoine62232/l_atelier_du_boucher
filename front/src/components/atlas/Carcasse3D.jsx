@@ -239,7 +239,7 @@ const NOM_COURT = { avant: "l'avant", arriere: "l'arrière" };
  */
 const Carcasse3D = ({
   ref,
-  modele = "/models/demi_carcasse_boeuf_v18.glb",
+  modele = "/models/demi_carcasse_boeuf_v17.glb",
   apercu = "/models/demi_carcasse_boeuf_v7_apercu.webp",
   coupe = null, parties, onExplorer, onExplorerMorceau, onSelection, onMorceau, partieInitiale = null }) => {
   const conteneurRef = useRef(null);
