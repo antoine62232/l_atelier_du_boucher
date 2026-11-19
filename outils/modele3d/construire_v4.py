@@ -371,7 +371,7 @@ x_fente = np.where(dist > 0, np.minimum(x_fente, x_fente * (1 - _w_cage) + _fond
 _zl = bord_dorsal + interp([(0.665, 0.43), (1.10, 0.26), (1.45, 1.0)], GY) * (bord_ventral_lisse - bord_dorsal)
 _w_pist = np.exp(-0.5 * ((GZ - _zl) / 0.07) ** 2) * np.clip((GY - 0.64) / 0.04, 0, 1) * np.clip((1.47 - GY) / 0.04, 0, 1)
 # Jamais sur la colonne : seulement dans la cage, après l'angle droit des vertèbres.
-_hors_col = np.clip((GZ - _z_droit - 0.01) / 0.02, 0, 1) * _zone_sternum
+_hors_col = np.clip((GZ - _z_droit - 0.01) / 0.02, 0, 1) * np.clip((1.16 - GY) / 0.05, 0, 1)
 _w_pist = ndi.gaussian_filter(_w_pist, 3) * _hors_col
 x_fente = np.where(dist > 0, np.minimum(x_fente, x_fente * (1 - _w_pist) + (x_ext + 0.06) * _w_pist), x_fente)
 x_ext = np.minimum(x_ext, x_fente - 0.004 * (dist > 0.003))
