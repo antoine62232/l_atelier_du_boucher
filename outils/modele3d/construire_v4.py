@@ -205,6 +205,13 @@ profil_creux /= (0.55 ** 0.55 * 0.45 ** 0.9) / 1.0  # maximum ≈ 1 vers t ≈ 0
 profil_creux = np.clip(profil_creux / profil_creux.max(), 0, 1)
 creux = interp(PROF_CREUX, GY) * profil_creux * ((GZ > za) & (GZ < zb))
 creux = ndi.gaussian_filter(creux, 14) * plat_creux
+# Poitrine (sternum scié avec la fente) : de la pointe de poitrine jusqu'aux dernières côtes sternales,
+# la bande le long du bord ventral est sciée à plat, comme la colonne. Pas de creux entre les côtes et le bord.
+_d_ventral = bord_ventral - GZ
+_sternum = np.clip((0.22 - _d_ventral) / 0.14, 0, 1)
+_sternum = _sternum * _sternum * (3 - 2 * _sternum)
+_zone_sternum = np.clip((1.05 - GY) / 0.15, 0, 1)
+creux = creux * (1 - _sternum * _zone_sternum)
 # Filet (psoas) sous les vertèbres lombaires, côté fente : masse ronde et pleine, pas un creux
 # (vu sur les vidéos de découpe). Entre la dernière côte et le bassin, on comble la cavité près du rachis
 # et on bombe légèrement le filet au-dessus du plan de fente.
