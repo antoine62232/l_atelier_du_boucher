@@ -187,22 +187,32 @@ bord_ventral = ndi.uniform_filter1d(bord_ventral, 9)[:, None] * np.ones((1, NZ))
 
 # Creux de la cage thoracique et de l'abdomen (côté fente).
 PROF_CREUX = [(0.40, 0.0), (0.52, 0.15), (0.75, 0.20), (1.00, 0.20), (1.15, 0.17), (1.35, 0.13), (1.55, 0.07), (1.80, 0.0)]
-za = z_rachis + 0.07
+# Bord ventral des corps vertébraux, relevé sur la photo de la face de fente (bande striée des vertèbres sciées).
+# Tout ce qui est côté dos (vertèbres, apophyses, long dorsal) est scié à plat : la fente reste plane et droite.
+# La cavité et le filet ne commencent qu'après ce bord.
+CORPS = [(0.0, -0.24), (0.45, -0.235), (0.60, -0.245), (0.80, -0.25), (1.00, -0.255), (1.15, -0.25), (1.30, -0.245), (1.50, -0.245), (1.75, -0.24), (2.0, -0.24)]
+z_corps = ndi.gaussian_filter1d(interp(CORPS, GY), 10, axis=0)
+plat = np.clip((GZ - z_corps) / 0.035, 0, 1)
+plat = plat * plat * (3 - 2 * plat)  # 0 sur la colonne, 1 à 3,5 cm au-delà
+# Départ de la cavité plus progressif (les côtes s'écartent des vertèbres en s'arrondissant) : pas de marche.
+plat_creux = np.clip((GZ - z_corps) / 0.08, 0, 1)
+plat_creux = plat_creux * plat_creux * (3 - 2 * plat_creux)
+za = z_corps
 zb = bord_ventral - 0.04
 t = np.clip((GZ - za) / np.maximum(zb - za, 0.05), 0, 1)
 profil_creux = (t ** 0.55) * (1 - t) ** 0.9
 profil_creux /= (0.55 ** 0.55 * 0.45 ** 0.9) / 1.0  # maximum ≈ 1 vers t ≈ 0.38
 profil_creux = np.clip(profil_creux / profil_creux.max(), 0, 1)
 creux = interp(PROF_CREUX, GY) * profil_creux * ((GZ > za) & (GZ < zb))
-creux = ndi.gaussian_filter(creux, 14)
-# Filet (psoas) le long des vertèbres lombaires, côté fente : masse ronde et pleine, pas un creux
+creux = ndi.gaussian_filter(creux, 14) * plat_creux
+# Filet (psoas) sous les vertèbres lombaires, côté fente : masse ronde et pleine, pas un creux
 # (vu sur les vidéos de découpe). Entre la dernière côte et le bassin, on comble la cavité près du rachis
 # et on bombe légèrement le filet au-dessus du plan de fente.
 _lomb = np.clip((GY - 1.12) / 0.12, 0, 1) * np.clip((1.86 - GY) / 0.1, 0, 1)
 _lomb = _lomb * _lomb * (3 - 2 * _lomb)
-_dz = GZ - (z_rachis + 0.15)
-filet = 0.035 * _lomb * np.exp(-0.5 * (_dz / 0.075) ** 2)
-creux = creux * (1 - _lomb * np.exp(-0.5 * (_dz / 0.12) ** 2))
+_dz = GZ - (z_corps + 0.06)
+filet = 0.022 * _lomb * np.exp(-0.5 * (_dz / 0.045) ** 2)
+creux = creux * (1 - _lomb * np.exp(-0.5 * (_dz / 0.09) ** 2))
 
 
 def bosse(yc, zc, val, sy, sz):
@@ -300,7 +310,7 @@ dist_l = ndi.gaussian_filter(dist, 7) * np.clip(dist / 0.012, 0, 1)
 rho = np.sqrt(np.clip(1 - (1 - np.clip(dist_l / r_arrondi, 0, 1)) ** 2, 0, 1))
 
 filet = ndi.gaussian_filter(filet, 5) * np.sqrt(np.clip(ndi.gaussian_filter(dist, 7) / 0.08, 0, 1))
-x_fente = (1 - poids_membre) * (globe + filet - creux) + poids_membre * (centre_membre + demi_tube)
+x_fente = (1 - poids_membre) * (globe + (filet - creux) * plat) + poids_membre * (centre_membre + demi_tube)
 x_ext = (1 - poids_membre) * (-epaisseur * rho) + poids_membre * (centre_membre - demi_tube)
 _h = -x_ext
 _h2 = _h.copy(); _h2[_i0:_i1] = np.maximum.accumulate(_h[_i0:_i1], axis=0)
