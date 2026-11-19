@@ -187,10 +187,10 @@ bord_ventral = ndi.uniform_filter1d(bord_ventral, 9)[:, None] * np.ones((1, NZ))
 
 # Creux de la cage thoracique et de l'abdomen (côté fente).
 PROF_CREUX = [(0.40, 0.0), (0.52, 0.15), (0.75, 0.20), (1.00, 0.20), (1.15, 0.17), (1.35, 0.13), (1.55, 0.07), (1.80, 0.0)]
-# Bord ventral des corps vertébraux, relevé sur la photo de la face de fente (bande striée des vertèbres sciées).
+# Bord ventral des corps vertébraux (la colonne remonte vers le ventre en allant vers le cou), relevé sur la photo de la face de fente (bande striée des vertèbres sciées).
 # Tout ce qui est côté dos (vertèbres, apophyses, long dorsal) est scié à plat : la fente reste plane et droite.
 # La cavité et le filet ne commencent qu'après ce bord.
-CORPS = [(0.0, -0.24), (0.45, -0.235), (0.60, -0.245), (0.80, -0.25), (1.00, -0.255), (1.15, -0.25), (1.30, -0.245), (1.50, -0.245), (1.75, -0.24), (2.0, -0.24)]
+CORPS = [(0.0, -0.10), (0.20, -0.12), (0.35, -0.13), (0.45, -0.155), (0.55, -0.18), (0.65, -0.20), (0.75, -0.215), (0.85, -0.235), (0.95, -0.25), (1.05, -0.255), (1.15, -0.25), (1.30, -0.245), (1.50, -0.245), (1.75, -0.24), (2.0, -0.24)]
 z_corps = ndi.gaussian_filter1d(interp(CORPS, GY), 10, axis=0)
 plat = np.clip((GZ - z_corps) / 0.035, 0, 1)
 plat = plat * plat * (3 - 2 * plat)  # 0 sur la colonne, 1 à 3,5 cm au-delà
