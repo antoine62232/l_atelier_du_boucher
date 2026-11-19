@@ -359,6 +359,11 @@ _hl = np.maximum(_hl, ndi.gaussian_filter(_hz, 3) * 0.0)
 _wm = np.clip(poids_membre * 1.5, 0, 1)
 _h = _hl * (1 - _wm) + ndi.gaussian_filter(_h, 3) * _wm
 x_ext = -_h * (dist > 0) + x_ext * (dist <= 0)
+# Cage thoracique : la paroi (côtes et muscles) ne fait que 7 cm environ. Dans la voûte, la face de fente
+# suit l'intérieur de la face extérieure ; une coupe en travers (coupe pistolet) ne montre qu'une paroi fine.
+_w_cage = ndi.gaussian_filter(_voute ** 0.35 * _zone_sternum, 2)
+_fond_cage = x_ext + 0.07
+x_fente = np.where(dist > 0, np.minimum(x_fente, x_fente * (1 - _w_cage) + _fond_cage * _w_cage), x_fente)
 x_ext = np.minimum(x_ext, x_fente - 0.004 * (dist > 0.003))
 
 
