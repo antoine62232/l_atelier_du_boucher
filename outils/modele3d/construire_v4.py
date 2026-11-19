@@ -359,6 +359,13 @@ _hl = np.maximum(_hl, ndi.gaussian_filter(_hz, 3) * 0.0)
 _wm = np.clip(poids_membre * 1.5, 0, 1)
 _h = _hl * (1 - _wm) + ndi.gaussian_filter(_h, 3) * _wm
 x_ext = -_h * (dist > 0) + x_ext * (dist <= 0)
+# Cage thoracique côté dos : juste après l'angle droit des vertèbres, la cage est profonde (il ne reste que
+# la paroi des côtes, environ 7 cm). La coupe pistolet passe là : sa tranche n'est qu'une paroi fine.
+# Vers le sternum, la voûte remonte comme avant.
+_w_cage = np.clip(_u / 0.06, 0, 1) * np.clip((0.75 - _u) / 0.35, 0, 1)
+_w_cage = ndi.gaussian_filter(_w_cage * (_voute > 0) * _zone_sternum, 2)
+_fond_cage = x_ext + 0.07
+x_fente = np.where(dist > 0, np.minimum(x_fente, x_fente * (1 - _w_cage) + _fond_cage * _w_cage), x_fente)
 x_ext = np.minimum(x_ext, x_fente - 0.004 * (dist > 0.003))
 
 
