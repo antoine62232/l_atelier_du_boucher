@@ -313,7 +313,10 @@ jarret_avant = masque_segment((0.30, 0.17), (0.06, 0.50), 0.11) & masque_g
 jarret_arriere = masque_segment((2.18, -0.14), (2.50, -0.10), 0.12) & masque_g
 membre = jarret_avant | jarret_arriere
 # Fondu large entre le corps et le jarret : pas de marche à la jonction.
-poids_membre = np.clip(ndi.gaussian_filter(membre.astype(np.float32), 10) * 1.5, 0, 1)
+# Flou rapporté à la surface de la carcasse : au bord du contour, le poids reste à 1. Sinon la jonction
+# des deux faces remonte vers la fente et le jarret est plat de ce côté (capture du 20/11).
+_g_corps = np.maximum(ndi.gaussian_filter(masque_g.astype(np.float32), 10), 1e-3)
+poids_membre = np.clip(ndi.gaussian_filter(membre.astype(np.float32), 10) / _g_corps * 1.5, 0, 1)
 # Rayon du jarret : demi-largeur locale du membre, lissée le long du membre.
 rayon_local = ndi.grey_dilation(dist * membre, size=(31, 31))
 rayon_local = np.maximum(ndi.gaussian_filter(rayon_local, 6), 0.025)
