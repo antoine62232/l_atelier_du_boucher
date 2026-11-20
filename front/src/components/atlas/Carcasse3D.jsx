@@ -59,6 +59,9 @@ const creerUniformes = () => ({
 
 // Couleur de la viande sur une face de coupe (espace linéaire).
 const COULEUR_COUPE = "vec3(0.30, 0.025, 0.03)";
+// Éclaircissement de la photo de la face de fente (espace linéaire) : elle sortait environ 15 % plus sombre
+// que la face extérieure. 1.0 = photo d'origine.
+const ECLAIRCIR_FENTE = "1.25";
 
 // Sur un écran tactile, pas de survol : un premier appui désigne le morceau, un second zoome.
 const ecranTactile = () => typeof window !== "undefined" && !window.matchMedia?.("(hover: hover)").matches;
@@ -155,6 +158,8 @@ float distanceSegment(vec2 p, vec2 a, vec2 b) {
       .replace(
         "#include <map_fragment>",
         `#include <map_fragment>
+// Face de fente (photo, pas les faces de coupe) : éclaircie pour s'accorder à la face extérieure.
+if (!uFaceExterieure && gl_FrontFacing) diffuseColor.rgb *= ${ECLAIRCIR_FENTE};
 // Flancs très inclinés (dos, ventre, dessus de la cuisse) : les photos, prises de face, y sont étirées.
 // On y pose un vrai morceau de la photo extérieure (couverture de gras rosée et marbrée), répété sans raccord
 // visible et teinté par la couleur locale de la photo.
